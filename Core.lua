@@ -186,7 +186,7 @@ function Hekili:HeartBeat()
 		return
 	end
 
-	self.ActiveModule.auditTrackers()
+	if self.ActiveModule and self.ActiveModule.auditTrackers then self.ActiveModule.auditTrackers() end
 
 	if self.DB.char['Single Target Enabled'] then	self:ProcessPriorityList( 'ST' ) end
 	if self.DB.char['Multi-Target Enabled'] then	self:ProcessPriorityList( 'AE' ) end
@@ -215,15 +215,7 @@ function Hekili:OnInitialize()
 	self:UnregisterAllEvents()
 
 	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-	--[[
 	self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
-	self:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
-	self:RegisterEvent("PET_BATTLE_CLOSE")
-	self:RegisterEvent("PET_BATTLE_OPENING_START") ]]
-	
-	--self:RegisterEvent("PLAYER_ENTERING_WORLD")
-	-- self:RegisterEvent("PLAYER_TALENT_UPDATE")
-
 	self:RegisterEvent("PLAYER_LOGOUT")
 
 	-- Combat time / boss fight status.
@@ -231,6 +223,11 @@ function Hekili:OnInitialize()
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	
+	-- self:RegisterEvent("PET_BATTLE_CLOSE")
+	-- self:RegisterEvent("PET_BATTLE_OPENING_START")
+	-- self:RegisterEvent("PLAYER_ENTERING_WORLD")
+
+
 	-- Will need this for time to die.
 	self:RegisterEvent("UNIT_HEALTH")
 
@@ -241,6 +238,7 @@ function Hekili:OnInitialize()
 end
 
 
+-- Borrowed TTD logic from 'Nemo' by soulwhip.
 function Hekili.InitTTD()
 	Hekili.TTD.n			= 1
 	Hekili.TTD.timeSum		= GetTime()
@@ -267,14 +265,6 @@ function Hekili:SanityCheck()
 	local specialization = select(2, GetSpecializationInfo(GetSpecialization()))
 	local activeSpec = GetActiveSpecGroup()
 
-	if class ~= "Shaman" or specialization ~= "Enhancement" then
-		self:Print("This addon currently supports Enhancement Shamans only; disabling.")
-		self.ActiveModule = nil
-		self:Disable()
-		self.DB.char.enabled = false
-		return
-	end
-
 	local pMod = self.DB.char['Primary Specialization Module']
 	local sMod = self.DB.char['Secondary Specialization Module']
 
@@ -299,7 +289,7 @@ function Hekili:SanityCheck()
 				self:Print("Module |cFFFF9900" .. sMod .. "|r is not appropriate for your class; unloading.")
 				self.DB.char['Secondary Specialization Module'] = '(none)'
 				sMod = '(none)'
-			elseif self.Modules[pMod].spec ~= specialization then
+			elseif self.Modules[sMod].spec ~= specialization then
 				self:Print("Module |cFFFF9900" .. sMod .. "|r is not appropriate for your specialization; unloading.")
 				self.DB.char['Secondary Specialization Module'] = '(none)'
 				sMod = '(none)'
@@ -399,16 +389,19 @@ function Hekili:UNIT_HEALTH( _, UID)
 end
 
 
+function Hekili:ACTIVE_TALENT_GROUP_CHANGED()
+	self:SanityCheck()
+end
+
+
 function Hekili:INSTANCE_ENCOUNTER_ENGAGE_UNIT()
 	Hekili.BossCombat		= true
 	Hekili.CombatStart		= GetTime()
-	-- Hekili.UsedConsumable	= false
 end
 
 
 function Hekili:PLAYER_REGEN_DISABLED(...)
     Hekili.CombatStart		= GetTime()
-    -- Hekili.UsedConsumable	= false
 end
 
 

@@ -562,11 +562,13 @@ function Hekili:SetOption(info, input)
 		if GetActiveSpecGroup() == 1 and self.Modules[ self.DB.char['Primary Specialization Module'] ] then
 			self.ActiveModule = self.Modules[ self.DB.char['Primary Specialization Module'] ]
 		end
+		self:SanityCheck()
 		
 	elseif opt == 'Secondary Specialization Module' then
 		if GetActiveSpecGroup() == 2 and self.Modules[ self.DB.char['Secondary Specialization Module'] ] then
 			self.ActiveModule = self.Modules[ self.DB.char['Secondary Specialization Module'] ]
 		end
+		self:SanityCheck()
 
 	elseif opt == 'Single Target Enabled' then
 		if input == false then
