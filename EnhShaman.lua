@@ -431,8 +431,13 @@ mod.state['ST'].actions = {
 		desc	= '',
 		SimC	=	'actions.single+=/elemental_blast,if=talent.elemental_blast.enabled&buff.maelstrom_weapon.react>=1',
 		check	=	function( state )
-			if state.talents[elemental_blast] and (state.pBuffs[maelstrom_weapon].count == 5 or state.pBuffs[ancestral_swiftness].up) then
-				return elemental_blast
+			if state.talents[elemental_blast] and (state.pBuffs[maelstrom_weapon].count >= 1 or state.pBuffs[ancestral_swiftness].up) then
+				if state.pBuffs[ancestral_swiftness].up or state.pBuffs[maelstrom_weapon].count == 5 then
+					return elemental_blast
+				else
+					-- Hardcasting.
+					return elemental_blast, nil, true
+				end
 			end
 			return nil
 		end },
@@ -499,7 +504,7 @@ mod.state['ST'].actions = {
 		SimC	= 'actions.single+=/lightning_bolt,if=set_bonus.tier15_2pc_melee=1&buff.maelstrom_weapon.react>=4&!buff.ascendance.up',
 		check	= function( state )
 				if state.set_bonuses['t15'] >= 2 and state.pBuffs[maelstrom_weapon].count >= 4 and not state.pBuffs[ascendance].up then
-					return lightning_bolt
+					return lightning_bolt, 0, true
 				end
 				return nil
 			end },
@@ -539,7 +544,8 @@ mod.state['ST'].actions = {
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>=3&!buff.ascendance.up',
 		check	= function( state )
 				if state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up then
-					return lightning_bolt
+					-- Hardcasting.
+					return lightning_bolt, 0, true
 				end
 				return nil
 			end },
@@ -558,7 +564,7 @@ mod.state['ST'].actions = {
 		desc	= 'AS',
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.ancestral_swiftness.up',
 		check	= function( state )
-				if state.pBuffs[ancestral_swiftness].up and state.pBuffs[maelstrom_weapon].count < 5 then
+				if state.pBuffs[ancestral_swiftness].up then -- and state.pBuffs[maelstrom_weapon].count < 5 then
 					return lightning_bolt
 				end
 				return nil
@@ -606,7 +612,8 @@ mod.state['ST'].actions = {
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>1&!buff.ascendance.up',
 		check	= function( state )
 				if state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ascendance].up then
-					return lightning_bolt
+					-- Hardcasting
+					return lightning_bolt, 0, true
 				end
 				return nil
 			end },

@@ -5,7 +5,7 @@
 
 local SpellRange = LibStub("SpellRange-1.0")
 
-function Hekili.ProcessPriorityList( id )
+function Hekili:ProcessPriorityList( id )
 
 	local module = Hekili.ActiveModule
 	
@@ -39,15 +39,14 @@ function Hekili.ProcessPriorityList( id )
 
 		if (Hekili.DB.char['Cooldown Enabled']) and id == 'ST' then
 			for j,v in ipairs(module.state['CD'].actions) do
-				local ckAbility, ckCooldown
-				local ckWait
+				local ckAbility, ckCooldown, ckWait
 
-				-- Check can pass a second argument that equates to the SimC 'wait' value.
+				-- Check can pass a second argument that equates to the SimC 'wait' value.  Third argument is 'true' if hardcasting.
 				ckAbility, ckWait = v.check( state )
 
 				if not ckWait then ckWait = 0 end
+				if not ckHardcast then ckHardcast = false end
 
-				-- trying w/o this check
 				if ckAbility and not (module.flags[ckAbility] and Hekili.Flagged(ckAbility)) then
 					ckCooldown = state.cooldowns[ckAbility]
 
@@ -66,16 +65,17 @@ function Hekili.ProcessPriorityList( id )
 		end
 		
 		for j,v in ipairs(state.actions) do
-			local ckAbility, ckCooldown
-			local ckWait
+			local ckAbility, ckWait, ckHardcast
+			local ckCooldown
 
-			-- Check can pass a second argument that equates to the SimC 'wait' value.
-			ckAbility, ckWait = v.check( state )
+			-- Check can pass a second argument that equates to the SimC 'wait' value.  Third arg is 'true' if hardcasting.
+			ckAbility, ckWait, ckHardcast = v.check( state )
 
 			if not ckWait or ckWait == GCD then ckWait = 0 end
+			if not ckHardcast then ckHardcast = false end
 
 			-- trying w/o this check
-			if ckAbility and not (module.flags[ckAbility] and Hekili.Flagged(ckAbility)) then
+			if ckAbility and not (module.flags[ckAbility] and Hekili.Flagged(ckAbility)) and (Hekili.DB.char['Show Hardcasts'] or not ckHardcast) then
 				ckCooldown = state.cooldowns[ckAbility]
 
 				-- May want to add some smoothing to this.
@@ -188,8 +188,8 @@ function Hekili:HeartBeat()
 
 	self.ActiveModule.auditTrackers()
 
-	if self.DB.char['Single Target Enabled'] then	self.ProcessPriorityList( 'ST' ) end
-	if self.DB.char['Multi-Target Enabled'] then	self.ProcessPriorityList( 'AE' ) end
+	if self.DB.char['Single Target Enabled'] then	self:ProcessPriorityList( 'ST' ) end
+	if self.DB.char['Multi-Target Enabled'] then	self:ProcessPriorityList( 'AE' ) end
 end
 
 
@@ -266,6 +266,14 @@ function Hekili:SanityCheck()
 	local class = UnitClass("player")
 	local specialization = select(2, GetSpecializationInfo(GetSpecialization()))
 	local activeSpec = GetActiveSpecGroup()
+
+	if class ~= "Shaman" or specialization ~= "Enhancement" then
+		self:Print("This addon currently supports Enhancement Shamans only; disabling.")
+		self.ActiveModule = nil
+		self:Disable()
+		self.DB.char.enabled = false
+		return
+	end
 
 	local pMod = self.DB.char['Primary Specialization Module']
 	local sMod = self.DB.char['Secondary Specialization Module']
