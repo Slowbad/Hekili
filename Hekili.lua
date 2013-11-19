@@ -18,7 +18,8 @@ Hekili.Tooltip = CreateFrame("GameTooltip", "HekiliTooltip", UIParent, "GameTool
 
 BINDING_HEADER_HEKILI_HEADER = "Hekili Priority Helper"
 BINDING_NAME_HEKILI_TOGGLE = "Enable/Disable Hekili"
-BINDING_NAME_HEKILI_TOGGLE_COOLDOWNS = "Toggle Priority Cooldowns"
+BINDING_NAME_HEKILI_TOGGLE_COOLDOWNS = "Toggle Display of Cooldowns"
+BINDING_NAME_HEKILI_TOGGLE_HARDCASTS = "Toggle Display of Hardcasts"
 
 Hekili.Modules = {}
 

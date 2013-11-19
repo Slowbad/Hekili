@@ -4,6 +4,10 @@
 ## Author: Kapulani (Hekili of TCN-Ner'zhul)
 ## Version: 0.1
 ## SavedVariables: HekiliDB
+## X-Curse-Packaged-Version: r4
+## X-Curse-Project-Name: Hekili
+## X-Curse-Project-ID: hekili
+## X-Curse-Repository-ID: wow/hekili/mainline
 
 Embeds.xml
 
