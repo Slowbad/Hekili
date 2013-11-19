@@ -7,6 +7,10 @@
 ## X-Curse-Project-Name: LibSpellRange-1.0
 ## X-Curse-Project-ID: libspellrange-1-0
 ## X-Curse-Repository-ID: wow/libspellrange-1-0/mainline
+## X-Curse-Packaged-Version: r6
+## X-Curse-Project-Name: Hekili
+## X-Curse-Project-ID: hekili
+## X-Curse-Repository-ID: wow/hekili/mainline
 
 #@no-lib-strip@
 libs\LibStub\LibStub.lua
