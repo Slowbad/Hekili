@@ -2,7 +2,6 @@
 ## Title: Hekili
 ## Notes: Primarily designed to provide a "dual" priority display (single-target and AOE).
 ## Author: Kapulani (Hekili of TCN-Ner'zhul)
-## Version: 0.1
 ## SavedVariables: HekiliDB
 ## X-Curse-Packaged-Version: r4
 ## X-Curse-Project-Name: Hekili
