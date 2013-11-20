@@ -75,7 +75,7 @@ function Hekili:ProcessPriorityList( id )
 			if not ckHardcast then ckHardcast = false end
 
 			-- trying w/o this check
-			if ckAbility and not (module.flags[ckAbility] and Hekili.Flagged(ckAbility)) and (Hekili.DB.char['Show Hardcasts'] or not ckHardcast) then
+			if ckAbility and not (module.flags[ckAbility] and Hekili.Flagged(ckAbility)) and (not ckHardcast or Hekili.DB.char['Show Hardcasts']) then
 				ckCooldown = state.cooldowns[ckAbility]
 
 				-- May want to add some smoothing to this.
@@ -396,18 +396,19 @@ end
 
 function Hekili:INSTANCE_ENCOUNTER_ENGAGE_UNIT()
 	Hekili.BossCombat		= true
-	Hekili.CombatStart		= GetTime()
 end
 
 
 function Hekili:PLAYER_REGEN_DISABLED(...)
     Hekili.CombatStart		= GetTime()
+    Hekili.UsedConsumable	= false
 end
 
 
 function Hekili:PLAYER_REGEN_ENABLED(...)
-	Hekili.BossCombat	= false
-	Hekili.CombatStart	= 0
+	Hekili.BossCombat		= false
+	Hekili.CombatStart		= 0
+    Hekili.UsedConsumable	= false
 end
 
 function Hekili:COMBAT_LOG_EVENT_UNFILTERED(...)

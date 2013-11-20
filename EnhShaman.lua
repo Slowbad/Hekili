@@ -87,7 +87,7 @@ mod.flags[blood_fury] = {
 }
 
 mod.flags[earth_elemental_totem] = {
-	cooldown	= function() return Hekili.ttCooldown(2062) end
+	cooldown	= Hekili.ttCooldown(2062)
 }
 
 mod.flags[flametongue_weapon] = {
@@ -144,10 +144,14 @@ mod.flags[lifeblood] = {
 	cooldown	= 120
 }
 
---[[ mod.flags[virmens_bite] = {
+mod.flags[virmens_bite] = {
 	consumable	= true,
 	cooldown	= 120
-} ]]
+}
+
+mod.flags[wind_shear] = {
+	interrupt	= true
+}
 
 
 -- We have to keep a table of pre-haste cast times because MW/etc. will affect them.
@@ -191,7 +195,7 @@ mod.pBuffsToTrack			= {
 	stormlash_totem,
 	time_warp,
 	unleash_flame,
-	-- virmens_bite
+	virmens_bite
 }
 
 mod.pDebuffsToTrack		= {
@@ -252,22 +256,22 @@ mod.state['CD'].actions = {
 		SimC	= 'actions+=/stormlash_totem,if=!active&!buff.stormlash.up&(buff.bloodlust.up|time>=60)',
 		check	= function( state )
 			-- TBI: Combat time.
-			if (not state.pBuffs[stormlash_totem].up) and (state.pBuffs[heroism].up or state.pBuffs[bloodlust].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) then
+			if (not state.pBuffs[stormlash_totem].up) and ( (state.pBuffs[heroism].up or state.pBuffs[bloodlust].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) or state.combatTime >= 60 ) then
 				return stormlash_totem
 			end
 			return nil
 		end },
 
---[[	{	act		= virmens_bite,
+	{	act		= virmens_bite,
 		desc	= 'Potion',
 		SimC	= 'actions+=/virmens_bite_potion,if=time>60&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active|target.time_to_die<=60)',
 		check	= function ( state )
 			-- TBI: Combat time.
-			if state.totems[totem_fire].up and (state.totems[totem_fire].name == fire_elemental_totem or Hekili.GetTTD() <= 60) then
+			if state.combatTime > 60 and ( (state.totems[totem_fire].up and state.totems[totem_fire].name == fire_elemental_totem) or state.timeToDie <= 60 ) then
 				return virmens_bite
 			end
 			return nil
-		end }, ]]
+		end },
 		
 	{	act		= blood_fury,
 		desc	= '',
@@ -275,16 +279,6 @@ mod.state['CD'].actions = {
 		check	= function( state )
 			if IsUsableSpell(blood_fury) then
 				return blood_fury
-			end
-			return nil
-		end },
-		
-	{	act		= arcane_torrent,
-		desc	= '',
-		SimC	= 'actions+=/arcane_torrent',
-		check	= function( state )
-			if IsUsableSpell(arcane_torrent) then
-				return arcane_torrent
 			end
 			return nil
 		end },
@@ -300,7 +294,7 @@ mod.state['CD'].actions = {
 		end },
 		
 	{	act		= elemental_mastery,
-		desc	= 'PE+gFET',
+		desc	= 'PE+GFET',
 		SimC	= 'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&(talent.primal_elementalist.enabled&glyph.fire_elemental_totem.enabled&(cooldown.fire_elemental_totem.remains=0|cooldown.fire_elemental_totem.remains>=80))',
 		check	= function( state )
 			if state.talents[elemental_mastery] and	(state.talents[primal_elementalist] and state.glyphs[fire_elemental_totem] and (state.cooldowns[fire_elemental_totem] == 0 or state.cooldowns[fire_elemental_totem] >= 80)) then
@@ -310,7 +304,7 @@ mod.state['CD'].actions = {
 		end },
 		
 	{	act		= elemental_mastery,
-		desc	= 'PE-gFET',
+		desc	= 'PE-GFET',
 		SimC	= 'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&(talent.primal_elementalist.enabled&!glyph.fire_elemental_totem.enabled&(cooldown.fire_elemental_totem.remains=0|cooldown.fire_elemental_totem.remains>=50))',
 		check	= function( state )
 			if state.talents[elemental_mastery] and	(state.talents[primal_elementalist] and not state.glyphs[fire_elemental_totem] and (state.cooldowns[fire_elemental_totem] == 0 or state.cooldowns[fire_elemental_totem] >= 50)) then
@@ -320,7 +314,7 @@ mod.state['CD'].actions = {
 		end },
 		
 	{	act		= elemental_mastery,
-		desc	= '-PE',
+		desc	= '-Primal',
 		SimC	= 'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&!talent.primal_elementalist.enabled',
 		check	= function( state )
 			if state.talents[elemental_mastery] and	not state.talents[primal_elementalist] then
@@ -406,6 +400,18 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
+		
+	{	act		= arcane_torrent,
+		desc	= '',
+		SimC	= 'actions+=/arcane_torrent',
+		check	= function( state )
+			if IsUsableSpell(arcane_torrent) and state.tCast > 0 then
+				return arcane_torrent
+			end
+			return nil
+		end },
+
+	-- TBD: Add Symbiosis: Solar Beam if available?
   
 	{	act		= searing_totem,
 		desc	= '',
@@ -429,8 +435,8 @@ mod.state['ST'].actions = {
 	
 	{	act		= elemental_blast,
 		desc	= '',
-		SimC	=	'actions.single+=/elemental_blast,if=talent.elemental_blast.enabled&buff.maelstrom_weapon.react>=1',
-		check	=	function( state )
+		SimC	= 'actions.single+=/elemental_blast,if=talent.elemental_blast.enabled&buff.maelstrom_weapon.react>=1',
+		check	= function( state )
 			if state.talents[elemental_blast] and (state.pBuffs[maelstrom_weapon].count >= 1 or state.pBuffs[ancestral_swiftness].up) then
 				if state.pBuffs[ancestral_swiftness].up or state.pBuffs[maelstrom_weapon].count == 5 then
 					return elemental_blast
@@ -486,147 +492,147 @@ mod.state['ST'].actions = {
 		desc	= 'UF&FS0',
 		SimC	= 'actions.single+=/flame_shock,if=buff.unleash_flame.up&!ticking',
 		check	= function( state )
-				if state.pBuffs[unleash_flame].up and not state.tDebuffs[flame_shock].up then
-					return flame_shock
-				end
-				return nil
-			end },
+			if state.pBuffs[unleash_flame].up and not state.tDebuffs[flame_shock].up then
+				return flame_shock
+			end
+			return nil
+		end },
 			
 	{	act		= lava_lash,
 		desc	= '',
 		SimC	= 'actions.single+=/lava_lash',
 		check	= function( state )
-				return lava_lash
-			end },
+			return lava_lash
+		end },
 	
 	{	act		= lightning_bolt,
 		desc	= 'T15',
 		SimC	= 'actions.single+=/lightning_bolt,if=set_bonus.tier15_2pc_melee=1&buff.maelstrom_weapon.react>=4&!buff.ascendance.up',
 		check	= function( state )
-				if state.set_bonuses['t15'] >= 2 and state.pBuffs[maelstrom_weapon].count >= 4 and not state.pBuffs[ascendance].up then
-					return lightning_bolt, 0, true
-				end
-				return nil
-			end },
+			if state.set_bonuses['t15'] >= 2 and state.pBuffs[maelstrom_weapon].count >= 4 and not state.pBuffs[ascendance].up then
+				return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
+			end
+			return nil
+		end },
 	
 	{	act		= flame_shock,
 		desc	= 'UF|FS0',
 		SimC	= 'actions.single+=/flame_shock,if=(buff.unleash_flame.up&(dot.flame_shock.remains<10|set_bonus.tier16_2pc_melee=0))|!ticking',
 		check	= function( state )
-				if (state.pBuffs[unleash_flame].up and (state.tDebuffs[flame_shock].remains < 10 or state.set_bonuses['t16'] < 2)) or not state.tDebuffs[flame_shock].up then
-					return flame_shock
-				end
-				return nil
-			end },
+			if (state.pBuffs[unleash_flame].up and (state.tDebuffs[flame_shock].remains < 10 or state.set_bonuses['t16'] < 2)) or not state.tDebuffs[flame_shock].up then
+				return flame_shock
+			end
+			return nil
+		end },
 	
 	{	act		= unleash_elements,
 		desc	= '',
 		SimC	= 'actions.single+=/unleash_elements',
 		check	= function( state )
-				if state.pBuffs[windfury_weapon].up and state.pBuffs[flametongue_weapon].up then
-					return unleash_elements
-				end
-				return nil
-			end },
+			if state.pBuffs[windfury_weapon].up and state.pBuffs[flametongue_weapon].up then
+				return unleash_elements
+			end
+			return nil
+		end },
 	
 	{	act 	= frost_shock,
 		desc	= 'Glyph',
 		SimC	= 'actions.single+=/frost_shock,if=glyph.frost_shock.enabled&set_bonus.tier14_4pc_melee=0',
 		check	= function( state )
-				if state.glyphs[frost_shock] and state.set_bonuses['t14'] == 0 then
-					return frost_shock
-				end
-				return nil
-			end },
+			if state.glyphs[frost_shock] and state.set_bonuses['t14'] < 4 then
+				return frost_shock
+			end
+			return nil
+		end },
 			
 	{	act		= lightning_bolt,
 		desc	= 'MW3+',
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>=3&!buff.ascendance.up',
 		check	= function( state )
-				if state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up then
-					-- Hardcasting.
-					return lightning_bolt, 0, true
-				end
-				return nil
-			end },
+			if state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ascendance].up then
+				-- Hardcasting.
+				return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
+			end
+			return nil
+		end },
 	
 	{	act		= ancestral_swiftness,
 		desc	= 'MW<2',
 		SimC	= 'actions.single+=/ancestral_swiftness,if=talent.ancestral_swiftness.enabled&buff.maelstrom_weapon.react<2',
 		check	= function( state )
-				if state.talents[ancestral_swiftness] and state.pBuffs[maelstrom_weapon].count < 2 then
-					return ancestral_swiftness
-				end
-				return nil
-			end },
+			if state.talents[ancestral_swiftness] and state.pBuffs[maelstrom_weapon].count < 2 then
+				return ancestral_swiftness
+			end
+			return nil
+		end },
 	
 	{	act		= lightning_bolt,
 		desc	= 'AS',
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.ancestral_swiftness.up',
 		check	= function( state )
-				if state.pBuffs[ancestral_swiftness].up then -- and state.pBuffs[maelstrom_weapon].count < 5 then
-					return lightning_bolt
-				end
-				return nil
-			end },
+			if state.pBuffs[ancestral_swiftness].up then
+				return lightning_bolt
+			end
+			return nil
+		end },
 	
 	{	act		= earth_shock,
 		desc	= '',
 		SimC	= 'actions.single+=/earth_shock,if=(!glyph.frost_shock.enabled|set_bonus.tier14_4pc_melee=1)',
 		check	= function( state )
-				if not state.glyphs[frost_shock] or state.set_bonuses['t14'] >= 4 then
-					return earth_shock
-				end
-				return nil
-			end },
+			if not state.glyphs[frost_shock] or state.set_bonuses['t14'] >= 4 then
+				return earth_shock
+			end
+			return nil
+		end },
 	
 	{	act		= feral_spirit,
 		desc	= '',
 		SimC	= 'actions.single+=/feral_spirit',
 		check	= function( state )
-				return feral_spirit
-			end },
+			return feral_spirit
+		end },
 	
 	{	act		= earth_elemental_totem,
 		desc	= '',
 		SimC	= 'actions.single+=/earth_elemental_totem,if=!active',
 		check	= function( state )
-				if not state.totems[totem_earth].up and state.cooldowns[fire_elemental_totem] >= 60 then
-					return earth_elemental_totem
-				end
-				return nil
-			end },
+			if not state.totems[totem_earth].up or state.totems[totem_earth].name ~= earth_elemental_totem then -- and state.cooldowns[fire_elemental_totem] >= 60 then
+				return earth_elemental_totem
+			end
+			return nil
+		end },
 	
 	{	act		= spiritwalkers_grace,
 		desc	= '',
 		SimC	= 'actions.single+=/spiritwalkers_grace,moving=1',
 		check	= function( state )
-				if state.moving then
-					return spiritwalkers_grace
-				end
-				return nil
-			end },
+			if state.moving then
+				return spiritwalkers_grace
+			end
+			return nil
+		end },
 	
 	{	act		= lightning_bolt,
 		desc	= 'MW2+',
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>1&!buff.ascendance.up',
 		check	= function( state )
-				if state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ascendance].up then
-					-- Hardcasting
-					return lightning_bolt, 0, true
-				end
-				return nil
-			end },
+			if state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ascendance].up then
+				-- Hardcasting
+				return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
+			end
+			return nil
+		end },
 			
 	{	act		= searing_totem,
 		desc	= 'Refresh',
 		SimC	= 'N/A',
 		check	= function( state )
-				if state.totems[totem_fire].up and state.totems[totem_fire].name == searing_totem and state.totems[totem_fire].remains < 30 then
-					return searing_totem
-				end
-				return nil
-			end }
+			if state.totems[totem_fire].up and state.totems[totem_fire].name == searing_totem and state.totems[totem_fire].remains < 15 then
+				return searing_totem
+			end
+			return nil
+		end }
 }
 
 
@@ -639,7 +645,6 @@ mod.state['AE'].actions = {
  		desc	= '4+',
  		SimC	= 'actions.aoe=fire_nova,if=active_flame_shock>=4',
  		check	= function( state )
-			-- Need to bring in FS counter for this.
 			if state.fsCount >= 4 then
 				return fire_nova
 			end
@@ -650,9 +655,8 @@ mod.state['AE'].actions = {
  		desc	= 'Wait',
  		SimC	= 'actions.aoe+=/wait,sec=cooldown.fire_nova.remains,if=active_flame_shock>=4&cooldown.fire_nova.remains<0.67',
  		check	= function( state )
-			-- Need to bring in FS counter for this.
 			if state.cooldowns[fire_nova] < 0.67 and state.fsCount >= 4 then
-				return fire_nova, 0.67
+				return fire_nova, state.cooldowns[fire_nova]
 			end
 			return nil
  		end },
@@ -661,7 +665,6 @@ mod.state['AE'].actions = {
 		desc	= '6+',
 		SimC	= 'actions.aoe+=/magma_totem,if=active_enemies>5&!totem.fire.active',
 		check	= function( state )
-			-- Need to bring in FS counter for this.
 			if not state.totems[totem_fire].up and state.tCount > 5 then
 				return magma_totem
 			end
@@ -672,7 +675,6 @@ mod.state['AE'].actions = {
 		desc	= '5-',
 		SimC	= 'actions.aoe+=/searing_totem,if=active_enemies<=5&!totem.fire.active',
 		check	= function( state )
-			-- Need to bring in FS counter for this.
 			if not state.totems[totem_fire].up and state.tCount <= 5 then
 				return searing_totem
 			end
@@ -693,8 +695,8 @@ mod.state['AE'].actions = {
 		desc	= 'MW1+',
 		SimC	= 'actions.aoe+=/elemental_blast,if=talent.elemental_blast.enabled&buff.maelstrom_weapon.react>=1',
 		check	= function( state )
-			if state.talents[elemental_blast] and not state.pBuffs[maelstrom_weapon].count >= 1 then
-				return elemental_blast
+			if state.talents[elemental_blast] and state.pBuffs[maelstrom_weapon].count >= 1 then
+				return elemental_blast, 0, (state.pBuffs[maelstrom_weapon].count < 5 and not state.pBuffs[ancestral_swiftness].up)
 			end
 			return nil
 		end },
@@ -705,7 +707,7 @@ mod.state['AE'].actions = {
 		check	= function( state )
 			-- Need to bring in FS counter for this.
 			if state.tCount >= 2 and state.pBuffs[maelstrom_weapon].count >= 3 then
-				return chain_lightning
+				return chain_lightning, 0, (state.pBuffs[maelstrom_weapon].count < 5 and not state.pBuffs[ancestral_swiftness].up)
 			end
 			return nil
 		end },
@@ -724,7 +726,7 @@ mod.state['AE'].actions = {
 		desc	= 'Cycle',
 		SimC	= 'actions.aoe+=/flame_shock,cycle_targets=1,if=!ticking',
 		check	= function( state )
-			-- Will probably implement this as a comparison between # flame shocks and MT hits (or FET AOE hits).
+			-- This only works if Magma Totem is up and hitting things, otherwise tCount will == fsCount.
 			if state.tDebuffs[flame_shock].up and state.tCount > state.fsCount then
 				return flame_shock
 			end
@@ -733,7 +735,7 @@ mod.state['AE'].actions = {
 
 	{	act		= flame_shock,
 		desc	= '',
-		SimC	= 'actions.aoe+=/flame_shock,cycle_targets=1,if=!ticking',
+		SimC	= 'N/A - use FS if it will expire before it comes off CD again',
 		check	= function( state )
 			if not state.tDebuffs[flame_shock].up or state.tDebuffs[flame_shock].remains < 6 then
 				return flame_shock
@@ -755,7 +757,6 @@ mod.state['AE'].actions = {
 		desc	= '3+',
 		SimC	= 'actions.aoe+=fire_nova,if=active_flame_shock>=3',
 		check	= function( state )
-			-- Need to bring in FS counter for this.
 			if state.fsCount >= 3 then
 				return fire_nova
 			end
@@ -768,7 +769,7 @@ mod.state['AE'].actions = {
 		check	= function( state )
 			-- Need to bring in FS counter for this.
 			if state.tCount >= 2 and state.pBuffs[maelstrom_weapon].count >= 1 then
-				return chain_lightning
+				return chain_lightning, 0, (state.pBuffs[maelstrom_weapon].count < 5 and not state.pBuffs[ancestral_swiftness].up)
 			end
 			return nil
 		end },
@@ -825,7 +826,6 @@ mod.state['AE'].actions = {
 		desc	= '',
 		SimC	= 'actions.aoe+=/fire_nova,if=active_flame_shock>=1',
 		check	= function( state )
-			-- Need FS count here.
 			if state.fsCount >= 1 then
 				return fire_nova
 			end
@@ -856,6 +856,8 @@ end
 mod.Execute[arcane_torrent] = function( state )
 	cast = 0
 	state.cooldowns[arcane_torrent] = 120
+	
+	state.tCast = 0
 	
 	return cast
 end
@@ -1233,19 +1235,19 @@ mod.Execute[unleash_elements] = function( state )
 	return cast
 end
 
---[[ mod.Execute[virmens_bite] = function( state )
+mod.Execute[virmens_bite] = function( state )
 	-- 1.0 GCD
 	cast = state.tGCD
 	state.cooldowns[virmens_bite] = 120
 
 	-- apply the buff if used in combat.
 	if (state.combatTime > 0) then Hekili.UsedConsumable = true end
-	state.pBuffs[virmens_bite].up	= true
+	state.pBuffs[virmens_bite].up		= true
 	state.pBuffs[virmens_bite].count	= 1
 	state.pBuffs[virmens_bite].remains	= 25	
 
 	return cast
-end ]]
+end
 
 mod.Execute[wind_shear] = function( state )
 	cast = 0

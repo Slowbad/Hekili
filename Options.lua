@@ -10,21 +10,21 @@ function OutputFlags( option, category )
 	if Hekili.ActiveModule then
 		for k,v in pairs(Hekili.ActiveModule.flags) do
 			if v[category] then
-				if count >= 1 then abilities = abilities + ', ' end
-				abilities = abilities + k
+				if count >= 1 then abilities = abilities .. ', ' end
+				abilities = abilities .. k
 				count = count + 1
 			end
 		end
 	end
 
 	if Hekili.DB.char[option] == true then
-		output = 'Hide ' .. category .. ' abilities (usually buffs) from the priority display (presently shown).'
+		output = 'Hide ' .. category .. ' abilities from the priority display (presently shown).'
 	else
-		output = 'Show ' .. category .. ' abilities (usually buffs) from the priority display (presently hidden).'
+		output = 'Show ' .. category .. ' abilities from the priority display (presently hidden).'
 	end
 
 	if abilities ~= '' then
-		output = output + '\n' + 'Affects: ' + abilities
+		output = output .. '\n|cFFFFD100Affects:|r ' .. abilities
 	end
 
 	return output			
@@ -179,7 +179,7 @@ function Hekili:GetOptions()
 											if self.DB.char['Cooldown Enabled'] == true then
 												output = 'Hide cooldowns from both rotations (presently enabled)'
 											else
-												output = 'Show cooldowns from both rotation (presently disabled).'
+												output = 'Show cooldowns from both rotations (presently disabled).'
 											end
 											return output			
 										end,
@@ -188,6 +188,42 @@ function Hekili:GetOptions()
 								get = 'GetOption',
 								order = 4,
 							},
+
+							['Show Hardcasts'] = {
+								type	= 'toggle',
+								name	= 'Show Hardcasts',
+								desc = function ()
+											local output
+											if self.DB.char['Cooldown Enabled'] == true then
+												output = 'Hide hardcasts from both rotations (presently shown)'
+											else
+												output = 'Hide hardcasts from both rotations (presently hidden).'
+											end
+											return output			
+										end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 5,
+							},
+							
+							['Show Interrupts'] = {
+								type	= 'toggle',
+								name	= 'Show Interrupts',
+								desc	= function () return OutputFlags( 'Show Interrupts', 'interrupt' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 6,
+							},
+
+							['Show Precombat'] = {
+								type	= 'toggle',
+								name	= 'Show Precombat',
+								desc	= function () return OutputFlags( 'Show Precombat', 'precombat' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 7,
+							},
+							
 						},
 					}
 				}
@@ -371,7 +407,7 @@ function Hekili:GetOptions()
 					['Show Talents'] = {
 						type	= 'toggle',
 						name	= 'Show Talents',
-						desc	= OutputFlags( 'Show Talents', 'talent' ),
+						desc	= function () return OutputFlags( 'Show Talents', 'talent' ) end,
 						width	= 'full',
 						set		= 'SetOption',
 						get		= 'GetOption',
@@ -380,47 +416,29 @@ function Hekili:GetOptions()
 					['Show Racials'] = {
 						type	= 'toggle',
 						name	= 'Show Racials',
-						desc	= OutputFlags( 'Show Racials', 'racial' ),
+						desc	= function () return OutputFlags( 'Show Racials', 'racial' ) end,
 						width	= 'full',
 						set		= 'SetOption',
 						get		= 'GetOption',
 						order	= 1,
 					},
-					['Show Interrupts'] = {
+					['Show Professions'] = {
 						type	= 'toggle',
-						name	= 'Show Interrupts',
-						desc	= OutputFlags( 'Show Interrupts', 'interrupt' ),
+						name	= 'Show Professions',
+						desc	= function () return OutputFlags( 'Show Professions', 'profession' ) end,
 						width	= 'full',
 						set		= 'SetOption',
 						get		= 'GetOption',
 						order	= 2,
 					},
-					['Show Precombat'] = {
+					['Show Bloodlust'] = {
 						type	= 'toggle',
-						name	= 'Show Precombat',
-						desc	= OutputFlags( 'Show Precombat', 'precombat' ),
+						name	= 'Show Bloodlust',
+						desc	= function () return OutputFlags( 'Show Bloodlust', 'bloodlust' ) end,
 						width	= 'full',
 						set		= 'SetOption',
 						get		= 'GetOption',
 						order	= 3,
-					},
-					['Show Professions'] = {
-						type	= 'toggle',
-						name	= 'Show Professions',
-						desc	= OutputFlags( 'Show Professions', 'profession' ),
-						width	= 'full',
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 4,
-					},
-					['Show Bloodlust'] = {
-						type	= 'toggle',
-						name	= 'Show Bloodlust',
-						desc	= OutputFlags( 'Show Bloodlust', 'bloodlust' ),
-						width	= 'full',
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 5,
 					},
 					['Show Consumables'] = {
 						type	= 'toggle',
@@ -429,16 +447,7 @@ function Hekili:GetOptions()
 						width	= 'full',
 						set		= 'SetOption',
 						get		= 'GetOption',
-						order	= 6,
-					},
-					['Show Hardcasts'] = {
-						type	= 'toggle',
-						name	= 'Show Hardcasts',
-						desc	= 'Show cast-time spells in the rotation (vs. waiting for Maelstrom Weapon stacks).',
-						width	= 'full',
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 7,
+						order	= 4,
 					},
 					['Cooldown Threshold'] = {
 						type 	= 'range',
@@ -449,7 +458,7 @@ function Hekili:GetOptions()
 						step	= 1,
 						get		= 'GetOption',
 						set		= 'SetOption',
-						order	= 8
+						order	= 5
 					}
 				},
 			},					
