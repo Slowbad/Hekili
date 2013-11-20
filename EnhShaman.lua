@@ -217,7 +217,7 @@ mod.tDebuffsToTrack		= {
 -- Cooldown Action List --
 --------------------------
 mod.state['CD'].actions = {
- 
+
 	{	act		= bloodlust,
 		desc	= '',
 		SimC	= 'actions+=/bloodlust,if=target.health.pct<25|time>5',
@@ -228,7 +228,7 @@ mod.state['CD'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= heroism,
 		desc	= '',
 		SimC	= 'actions+=/heroism,if=target.health.pct<25|time>5',
@@ -239,7 +239,7 @@ mod.state['CD'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= synapse_springs,
 		desc	= 'Gloves',
 		SimC	= 'actions+=/use_item,name=[gloves]',
@@ -248,7 +248,7 @@ mod.state['CD'].actions = {
 				return synapse_springs
 			end
 		end },
-		
+
 	{	act		= stormlash_totem,
 		desc	= '',
 		SimC	= 'actions+=/stormlash_totem,if=!active&!buff.stormlash.up&(buff.bloodlust.up|time>=60)',
@@ -268,7 +268,7 @@ mod.state['CD'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= blood_fury,
 		desc	= '',
 		SimC	= 'actions+=/blood_fury',
@@ -278,7 +278,7 @@ mod.state['CD'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= berserking,
 		desc	= '',
 		SimC	= 'actions+=/berserking',
@@ -288,7 +288,7 @@ mod.state['CD'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= elemental_mastery,
 		desc	= 'PE+GFET',
 		SimC	= 'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&(talent.primal_elementalist.enabled&glyph.fire_elemental_totem.enabled&(cooldown.fire_elemental_totem.remains=0|cooldown.fire_elemental_totem.remains>=80))',
@@ -298,7 +298,7 @@ mod.state['CD'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= elemental_mastery,
 		desc	= 'PE-GFET',
 		SimC	= 'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&(talent.primal_elementalist.enabled&!glyph.fire_elemental_totem.enabled&(cooldown.fire_elemental_totem.remains=0|cooldown.fire_elemental_totem.remains>=50))',
@@ -308,7 +308,7 @@ mod.state['CD'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= elemental_mastery,
 		desc	= '-Primal',
 		SimC	= 'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&!talent.primal_elementalist.enabled',
@@ -328,7 +328,7 @@ mod.state['CD'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= ascendance,
 		desc	= '',
 		SimC	= 'actions+=/ascendance,if=cooldown.strike.remains>=3',
@@ -338,7 +338,7 @@ mod.state['CD'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= lifeblood,
 		desc	= '',
 		SimC	= 'actions+=/lifeblood,if=(glyph.fire_elemental_totem.enabled&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active))|!glyph.fire_elemental_totem.enabled',
@@ -348,7 +348,7 @@ mod.state['CD'].actions = {
 			end
 			return nil
 		end }
-		
+
 }
 
 
@@ -366,7 +366,7 @@ mod.state['ST'].actions = {
  			end
  			return nil
  		end },
- 
+
  	{	act		= flametongue_weapon,
  		desc	= '',
  		SimC	= '/actions.precombat+=flametongue_weapon,weapon=off',
@@ -376,7 +376,7 @@ mod.state['ST'].actions = {
  			end
  			return nil
  		end },
- 
+
   	{	act		= lightning_shield,
   		desc	= '',
   		SimC	= '/actions.precombat+=lightning_shield,if=!buff.lightning_shield.up',
@@ -386,7 +386,7 @@ mod.state['ST'].actions = {
   			end
   			return nil
   		end },
-  
+
 	{	act		= wind_shear,
 		desc	= '',
 		SimC	= 'actions=wind_shear',
@@ -396,7 +396,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= arcane_torrent,
 		desc	= '',
 		SimC	= 'actions+=/arcane_torrent',
@@ -408,7 +408,7 @@ mod.state['ST'].actions = {
 		end },
 
 	-- TBD: Add Symbiosis: Solar Beam if available?
-  
+
 	{	act		= searing_totem,
 		desc	= '',
 		SimC	= 'actions.single=searing_totem,if=!totem.fire.active',
@@ -418,7 +418,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= unleash_elements,
 		desc	= 'UF|T16',
 		SimC	= 'actions.single+=/unleash_elements,if=(talent.unleashed_fury.enabled|set_bonus.tier16_2pc_melee=1)',
@@ -428,7 +428,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= elemental_blast,
 		desc	= '',
 		SimC	= 'actions.single+=/elemental_blast,if=talent.elemental_blast.enabled&buff.maelstrom_weapon.react>=1',
@@ -443,7 +443,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= lightning_bolt,
 		desc	= 'MW5',
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react=5',
@@ -453,7 +453,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= feral_spirit,
 		desc	= 'T15',
 		SimC	= 'actions.single+=/feral_spirit,if=set_bonus.tier15_4pc_melee=1',
@@ -473,7 +473,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= stormstrike,
 		desc	= '',
 		SimC	= 'actions.single+=/stormstrike',
@@ -483,7 +483,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= flame_shock,
 		desc	= 'UF&FS0',
 		SimC	= 'actions.single+=/flame_shock,if=buff.unleash_flame.up&!ticking',
@@ -493,14 +493,14 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-			
+
 	{	act		= lava_lash,
 		desc	= '',
 		SimC	= 'actions.single+=/lava_lash',
 		check	= function( state )
 			return lava_lash
 		end },
-	
+
 	{	act		= lightning_bolt,
 		desc	= 'T15',
 		SimC	= 'actions.single+=/lightning_bolt,if=set_bonus.tier15_2pc_melee=1&buff.maelstrom_weapon.react>=4&!buff.ascendance.up',
@@ -510,7 +510,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= flame_shock,
 		desc	= 'UF|FS0',
 		SimC	= 'actions.single+=/flame_shock,if=(buff.unleash_flame.up&(dot.flame_shock.remains<10|set_bonus.tier16_2pc_melee=0))|!ticking',
@@ -520,7 +520,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= unleash_elements,
 		desc	= '',
 		SimC	= 'actions.single+=/unleash_elements',
@@ -530,7 +530,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act 	= frost_shock,
 		desc	= 'Glyph',
 		SimC	= 'actions.single+=/frost_shock,if=glyph.frost_shock.enabled&set_bonus.tier14_4pc_melee=0',
@@ -540,7 +540,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-			
+
 	{	act		= lightning_bolt,
 		desc	= 'MW3+',
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>=3&!buff.ascendance.up',
@@ -551,7 +551,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= ancestral_swiftness,
 		desc	= 'MW<2',
 		SimC	= 'actions.single+=/ancestral_swiftness,if=talent.ancestral_swiftness.enabled&buff.maelstrom_weapon.react<2',
@@ -561,7 +561,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= lightning_bolt,
 		desc	= 'AS',
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.ancestral_swiftness.up',
@@ -571,7 +571,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= earth_shock,
 		desc	= '',
 		SimC	= 'actions.single+=/earth_shock,if=(!glyph.frost_shock.enabled|set_bonus.tier14_4pc_melee=1)',
@@ -581,14 +581,14 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= feral_spirit,
 		desc	= '',
 		SimC	= 'actions.single+=/feral_spirit',
 		check	= function( state )
 			return feral_spirit
 		end },
-	
+
 	{	act		= earth_elemental_totem,
 		desc	= '',
 		SimC	= 'actions.single+=/earth_elemental_totem,if=!active',
@@ -598,7 +598,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= spiritwalkers_grace,
 		desc	= '',
 		SimC	= 'actions.single+=/spiritwalkers_grace,moving=1',
@@ -608,7 +608,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= lightning_bolt,
 		desc	= 'MW2+',
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>1&!buff.ascendance.up',
@@ -619,7 +619,7 @@ mod.state['ST'].actions = {
 			end
 			return nil
 		end },
-			
+
 	{	act		= searing_totem,
 		desc	= 'Refresh',
 		SimC	= 'N/A',
@@ -636,7 +636,7 @@ mod.state['ST'].actions = {
 -- AOE Action List --
 ---------------------
 mod.state['AE'].actions = {
- 
+
  	{	act		= fire_nova,
  		desc	= '4+',
  		SimC	= 'actions.aoe=fire_nova,if=active_flame_shock>=4',
@@ -717,7 +717,7 @@ mod.state['AE'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= flame_shock,
 		desc	= 'Cycle',
 		SimC	= 'actions.aoe+=/flame_shock,cycle_targets=1,if=!ticking',
@@ -738,7 +738,7 @@ mod.state['AE'].actions = {
 			end
 			return nil
 		end },
-				
+
 	{	act		= stormblast,
 		desc	= '',
 		SimC	= 'actions.aoe+=stormblast',
@@ -748,7 +748,7 @@ mod.state['AE'].actions = {
 			end
 			return nil
 		end },
-	
+
 	{	act		= fire_nova,
 		desc	= '3+',
 		SimC	= 'actions.aoe+=fire_nova,if=active_flame_shock>=3',
@@ -758,7 +758,7 @@ mod.state['AE'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= chain_lightning,
 		desc	= '2+MW1+',
 		SimC	= 'actions.aoe+=/chain_lightning,if=active_enemies>=2&buff.maelstrom_weapon.react>=1',
@@ -797,7 +797,7 @@ mod.state['AE'].actions = {
 		check	= function( state )
 			return feral_spirit
 		end },
-		
+
 	{	act		= earth_elemental_totem,
 		desc	= '',
 		SimC	= 'actions.aoe+=/earth_elemental_totem,if=!active&cooldown.fire_elemental_totem.remains>=50',
@@ -807,7 +807,7 @@ mod.state['AE'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= spiritwalkers_grace,
 		desc	= '',
 		SimC	= 'actions.aoe+=/spiritwalkers_grace,moving=1',
@@ -817,7 +817,7 @@ mod.state['AE'].actions = {
 			end
 			return nil
 		end },
-		
+
 	{	act		= fire_nova,
 		desc	= '',
 		SimC	= 'actions.aoe+=/fire_nova,if=active_flame_shock>=1',
@@ -828,7 +828,7 @@ mod.state['AE'].actions = {
 			return nil
 		end }
 
-}	
+}
 
 
 ----------------------------------------------------------------------------------------------
@@ -842,47 +842,47 @@ mod.Execute[ancestral_swiftness] = function( state )
 	state.cooldowns[ancestral_swiftness] = 90
 
 	-- apply the ancestral swiftness buff
-	state.pBuffs[ancestral_swiftness].up	= true
+	state.pBuffs[ancestral_swiftness].up		= true
 	state.pBuffs[ancestral_swiftness].count		= 1
 	state.pBuffs[ancestral_swiftness].remains	= 0
 
 	return cast
 end
-	
+
 mod.Execute[arcane_torrent] = function( state )
 	cast = 0
 	state.cooldowns[arcane_torrent] = 120
-	
+
 	state.tCast = 0
-	
+
 	return cast
 end
 
 mod.Execute[ascendance] = function( state )
 	cast = 0
-	
+
 	state.pBuffs[ascendance].up			= true
 	state.pBuffs[ascendance].count		= 1
 	state.pBuffs[ascendance].remains	= 15
-	
+
 	state.cooldowns[ascendance]		= Hekili.ttCooldown(114049)
 	state.cooldowns[stormstrike]	= 0
 	state.cooldowns[stormblast]		= 0
-	
+
 	return cast
 end
-	
+
 mod.Execute[berserking] = function( state )
 	cast = 0
 	state.cooldowns[berserking] = 120
-	
+
 	return cast
 end
 
 mod.Execute[blood_fury] = function( state )
 	cast = 0
 	state.cooldowns[blood_fury] = 120
-	
+
 	return cast
 end
 
@@ -893,7 +893,7 @@ mod.Execute[bloodlust] = function( state )
 	if state.pDebuffs[sated].up or state.pDebuffs[exhaustion].up or state.pDebuffs[insanity].up or state.pDebuffs[temporal_displacement].up then
 		return cast
 	end
-	
+
 	state.pBuffs[bloodlust].up		= true
 	state.pBuffs[bloodlust].count 	= 1
 	state.pBuffs[bloodlust].remains = 40
@@ -902,7 +902,7 @@ mod.Execute[bloodlust] = function( state )
 	state.pDebuffs[sated].remains 	= 600
 
 	RecalculateHaste( state )
-	
+
 	return cast
 end
 
@@ -927,7 +927,7 @@ mod.Execute[chain_lightning] = function ( state )
 	if cast < state.sGCD then cast = state.sGCD end
 	return cast
 end
-		
+
 mod.Execute[earth_elemental_totem] = function( state )
 	cast = state.tGCD
 	state.cooldowns[earth_elemental_totem] = Hekili.ttCooldown(2062)
@@ -941,14 +941,14 @@ end
 
 mod.Execute[earth_shock] = function( state )
 	cast = state.mGCD
-		
+
 	state.cooldowns[flame_shock] = 6.0
 	state.cooldowns[frost_shock] = 6.0
 	state.cooldowns[earth_shock] = 6.0
-		
+
 	return cast
 end
-	
+
 mod.Execute[elemental_blast] = function( state )
 	cast = 2.5 / state.sHaste
 
@@ -979,7 +979,7 @@ mod.Execute[elemental_mastery] = function( state )
 	state.pBuffs[elemental_mastery].remains 	= 20
 
 	RecalculateHaste( state )
-	
+
 	return cast
 end
 
@@ -988,7 +988,7 @@ mod.Execute[feral_spirit] = function( state )
 	cast = state.sGCD
 
 	state.cooldowns[feral_spirit] = Hekili.ttCooldown(51533)
-	
+
 	return cast
 end
 
@@ -1006,7 +1006,7 @@ end
 mod.Execute[fire_nova] = function( state )
 	cast = state.sGCD
 	state.cooldowns[fire_nova] = 4.0
-	
+
 	state.pBuffs[unleash_flame].up			= false
 	state.pBuffs[unleash_flame].count		= 0
 	state.pBuffs[unleash_flame].duration	= 0
@@ -1016,7 +1016,7 @@ end
 
 mod.Execute[flame_shock] = function( state )
 	cast = state.sGCD
-	
+
 	state.cooldowns[flame_shock] = 6.0
 	state.cooldowns[frost_shock] = 6.0
 	state.cooldowns[earth_shock] = 6.0
@@ -1028,17 +1028,17 @@ mod.Execute[flame_shock] = function( state )
 	local tick	= 3 / state.sHaste
 	local ticks	= round( 30 / tick )
 	local length = tick * ticks
-	
+
 	state.tDebuffs[flame_shock].up			= true
 	state.tDebuffs[flame_shock].count		= 1
 	state.tDebuffs[flame_shock].duration	= length
-	
+
 	return cast
 end
 
 mod.Execute[frost_shock] = function( state )
 	cast = state.sGCD
-	
+
 	if state.glyphs[frost_shock] then
 		state.cooldowns[flame_shock] = 4.0
 		state.cooldowns[frost_shock] = 4.0
@@ -1054,11 +1054,11 @@ end
 
 mod.Execute[flametongue_weapon] = function( state )
 	cast = state.sGCD
-	
+
 	state.pBuffs[flametongue_weapon].up 		= true
 	state.pBuffs[flametongue_weapon].count		= 1
 	state.pBuffs[flametongue_weapon].remains 	= 3600
-	
+
 	return cast
 end
 
@@ -1069,7 +1069,7 @@ mod.Execute[heroism] = function( state )
 	if state.pDebuffs[sated].up or state.pDebuffs[exhaustion].up or state.pDebuffs[insanity].up or state.pDebuffs[temporal_displacement].up then
 		return cast
 	end
-	
+
 	state.pBuffs[heroism].up			= true
 	state.pBuffs[heroism].count 		= 1
 	state.pBuffs[heroism].remains 		= 40
@@ -1078,14 +1078,14 @@ mod.Execute[heroism] = function( state )
 	state.pDebuffs[exhaustion].remains 	= 600
 
 	RecalculateHaste( state )
-	
+
 	return cast
 end
 
 mod.Execute[lava_lash] = function( state )
 	cast = state.mGCD
 	state.cooldowns[lava_lash] = 10.0
-	
+
 	return cast
 end
 
@@ -1098,7 +1098,7 @@ mod.Execute[lifeblood] = function( state )
 	state.pBuffs[lifeblood].up	= true
 	state.pBuffs[lifeblood].count	= 1
 	state.pBuffs[lifeblood].remains	= 20
-	
+
 	local lbBenefit = 2880
 	if state.pBuffs[flurry].up then
 		lbBenefit = lbBenefit * 1.5
@@ -1110,7 +1110,7 @@ mod.Execute[lifeblood] = function( state )
 	RecalculateHaste( state )
 
 	return cast
-end	
+end
 
 mod.Execute[lightning_bolt] = function( state )
 	cast = 2.5 / state.sHaste
@@ -1135,31 +1135,31 @@ end
 
 mod.Execute[lightning_shield] = function( state )
 	cast = state.sGCD
-	
+
 	state.pBuffs[lightning_shield].up		= true
 	state.pBuffs[lightning_shield].count	= 1
 	state.pBuffs[lightning_shield].remains	= 3600
-		
+
 	return cast
 end
-	
+
 mod.Execute[magma_totem] = function( state )
 	cast = state.tGCD
-	
+
 	state.totems[totem_fire].up			= true
 	state.totems[totem_fire].name		= magma_totem
 	state.totems[totem_fire].remains	= 60
-	
+
 	return cast
 end
 
 mod.Execute[searing_totem] = function( state )
 	cast = state.tGCD
-	
+
 	state.totems[totem_fire].up			= true
 	state.totems[totem_fire].name		= searing_totem
 	state.totems[totem_fire].remains	= 60
-	
+
 	return cast
 end
 
@@ -1173,28 +1173,28 @@ mod.Execute[stormblast] = function( state )
 		state.pBuffs[maelstrom_weapon].up		= true
 		state.pBuffs[maelstrom_weapon].count	= state.pBuffs[maelstrom_weapon].count + 2
 		state.pBuffs[maelstrom_weapon].remains	= 30
-		
+
 		if state.pBuffs[maelstrom_weapon].count > 5 then state.pBuffs[maelstrom_weapon].count = 5 end
 	end
-	
+
 	return cast
 end
 
 mod.Execute[stormlash_totem] = function( state )
 	cast = state.tGCD
-	
+
 	state.totems[totem_air].up			= true
 	state.totems[totem_air].name		= stormlash_totem
 	state.totems[totem_air].remains		= 10
-	
+
 	-- should i add the buff?
 	state.pBuffs[stormlash_totem].up		= true
 	state.pBuffs[stormlash_totem].count		= 1
 	state.pBuffs[stormlash_totem].remains	= 10
-	
+
 	return cast
 end
-	
+
 mod.Execute[stormstrike] = function( state )
 	cast = state.mGCD
 	state.cooldowns[stormstrike] = 8.0
@@ -1203,22 +1203,22 @@ mod.Execute[stormstrike] = function( state )
 		state.pBuffs[maelstrom_weapon].up		= true
 		state.pBuffs[maelstrom_weapon].count	= state.pBuffs[maelstrom_weapon].count + 2
 		state.pBuffs[maelstrom_weapon].remains	= 30
-		
+
 		if state.pBuffs[maelstrom_weapon].count > 5 then state.pBuffs[maelstrom_weapon].count = 5 end
 	end
-	
+
 	return cast
 end
 
 mod.Execute[synapse_springs] = function( state )
 	cast = 0
-	
+
 	state.cooldowns[synapse_springs] = 60
-	
+
 	return cast
 end
 
-mod.Execute[unleash_elements] = function( state ) 
+mod.Execute[unleash_elements] = function( state )
 	cast = state.sGCD
 	state.cooldowns[unleash_elements] = 15.0
 
@@ -1227,42 +1227,42 @@ mod.Execute[unleash_elements] = function( state )
 		state.pBuffs[unleash_flame].count		= 1
 		state.pBuffs[unleash_flame].remains		= 8
 	end
-	
+
 	return cast
 end
 
 mod.Execute[virmens_bite] = function( state )
-	-- 1.0 GCD
-	cast = state.tGCD
+	-- no GCD
+	cast = 0
 	state.cooldowns[virmens_bite] = 120
 
 	-- apply the buff if used in combat.
 	state.pBuffs[virmens_bite].up		= true
 	state.pBuffs[virmens_bite].count	= 1
-	state.pBuffs[virmens_bite].remains	= 25	
+	state.pBuffs[virmens_bite].remains	= 25
 
 	return cast
 end
 
 mod.Execute[wind_shear] = function( state )
 	cast = 0
-	state.cooldowns[wind_shear] = 12	
-	
+	state.cooldowns[wind_shear] = 12
+
 	state.tCast = 0
-	
+
 	return cast
 end
 
 mod.Execute[windfury_weapon] = function( state )
 	cast = state.sGCD
-	
+
 	state.pBuffs[windfury_weapon].up	= true
 	state.pBuffs[windfury_weapon].count 	= 1
 	state.pBuffs[windfury_weapon].remains 	= 3600
-	
+
 	return cast
 end
-	
+
 
 mod.offGCD = {}
 mod.offGCD[ancestral_swiftness]	= true
@@ -1305,32 +1305,32 @@ end
 
 
 function mod.RefreshState( state )
-	
+
 	state.time			= GetTime()
 	state.combatTime 	= state.time - (Hekili.CombatStart or state.time)
 	state.timeToDie		= Hekili.GetTTD()
 	state.tCount,
 	state.mtCount,
 	state.fsCount		= mod.activeTargets()
-	
+
 	state.faction		= UnitFactionGroup("player")
 	state.race			= UnitRace("player")
 
 
-	------------------	
-	-- PLAYER BUFFS --		
+	------------------
+	-- PLAYER BUFFS --
 
 	if not state.pBuffs then
 		state.pBuffs = {}
-		
+
 		for i,v in ipairs(mod.pBuffsToTrack) do
 			state.pBuffs[v] = {}
 		end
-		
+
 		state.pBuffs[windfury_weapon]		= {}
 		state.pBuffs[flametongue_weapon]	= {}
 	end
-	
+
 	for i,v in ipairs(mod.pBuffsToTrack) do
 		local name, _, _, count, _, _, expires = UnitBuff("player", v)
 		local remains = 0
@@ -1366,22 +1366,22 @@ function mod.RefreshState( state )
 		state.pBuffs[flametongue_weapon].count		= 0
 		state.pBuffs[flametongue_weapon].remains	= 0
 	end
-	
+
 	-- PLAYER BUFFS --
 	------------------
-		
-	
-	--------------------	
-	-- PLAYER DEBUFFS --		
+
+
+	--------------------
+	-- PLAYER DEBUFFS --
 
 	if not state.pDebuffs then
 		state.pDebuffs = {}
-		
+
 		for i,v in ipairs(mod.pDebuffsToTrack) do
 			state.pDebuffs[v] = {}
 		end
 	end
-	
+
 	for i,v in ipairs(mod.pDebuffsToTrack) do
 		local name, _, _, count, _, _, expires = UnitDebuff("player", v)
 		local remains = 0
@@ -1395,26 +1395,26 @@ function mod.RefreshState( state )
 		state.pDebuffs[name].count		= count and count or 0
 		state.pDebuffs[name].remains	= remains
 	end
-	
+
 	-- PLAYER DEBUFFS --
 	--------------------
 
-	
+
 	---------------
 	-- COOLDOWNS --
-	
+
 	if not state.cooldowns then
 		state.cooldowns = {}
 	end
-	
+
 	for k,_ in pairs(mod.Execute) do
 		local cdStart, cdLength = GetSpellCooldown(k)
-		
+
 		-- Faking the CD for off-GCD abilities preserves the order.
 		if mod.offGCD[k] and cdLength == 0 then
 			cdStart, cdLength = GetSpellCooldown(lightning_shield)
 		end
-		
+
 		if cdStart ~= nil and cdStart > 0 then
 			state.cooldowns[k] = cdStart + cdLength - state.time
 		else
@@ -1426,15 +1426,15 @@ function mod.RefreshState( state )
 	if state.pBuffs[ascendance].up then
 		state.cooldowns[ascendance] = Hekili.ttCooldown(114049)
 	end
-	
-	
+
+
 	-- COOLDOWNS --
 	---------------
 
 
 	-----------
 	-- ITEMS --
-	
+
 	if not state.items then state.items	= {} end
 
 	state.items[synapse_springs]	= false
@@ -1448,11 +1448,11 @@ function mod.RefreshState( state )
 		state.items[synapse_springs]	= true
 
 		local cdStart, cdLength = GetItemCooldown(gloves)
-		
+
 		if cdStart == 0 and cdLength == 0 then
 			cdStart, cdLength = GetSpellCooldown(lightning_shield)
 		end
-		
+
 		if cdStart ~= nil and cdStart > 0 then
 			state.cooldowns[synapse_springs] = cdStart + cdLength - state.time
 		else
@@ -1468,11 +1468,11 @@ function mod.RefreshState( state )
 		state.items[virmens_bite]			= true
 
 		local cdStart, cdDuration, cdEnable = GetItemCooldown(76089)
-		
+
 		if cdStart == 0 and cdLength == 0 then
 			cdStart, cdLength = GetSpellCooldown(lightning_shield)
 		end
-		
+
 		if cdEnable == 1 and cdStart > 0 then
 			state.cooldowns[virmens_bite] = cdStart + cdLength - state.time
 		else
@@ -1490,15 +1490,15 @@ function mod.RefreshState( state )
 	if not state.totems then
 		state.totems = {}
 	end
-	
+
 	for i = 1, 4 do
 		if not state.totems[i] then state.totems[i] = {} end
 
 		local up, name, start, duration = GetTotemInfo(i)
 		local remains = start + duration - state.time
-		
+
 		if remains < 0 then remains = 0 end
-		
+
 		state.totems[i].name 	= name
 		state.totems[i].up		= up
 		state.totems[i].remains = remains
@@ -1507,14 +1507,14 @@ function mod.RefreshState( state )
 	-- TOTEMS --
 	------------
 
-	
+
 	-------------
 	-- TALENTS --
 
 	if not state.talents then
 		state.talents = {}
 	end
-	
+
 	for i=1, MAX_NUM_TALENTS do
 		local name, _, _, _, enabled = GetTalentInfo(i)
 
@@ -1522,15 +1522,15 @@ function mod.RefreshState( state )
 	end
 	-- TALENTS --
 	-------------
-	
-	
+
+
 	------------
 	-- GLYPHS --
 
 	if not state.glyphs then
 		state.glyphs = {}
 	end
-	
+
 	-- Set all glyphs to false before checking to see which ones are actually active.
 	for k,_ in pairs(state.glyphs) do
 		state.glyphs[k] = false
@@ -1549,7 +1549,7 @@ function mod.RefreshState( state )
 
 	-- GLYPHS --
 	------------
-	
+
 
 	-----------------
 	-- SET BONUSES --
@@ -1563,7 +1563,7 @@ function mod.RefreshState( state )
 
 	-- SET BONUSES --
 	-----------------
-	
+
 
 	-------------------
 	-- TARGET HEALTH --
@@ -1577,10 +1577,10 @@ function mod.RefreshState( state )
 
 	--------------------
 	-- TARGET DEBUFFS --
-		
+
 	if not state.tDebuffs then
 		state.tDebuffs = {}
-		
+
 		for i,v in ipairs(mod.tDebuffsToTrack) do
 			state.tDebuffs[v] = {}
 		end
@@ -1615,35 +1615,35 @@ function mod.RefreshState( state )
 			state.tDebuffs[v].remains	= 0
 		end
 	end
-	
+
 	-- TARGET DEBUFFS --
 	--------------------
 
 
 	----------------------
 	-- TARGET CAST INFO --
-	
+
 	state.tCast = 0
-	
+
 	if UnitName("target") and UnitCanAttack("player", "target") and UnitHealth("target") > 0 then
 		local _, _, _, _, _, endCast, _, _, notInterruptible = UnitCastingInfo("target")
-		
+
 		if endCast ~= nil and not notInterruptible then
 			state.tCast	= endCast / 1000
 		end
-		
+
 		_, _, _, _, _, endCast, _, notInterruptible = UnitChannelInfo("target")
-		
+
 		if endCast ~= nil and not notInterruptible then
 			state.tCast = endCast / 1000
 		end
 	end
-	
-	
+
+
 
 	----------------
 	-- HASTE INFO --
-	
+
 	-- Player's Combat Rating, for updates.
 	state.shRating = GetCombatRating(CR_HASTE_SPELL)
 	state.mhRating = GetCombatRating(CR_HASTE_MELEE)
@@ -1653,9 +1653,9 @@ function mod.RefreshState( state )
 	state.mHaste = (1 + ( state.mhRating / 42500 ) )
 	state.mGCD = 1.5
 	state.tGCD = 1.0
-	
+
 	RecalculateHaste( state )
-	
+
 	-- HASTE INFO --
 	------------------
 
@@ -1690,7 +1690,7 @@ function mod.AdvanceState( state, elapsed )
 
 	---------------
 	-- COOLDOWNS --
-	
+
 	for k,_ in pairs(mod.Execute) do
 		if not state.cooldowns[k] then
 			state.cooldowns[k] = 0
@@ -1704,10 +1704,10 @@ function mod.AdvanceState( state, elapsed )
 			state.cooldowns[i] = 0
 		end
 	end
-	
+
 	-- COOLDOWNS --
 	---------------
-	
+
 
 	------------
 	-- TOTEMS --
@@ -1717,7 +1717,7 @@ function mod.AdvanceState( state, elapsed )
 			if state.totems[i].remains > 0 then
 				state.totems[i].remains = state.totems[i].remains - elapsed
 			end
-			
+
 			if state.totems[i].remains < 0 then
 				state.totems[i].name = nil
 				state.totems[i].up = false
@@ -1728,10 +1728,10 @@ function mod.AdvanceState( state, elapsed )
 
 	-- TOTEMS --
 	------------
-	
 
-	------------------	
-	-- PLAYER BUFFS --		
+
+	------------------
+	-- PLAYER BUFFS --
 
 	for k,_ in pairs(state.pBuffs) do
 		if state.pBuffs[k].up then
@@ -1761,13 +1761,13 @@ function mod.AdvanceState( state, elapsed )
 			end
 		end
 	end
-	
+
 	-- PLAYER BUFFS --
 	------------------
-	
-	
-	--------------------	
-	-- PLAYER DEBUFFS --		
+
+
+	--------------------
+	-- PLAYER DEBUFFS --
 
 	for k,v in pairs(state.pDebuffs) do
 		if v.up then
@@ -1782,14 +1782,14 @@ function mod.AdvanceState( state, elapsed )
 			end
 		end
 	end
-	
+
 	-- PLAYER DEBUFFS --
 	--------------------
-	
+
 
 	--------------------
 	-- TARGET DEBUFFS --
-		
+
 	for k,v in pairs(state.tDebuffs) do
 		if v.up then
 			if v.remains > 0 then
@@ -1803,7 +1803,7 @@ function mod.AdvanceState( state, elapsed )
 			end
 		end
 	end
-	
+
 	-- TARGET DEBUFFS --
 	--------------------
 
@@ -1814,18 +1814,18 @@ function mod.AdvanceState( state, elapsed )
 	-- Maelstrom Weapon uses 10 procs per minute prior to counting haste.
 	local mhSwing = Hekili.ttWeaponSpeed( GetInventorySlotInfo("MainHandSlot") )
 	local mhPPH = 0
-	
+
 	if mhSwing then
 		mhPPH = mhSwing * 10 / 60
 	end
-	
+
 	local ohSwing = Hekili.ttWeaponSpeed( GetInventorySlotInfo("SecondaryHandSlot") )
 	local ohPPH = 0
-	
+
 	if ohSwing then
 		ohPPH = mhSwing * 10 / 60
 	end
-	
+
 end
 
 
@@ -1846,9 +1846,9 @@ function mod.countHits( verb )
 	end
 
 	return mod.trackHits.count and mod.trackHits.count or 0
-	
+
 end
-	
+
 
 function mod.countDebuffs( spell, verb )
 	local num = 0
@@ -1873,12 +1873,12 @@ function mod.activeTargets( verb )
 	local debuffs = 0
 	for k,v in pairs(mod.trackDebuffs) do
 		local tmpDebuffs = mod.countDebuffs( k, verb )
-		
+
 		if tmpDebuffs > debuffs then debuffs = tmpDebuffs end
 	end
 
 	local hits = mod.countHits( verb )
-	
+
 	if hits > debuffs and hits > 1 then
 		return hits, hits, debuffs
 	elseif debuffs > hits and debuffs > 1 then
@@ -1889,7 +1889,7 @@ function mod.activeTargets( verb )
 end
 
 
-	
+
 function mod.auditTrackers( )
 	for spell, spellTable in pairs(mod.trackDebuffs) do
 		for unit, lastTick in pairs(spellTable) do
@@ -1919,9 +1919,9 @@ function mod:CLEU(AddOn, event, time, subtype, _, sourceGUID, sourceName, _, _, 
 	if AddOn.DB.char['Multi-Target Enabled'] == false then
 		return true
 	end
-		
+
 	local hasTotem, totemName = GetTotemInfo(1)
-	
+
 	if hasTotem and totemName == 'Magma Totem' then
 		if subtype == 'SPELL_DAMAGE' and sourceGUID == self.trackHits.source and spellName == 'Magma Totem' then
 			if self.trackHits.pulse == 0 or (GetTime() - self.trackHits.pulse > 0.5) then
@@ -1941,14 +1941,14 @@ function mod:CLEU(AddOn, event, time, subtype, _, sourceGUID, sourceName, _, _, 
 		self.trackHits.pulse	= 0
 		self.trackHits.count	= 0
 	end
-	
+
 	if subtype == 'SPELL_AURA_APPLIED' or subtype == 'SPELL_AURA_REFRESH' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' or subtype == 'SPELL_DAMAGE' then
 		if spellName == 'Flame Shock' and sourceGUID == UnitGUID('player') then
 			if not self.trackDebuffs[spellName] then self.trackDebuffs[spellName] = {} end
 			self.trackDebuffs[spellName][destGUID]	= GetTime()
 		end
 	end
-	
+
 	-- Theory: Sometimes, the unit dies but SPELL_AURA_REMOVED does not fire.
 	if event == "UNIT_DIED" or event == "UNIT_DESTROYED" then
 		if self.trackDebuffs[spellName] and self.trackDebuffs[spellName][destGUID] then
@@ -1967,5 +1967,5 @@ function mod:CLEU(AddOn, event, time, subtype, _, sourceGUID, sourceName, _, _, 
     if (subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL') and spellName == 'Flame Shock' and sourceGUID == UnitGUID('player') then
 		self.trackDebuffs[spellName][destGUID] = nil
     end
-    
+
 end
