@@ -222,7 +222,6 @@ mod.state['CD'].actions = {
 		desc	= '',
 		SimC	= 'actions+=/bloodlust,if=target.health.pct<25|time>5',
 		check	= function( state )
-			-- TBI:  Snapshot Target Health, predict target health, track combat length.
 			if (IsUsableSpell(bloodlust) and state.tHealthPct < 25 and state.combatTime > 5)
 				and (not state.pDebuffs[sated].up and not state.pDebuffs[exhaustion].up and not state.pDebuffs[temporal_displacement].up and not state.pDebuffs[insanity].up) then
 				return bloodlust
@@ -234,7 +233,6 @@ mod.state['CD'].actions = {
 		desc	= '',
 		SimC	= 'actions+=/heroism,if=target.health.pct<25|time>5',
 		check	= function( state )
-			-- TBI:  Snapshot Target Health, predict target health, track combat length.
 			if (IsUsableSpell(heroism) and state.tHealthPct < 25 and state.combatTime > 5)
 				and (not state.pDebuffs[sated].up and not state.pDebuffs[exhaustion].up and not state.pDebuffs[temporal_displacement].up and not state.pDebuffs[insanity].up) then
 				return heroism
@@ -255,7 +253,6 @@ mod.state['CD'].actions = {
 		desc	= '',
 		SimC	= 'actions+=/stormlash_totem,if=!active&!buff.stormlash.up&(buff.bloodlust.up|time>=60)',
 		check	= function( state )
-			-- TBI: Combat time.
 			if (not state.pBuffs[stormlash_totem].up) and ( (state.pBuffs[heroism].up or state.pBuffs[bloodlust].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) or state.combatTime >= 60 ) then
 				return stormlash_totem
 			end
@@ -266,7 +263,6 @@ mod.state['CD'].actions = {
 		desc	= 'Potion',
 		SimC	= 'actions+=/virmens_bite_potion,if=time>60&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active|target.time_to_die<=60)',
 		check	= function ( state )
-			-- TBI: Combat time.
 			if state.combatTime > 60 and ( (state.totems[totem_fire].up and state.totems[totem_fire].name == fire_elemental_totem) or state.timeToDie <= 60 ) then
 				return virmens_bite
 			end
@@ -1241,7 +1237,6 @@ mod.Execute[virmens_bite] = function( state )
 	state.cooldowns[virmens_bite] = 120
 
 	-- apply the buff if used in combat.
-	if (state.combatTime > 0) then Hekili.UsedConsumable = true end
 	state.pBuffs[virmens_bite].up		= true
 	state.pBuffs[virmens_bite].count	= 1
 	state.pBuffs[virmens_bite].remains	= 25	
@@ -1318,8 +1313,8 @@ function mod.RefreshState( state )
 	state.mtCount,
 	state.fsCount		= mod.activeTargets()
 	
-	state.faction	= UnitFactionGroup("player")
-	state.race		= UnitRace("player")
+	state.faction		= UnitFactionGroup("player")
+	state.race			= UnitRace("player")
 
 
 	------------------	
@@ -1443,7 +1438,7 @@ function mod.RefreshState( state )
 	if not state.items then state.items	= {} end
 
 	state.items[synapse_springs]	= false
-	-- state.items[virmens_bite]		= false
+	state.items[virmens_bite]		= false
 
 	-- Engineering Gloves
 	local gloves = GetInventoryItemID("player", GetInventorySlotInfo("HandsSlot"))
@@ -1465,22 +1460,25 @@ function mod.RefreshState( state )
 		end
 	end
 
-	--[[ Virmen's Bite
+	-- Virmen's Bite
 	local vbCount = GetItemCount(virmens_bite, false)
+	state.cooldowns[virmens_bite]			= 999
 
-	state.cooldowns[virmens_bite]			= 0
-	if Hekili.UsedConsumable then
-		state.cooldowns[virmens_bite] 		= 120
-	elseif vbCount > 0 then
+	if vbCount > 0 then
 		state.items[virmens_bite]			= true
 
-		local gCDstart, gCDduration = GetItemCooldown(76089)
+		local cdStart, cdDuration, cdEnable = GetItemCooldown(76089)
 		
-		if gCDstart > 0 then
-			state.cooldowns[virmens_bite]	= gCDstart + gCDduration - state.time
+		if cdStart == 0 and cdLength == 0 then
+			cdStart, cdLength = GetSpellCooldown(lightning_shield)
 		end
 		
-	end ]]
+		if cdEnable == 1 and cdStart > 0 then
+			state.cooldowns[virmens_bite] = cdStart + cdLength - state.time
+		else
+			state.cooldowns[virmens_bite] = 0
+		end
+	end
 
 	-- ITEMS --
 	-----------
@@ -1588,7 +1586,7 @@ function mod.RefreshState( state )
 		end
 	end
 
-	if UnitName("target") and UnitCanAttack("player", "target") and UnitHealth("target") > 0 then
+	if UnitExists("target") and UnitCanAttack("player", "target") and UnitHealth("target") > 0 then
 		for i,v in ipairs(mod.tDebuffsToTrack) do
 			local name, _, _, count, _, _, expires, caster = UnitDebuff("target", v)
 			local remains = 0

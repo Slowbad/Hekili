@@ -21,5 +21,9 @@
 ## X-Curse-Project-Name: Hekili
 ## X-Curse-Project-ID: hekili
 ## X-Curse-Repository-ID: wow/hekili/mainline
+## X-Curse-Packaged-Version: r9
+## X-Curse-Project-Name: Hekili
+## X-Curse-Project-ID: hekili
+## X-Curse-Repository-ID: wow/hekili/mainline
 
 LibStub.lua

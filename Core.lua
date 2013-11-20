@@ -9,7 +9,8 @@ function Hekili:ProcessPriorityList( id )
 
 	local module = Hekili.ActiveModule
 	
-	if not module or not module.enabled[id] then
+	if not module or not module.enabled[id] or
+		(self.DB.char['Visibility'] == 'Show with Target' and (not UnitExists("target") or not UnitCanAttack("player", "target") ) ) then
 		for i = 1, 5 do
 			Hekili.UI.AButtons[id][i]:Hide()
 		end
@@ -401,14 +402,12 @@ end
 
 function Hekili:PLAYER_REGEN_DISABLED(...)
     Hekili.CombatStart		= GetTime()
-    Hekili.UsedConsumable	= false
 end
 
 
 function Hekili:PLAYER_REGEN_ENABLED(...)
 	Hekili.BossCombat		= false
 	Hekili.CombatStart		= 0
-    Hekili.UsedConsumable	= false
 end
 
 function Hekili:COMBAT_LOG_EVENT_UNFILTERED(...)

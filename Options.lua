@@ -92,6 +92,21 @@ function Hekili:GetOptions()
 						get = 'GetOption',
 						order = 2,
 					},
+					['Visibility'] = {
+						type = 'select',
+						name = 'Visibility',
+						values = {
+							['Always Show']			= 'Always Show',
+							['Show with Target']	= 'Show with Target',
+						},
+						desc = 'Choose when the AddOn should be visible.',
+						cmdHidden = true,
+						set = 'SetOption',
+						get = 'GetOption',
+						order = 3,
+						width = 'full',
+					},
+
 					['Modules'] = {
 						type = "group",
 						name = "Module Settings",
@@ -485,6 +500,7 @@ function Hekili:GetDefaults()
 			['Secondary Specialization Module']	= 'Enhancement Shaman SimC 5.4.1',
 			['Single Target Enabled']			= true,
 			['Multi-Target Enabled']			= true,
+			['Visibility']						= 'Always Show',
 			['Cooldown Enabled']				= false,
 			['Single Target Group Enabled']		= true,
 			['Single Target Icons Displayed']	= 5,
