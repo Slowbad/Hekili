@@ -10,7 +10,8 @@ function Hekili:ProcessPriorityList( id )
 	local module = Hekili.ActiveModule
 	
 	if not module or not module.enabled[id] or
-		(self.DB.char['Visibility'] == 'Show with Target' and (not UnitExists("target") or not UnitCanAttack("player", "target") ) ) then
+		(self.DB.char['Visibility'] == 'Show with Target' and (not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
+		(UnitUsingVehicle('player') == 1) then
 		for i = 1, 5 do
 			Hekili.UI.AButtons[id][i]:Hide()
 		end
@@ -38,7 +39,7 @@ function Hekili:ProcessPriorityList( id )
 		local Cooldown		= 999
 		local cdThreshold	= 30
 
-		if (Hekili.DB.char['Cooldown Enabled']) and id == 'ST' then
+		if (Hekili.DB.char['Cooldown Enabled']) and (self.DB.char['Multi-Target Cooldowns'] or id == 'ST') then
 			for j,v in ipairs(module.state['CD'].actions) do
 				local ckAbility, ckCooldown, ckWait
 
@@ -48,7 +49,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAbility and not (module.flags[ckAbility] and Hekili.Flagged(ckAbility)) then
+				if ckAbility and not self.DB.char['Name Filter']:match(ckAbility) and not (module.flags[ckAbility] and Hekili.Flagged(ckAbility)) then
 					ckCooldown = state.cooldowns[ckAbility]
 
 					-- May want to add some smoothing to this.
@@ -75,8 +76,7 @@ function Hekili:ProcessPriorityList( id )
 			if not ckWait or ckWait == GCD then ckWait = 0 end
 			if not ckHardcast then ckHardcast = false end
 
-			-- trying w/o this check
-			if ckAbility and not (module.flags[ckAbility] and Hekili.Flagged(ckAbility)) and (not ckHardcast or Hekili.DB.char['Show Hardcasts']) then
+			if ckAbility and not self.DB.char['Name Filter']:match(ckAbility) and not (module.flags[ckAbility] and Hekili.Flagged(ckAbility)) and (not ckHardcast or Hekili.DB.char['Show Hardcasts']) then
 				ckCooldown = state.cooldowns[ckAbility]
 
 				-- May want to add some smoothing to this.
@@ -159,7 +159,7 @@ function Hekili:ProcessPriorityList( id )
 	end
 
 	if id == 'AE' then
-		if state.tCount > 1 then
+		if self.DB.char['Multi-Target Illumination'] > 0 and state.tCount >= self.DB.char['Multi-Target Illumination'] then
 			ActionButton_ShowOverlayGlow(Hekili.UI.AButtons[id][1])
 			Hekili.UI.AButtons[id][1].targets:SetText(state.fsCount .. ' (' .. state.tCount .. ')')
 		else
@@ -226,10 +226,11 @@ function Hekili:OnInitialize()
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	
+	self:RegisterEvent("UPDATE_BINDINGS")
+	
 	-- self:RegisterEvent("PET_BATTLE_CLOSE")
 	-- self:RegisterEvent("PET_BATTLE_OPENING_START")
 	-- self:RegisterEvent("PLAYER_ENTERING_WORLD")
-
 
 	-- Will need this for time to die.
 	self:RegisterEvent("UNIT_HEALTH")
@@ -418,4 +419,9 @@ function Hekili:COMBAT_LOG_EVENT_UNFILTERED(...)
 		self.ActiveModule:CLEU(self, ...)
 	end
 
+end
+
+function Hekili:UPDATE_BINDINGS()
+	self.DB.char['Cooldown Hotkey'] = GetBindingKey("HEKILI_TOGGLE_COOLDOWNS") or ''
+	self.DB.char['Hardcast Hotkey'] = GetBindingKey("HEKILI_TOGGLE_HARDCASTS") or ''
 end

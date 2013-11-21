@@ -111,6 +111,7 @@ function Hekili:GetOptions()
 						type = "group",
 						name = "Module Settings",
 						inline = true,
+						order = 4,
 						args = {
 							['Primary Specialization Module'] = {
 								type = 'select',
@@ -149,7 +150,7 @@ function Hekili:GetOptions()
 								order = 1,
 								width = 'full',
 							},
-
+							
 							['Single Target Enabled'] = {
 								type = 'toggle',
 								name = 'Enable Single Target',
@@ -184,62 +185,8 @@ function Hekili:GetOptions()
 								set = 'SetOption',
 								get = 'GetOption',
 								order = 3,
-							},
-
-							['Cooldown Enabled'] = {
-								type = 'toggle',
-								name = 'Show Cooldowns',
-								desc = function ()
-											local output
-											if self.DB.char['Cooldown Enabled'] == true then
-												output = 'Hide cooldowns from both rotations (presently enabled)'
-											else
-												output = 'Show cooldowns from both rotations (presently disabled).'
-											end
-											return output			
-										end,
-								cmdHidden = true,
-								set = 'SetOption',
-								get = 'GetOption',
-								order = 4,
-							},
-
-							['Show Hardcasts'] = {
-								type	= 'toggle',
-								name	= 'Show Hardcasts',
-								desc = function ()
-											local output
-											if self.DB.char['Cooldown Enabled'] == true then
-												output = 'Hide hardcasts from both rotations (presently shown)'
-											else
-												output = 'Hide hardcasts from both rotations (presently hidden).'
-											end
-											return output			
-										end,
-								set		= 'SetOption',
-								get		= 'GetOption',
-								order	= 5,
-							},
-							
-							['Show Interrupts'] = {
-								type	= 'toggle',
-								name	= 'Show Interrupts',
-								desc	= function () return OutputFlags( 'Show Interrupts', 'interrupt' ) end,
-								set		= 'SetOption',
-								get		= 'GetOption',
-								order	= 6,
-							},
-
-							['Show Precombat'] = {
-								type	= 'toggle',
-								name	= 'Show Precombat',
-								desc	= function () return OutputFlags( 'Show Precombat', 'precombat' ) end,
-								set		= 'SetOption',
-								get		= 'GetOption',
-								order	= 7,
-							},
-							
-						},
+							}
+						}
 					}
 				}
 			},
@@ -352,6 +299,23 @@ function Hekili:GetOptions()
 								get		= 'GetOption',
 								order	= 0,
 							},
+							['Multi-Target Cooldowns'] = {
+								type	= 'toggle',
+								name	= 'Allow Cooldowns',
+								desc	= function ()
+											local output
+											if self.DB.char['Multi-Target Cooldowns'] == true then
+												output = 'Disallow cooldowns from showing in the multi-target rotation when cooldowns are enabled (presently allowed).'
+											else
+												output = 'Allow cooldowns to show in the multi-target rotation when cooldowns are enabled (presently disallowed).'
+											end
+											return output			
+										end,
+								width	= 'full',
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 1,
+							},
 							['Multi-Target Icons Displayed'] = {
 								type	= 'range',
 								name	= 'Icons Displayed',
@@ -361,7 +325,18 @@ function Hekili:GetOptions()
 								min		= 1,
 								max		= 5,
 								step	= 1,
-								order	= 1,
+								order	= 2,
+							},
+							['Multi-Target Illumination'] = {
+								type	= 'range',
+								name	= 'Icon Illumination',
+								desc	= 'Set the number of targets required for the multi-target icon to light up (or 0 for never).',
+								min		= 0,
+								max		= 10,
+								step	= 1,
+								get		= 'GetOption',
+								set		= 'SetOption',
+								order	= 3
 							},
 							['Multi-Target Queue Direction'] = {
 								type	= "select",
@@ -371,7 +346,7 @@ function Hekili:GetOptions()
 								set		= 'SetOption',
 								style	= 'dropdown',
 								width	= 'full',
-								order	= 2,
+								order	= 4,
 								values	= {
 									RIGHT	= 'Right (L to R)',
 									LEFT	= 'Left (R to L)',
@@ -386,7 +361,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 3
+								order	= 5
 							},
 							['Multi-Target Icon Spacing'] = {
 								type	= 'range',
@@ -397,7 +372,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 4
+								order	= 6
 							},
 							['Multi-Target Queued Icon Size'] = {
 								type	= 'range',
@@ -408,7 +383,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 5
+								order	= 7
 							},
 						},
 					},
@@ -416,53 +391,54 @@ function Hekili:GetOptions()
 			},
 			['Filters'] = {
 				type = 'group',
-				name = 'Cooldown Filters',
+				name = 'Filters',
 				order = 2,
 				args = {
-					['Show Talents'] = {
-						type	= 'toggle',
-						name	= 'Show Talents',
-						desc	= function () return OutputFlags( 'Show Talents', 'talent' ) end,
-						width	= 'full',
-						set		= 'SetOption',
-						get		= 'GetOption',
+					['Cooldowns'] = {
+						type	= 'header',
+						name	= 'Cooldown Filters',
 						order	= 0,
-					},
-					['Show Racials'] = {
-						type	= 'toggle',
-						name	= 'Show Racials',
-						desc	= function () return OutputFlags( 'Show Racials', 'racial' ) end,
 						width	= 'full',
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 1,
-					},
-					['Show Professions'] = {
-						type	= 'toggle',
-						name	= 'Show Professions',
-						desc	= function () return OutputFlags( 'Show Professions', 'profession' ) end,
-						width	= 'full',
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 2,
 					},
 					['Show Bloodlust'] = {
 						type	= 'toggle',
 						name	= 'Show Bloodlust',
 						desc	= function () return OutputFlags( 'Show Bloodlust', 'bloodlust' ) end,
-						width	= 'full',
 						set		= 'SetOption',
 						get		= 'GetOption',
-						order	= 3,
+						order	= 1,
 					},
 					['Show Consumables'] = {
 						type	= 'toggle',
 						name	= 'Show Consumables',
 						desc	= function () return OutputFlags( 'Show Consumables', 'consumable' ) end,
-						width	= 'full',
+						set		= 'SetOption',
+						get		= 'GetOption',
+						order	= 2,
+					},
+					['Show Professions'] = {
+						type	= 'toggle',
+						name	= 'Show Professions',
+						desc	= function () return OutputFlags( 'Show Professions', 'profession' ) end,
+						set		= 'SetOption',
+						get		= 'GetOption',
+						order	= 3,
+					},
+					['Show Racials'] = {
+						type	= 'toggle',
+						name	= 'Show Racials',
+						desc	= function () return OutputFlags( 'Show Racials', 'racial' ) end,
 						set		= 'SetOption',
 						get		= 'GetOption',
 						order	= 4,
+					},
+					['Show Talents'] = {
+						type	= 'toggle',
+						name	= 'Show Talents',
+						desc	= function () return OutputFlags( 'Show Talents', 'talent' ) end,
+						set		= 'SetOption',
+						get		= 'GetOption',
+						order	= 5,
 					},
 					['Cooldown Threshold'] = {
 						type 	= 'range',
@@ -473,7 +449,107 @@ function Hekili:GetOptions()
 						step	= 1,
 						get		= 'GetOption',
 						set		= 'SetOption',
-						order	= 5
+						order	= 6
+					},
+					['General Filters'] = {
+						type	= 'header',
+						name	= 'General Filters',
+						order	= 7
+					},
+					['General Filter Description'] = {
+						type	= 'description',
+						name	= 'Filtering in this subsection applies to all categories (cooldowns, multi-target, and single target).',
+						order	= 8
+					},
+
+					['Cooldown Enabled'] = {
+						type = 'toggle',
+						name = 'Show Cooldowns',
+						desc = function ()
+									local output
+									if self.DB.char['Cooldown Enabled'] == true then
+										output = 'Hide cooldowns from both rotations (presently enabled)'
+									else
+										output = 'Show cooldowns from both rotations (presently disabled).'
+									end
+									return output			
+								end,
+						cmdHidden = true,
+						set = 'SetOption',
+						get = function() return GetBindingKey("HEKILI_TOGGLE_COOLDOWNS") end,
+						order = 9,
+					},
+
+					['Show Hardcasts'] = {
+						type	= 'toggle',
+						name	= 'Show Hardcasts',
+						desc = function ()
+									local output
+									if self.DB.char['Cooldown Enabled'] == true then
+										output = 'Hide hardcasts from both rotations (presently shown)'
+									else
+										output = 'Hide hardcasts from both rotations (presently hidden).'
+									end
+									return output			
+								end,
+						set		= 'SetOption',
+						get		= 'GetOption',
+						order	= 10,
+					},
+
+					['Show Interrupts'] = {
+						type	= 'toggle',
+						name	= 'Show Interrupts',
+						desc	= function () return OutputFlags( 'Show Interrupts', 'interrupt' ) end,
+						set		= 'SetOption',
+						get		= 'GetOption',
+						order	= 11,
+					},
+
+					['Show Precombat'] = {
+						type	= 'toggle',
+						name	= 'Show Precombat',
+						desc	= function () return OutputFlags( 'Show Precombat', 'precombat' ) end,
+						set		= 'SetOption',
+						get		= 'GetOption',
+						order	= 12,
+					},
+					
+					['Name Filter'] = {
+						type	= 'input',
+						name	= 'Name Filter',
+						get		= 'GetOption',
+						set		= 'SetOption',
+						multiline = 5,
+						desc	= 'Enter the ability names you wish to filter, separated by commas/spaces/returns.',
+						order	= 13,
+						width	= 'full'
+					},
+
+					['Hotkeys'] = {
+						type	= 'header',
+						name	= 'Hotkeys',
+						order	= 14
+					},
+
+					['Cooldown Hotkey'] = {
+						type	= 'keybinding',
+						name	= 'Cooldown Hotkey',
+						desc	= 'Bind or unbind a hotkey to toggle cooldowns on/off.',
+						cmdHidden = true,
+						set = 'SetOption',
+						get = 'GetOption',
+						order = 15,
+					},
+
+					['Hardcast Hotkey'] = {
+						type	= 'keybinding',
+						name	= 'Hardcast Hotkey',
+						desc	= 'Bind or unbind a hotkey to toggle hardcasts on/off.',
+						cmdHidden = true,
+						set		= 'SetOption',
+						get		= 'GetOption',
+						order	= 16
 					}
 				},
 			},					
@@ -502,6 +578,7 @@ function Hekili:GetDefaults()
 			['Multi-Target Enabled']			= true,
 			['Visibility']						= 'Always Show',
 			['Cooldown Enabled']				= false,
+			['Cooldown Hotkey'] 				= '',
 			['Single Target Group Enabled']		= true,
 			['Single Target Icons Displayed']	= 5,
 			['Single Target Queue Direction']	= 'RIGHT',
@@ -509,11 +586,13 @@ function Hekili:GetDefaults()
 			['Single Target Icon Spacing']		= 5,
 			['Single Target Queued Icon Size']	= 40,
 			['Multi-Target Group Enabled']		= true,
+			['Multi-Target Cooldowns']			= false,
 			['Multi-Target Icons Displayed']	= 2,
-			['Multi-Target Queue Direction']	= 'RIGHT',
+			['Multi-Target Illumination']		= 2,
+			['Multi-Target Queue Direction']	= 'LEFT',
 			['Multi-Target Primary Icon Size'] 	= 50,
 			['Multi-Target Icon Spacing']		= 5,
-			['Multi-Target Queued Icon Size']	= 50,
+			['Multi-Target Queued Icon Size']	= 40,
 			['Show Talents']					= true,
 			['Show Racials']					= false,
 			['Show Interrupts']					= true,
@@ -522,7 +601,9 @@ function Hekili:GetDefaults()
 			['Show Bloodlust']					= false,
 			['Show Consumables']				= false,
 			['Show Hardcasts']					= true,
-			['Cooldown Threshold']				= 300
+			['Hardcast Hotkey'] 				= '',
+			['Cooldown Threshold']				= 300,
+			['Name Filter']						= ''
 		},
 		profile = {
 			['CD Talents']						= true,
@@ -567,11 +648,13 @@ function Hekili:SetOption(info, input)
 	local opt = info[#info]
 	local output = tostring(input)
 	
-	if (self:IsVerbose() or opt == "verbose") and info['type'] ~= 'range' then
+	if (self:IsVerbose() or opt == "verbose") and info.type ~= 'range' and info.type ~= 'input' and info.type ~= 'keybinding' then
 		self:Print('Option |cFF00FF00' .. opt .. '|r set to |cFF00FF00' .. output .. '|r.')
 	end
 	
-	self.DB.char[opt] = input
+	if (info.type ~= 'keybinding') then
+		self.DB.char[opt] = input
+	end
 	
 	if opt == "enabled" then
 		if output == "false" and self:IsEnabled() then
@@ -611,6 +694,36 @@ function Hekili:SetOption(info, input)
 		
 	elseif opt == 'Cooldown Enabled' then
 		-- ...
+
+	elseif opt == 'Cooldown Hotkey' then
+		-- Clear the old binding.
+		if self.DB.char[opt] ~= '' then
+			self.DB.char[opt] = ''
+		end
+		
+		if GetBindingKey("HEKILI_TOGGLE_COOLDOWNS") then
+			SetBinding(GetBindingKey("HEKILI_TOGGLE_COOLDOWNS"))
+		end
+		
+		if input ~= '' then
+			SetBinding(input, "HEKILI_TOGGLE_COOLDOWNS")
+			self.DB.char[opt] = input
+		end
+
+	elseif opt == 'Hardcast Hotkey' then
+		-- Clear the old binding.
+		if self.DB.char[opt] ~= '' then
+			self.DB.char[opt] = ''
+		end
+		
+		if GetBindingKey("HEKILI_TOGGLE_HARDCASTS") then
+			SetBinding(GetBindingKey("HEKILI_TOGGLE_HARDCASTS"))
+		end
+		
+		if input ~= '' then
+			SetBinding(input, "HEKILI_TOGGLE_HARDCASTS")
+			self.DB.char[opt] = input
+		end
 		
 	elseif opt == 'Single Target Queue Direction' then
 		for i = 2, 5 do
@@ -627,8 +740,8 @@ function Hekili:SetOption(info, input)
 		self.UI.AButtons.ST[1]:SetPoint(self.DB.char['ST Relative To'], self.DB.char['ST X'], self.DB.char['ST Y'])
 		self.UI.AButtons.ST[1]:SetWidth(input)
 		self.UI.AButtons.ST[1]:SetHeight(input)
-		self.UI.AButtons.ST[1].topText:SetSize(input, input / 3)
-		self.UI.AButtons.ST[1].btmText:SetSize(input, input / 3)
+		self.UI.AButtons.ST[1].topText:SetSize(input, input / 2)
+		self.UI.AButtons.ST[1].btmText:SetSize(input, input / 2)
 		
 		if self.LBF then
 			self.stGroup:ReSkin()
@@ -653,8 +766,8 @@ function Hekili:SetOption(info, input)
 			end
 			self.UI.AButtons.ST[i]:SetWidth(input)
 			self.UI.AButtons.ST[i]:SetHeight(input)
-			self.UI.AButtons.ST[i].topText:SetSize(input, input / 3)
-			self.UI.AButtons.ST[i].btmText:SetSize(input, input / 3)
+			self.UI.AButtons.ST[i].topText:SetSize(input, input / 2)
+			self.UI.AButtons.ST[i].btmText:SetSize(input, input / 2)
 		end
 
 		if self.LBF then
@@ -676,8 +789,8 @@ function Hekili:SetOption(info, input)
 		Hekili.UI.AButtons.AE[1]:SetPoint(self.DB.char['AE Relative To'], self.DB.char['AE X'], self.DB.char['AE Y'])
 		Hekili.UI.AButtons.AE[1]:SetWidth(input)
 		Hekili.UI.AButtons.AE[1]:SetHeight(input)
-		self.UI.AButtons.AE[i].topText:SetSize(input, input / 3)
-		self.UI.AButtons.AE[i].btmText:SetSize(input, input / 3)
+		self.UI.AButtons.AE[i].topText:SetSize(input, input / 2)
+		self.UI.AButtons.AE[i].btmText:SetSize(input, input / 2)
 		
 		if self.LBF then
 			self.aeGroup:ReSkin()
@@ -693,8 +806,8 @@ function Hekili:SetOption(info, input)
 			end
 			self.UI.AButtons.AE[i]:SetWidth(input)
 			self.UI.AButtons.AE[i]:SetHeight(input)
-			self.UI.AButtons.AE[i].topText:SetSize(input, input / 3)
-			self.UI.AButtons.AE[i].btmText:SetSize(input, input / 3)
+			self.UI.AButtons.AE[i].topText:SetSize(input, input / 2)
+			self.UI.AButtons.AE[i].btmText:SetSize(input, input / 2)
 		end
 
 		if self.LBF then

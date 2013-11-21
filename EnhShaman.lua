@@ -505,7 +505,7 @@ mod.state['ST'].actions = {
 		desc	= 'T15',
 		SimC	= 'actions.single+=/lightning_bolt,if=set_bonus.tier15_2pc_melee=1&buff.maelstrom_weapon.react>=4&!buff.ascendance.up',
 		check	= function( state )
-			if state.set_bonuses['t15'] >= 2 and state.pBuffs[maelstrom_weapon].count >= 4 and not state.pBuffs[ascendance].up then
+			if state.set_bonuses['t15'] >= 2 and not state.pBuffs[ancestral_swiftness].up and state.pBuffs[maelstrom_weapon].count >= 4 and not state.pBuffs[ascendance].up then
 				return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 			end
 			return nil
@@ -545,7 +545,7 @@ mod.state['ST'].actions = {
 		desc	= 'MW3+',
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>=3&!buff.ascendance.up',
 		check	= function( state )
-			if state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ascendance].up then
+			if state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up then
 				-- Hardcasting.
 				return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 			end
@@ -613,7 +613,7 @@ mod.state['ST'].actions = {
 		desc	= 'MW2+',
 		SimC	= 'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>1&!buff.ascendance.up',
 		check	= function( state )
-			if state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ascendance].up then
+			if state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up then
 				-- Hardcasting
 				return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 			end
@@ -1877,6 +1877,7 @@ end
 function mod.activeTargets( verb )
 
 	local debuffs = 0
+
 	for k,v in pairs(mod.trackDebuffs) do
 		local tmpDebuffs = mod.countDebuffs( k, verb )
 
@@ -1885,12 +1886,12 @@ function mod.activeTargets( verb )
 
 	local hits = mod.countHits( verb )
 
-	if hits > debuffs and hits > 1 then
+	if hits > debuffs then
 		return hits, hits, debuffs
-	elseif debuffs > hits and debuffs > 1 then
+	elseif debuffs > hits then
 		return debuffs, hits, debuffs
 	else
-		return (hits and hits or 1), hits, debuffs
+		return 0, hits, debuffs
 	end
 end
 
@@ -1915,7 +1916,6 @@ function mod:CLEU(AddOn, event, time, subtype, _, sourceGUID, sourceName, _, _, 
 
 	-- Capture summoning of a Magma Totem for # targets by # hits.
 	if subtype == 'SPELL_SUMMON' and sourceGUID == UnitGUID('player') and destName == 'Magma Totem' then
-		AddOn:Print("Found summon of Magma Totem.")
 		self.trackHits.source	= destGUID
 		self.trackHits.pulse	= GetTime()
 		self.trackHits.count	= 0
