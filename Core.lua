@@ -114,8 +114,10 @@ function Hekili:ProcessPriorityList( id )
 			local start, duration = GetSpellCooldown(Action)
 
 			-- Override for Virmen's Bite
-			if not start and not duration then
+			if Action == "Virmen's Bite" and not start and not duration then
 				start, duration = GetItemCooldown(76089)
+			elseif not start and not duration then
+				start, duration = GetSpellCooldown("Lightning Shield")
 			end
 
 			if i == 1 or (i > 1 and duration ~= GCD) then
