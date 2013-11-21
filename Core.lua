@@ -11,7 +11,7 @@ function Hekili:ProcessPriorityList( id )
 	
 	if not module or not module.enabled[id] or
 		(self.DB.char['Visibility'] == 'Show with Target' and (not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
-		(UnitUsingVehicle('player') == 1) then
+		(UnitHasVehicleUI('player')) then
 		for i = 1, 5 do
 			Hekili.UI.AButtons[id][i]:Hide()
 		end
