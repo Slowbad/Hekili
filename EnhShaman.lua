@@ -1307,7 +1307,13 @@ end
 function mod.RefreshState( state )
 
 	state.time			= GetTime()
-	state.combatTime 	= state.time - (Hekili.CombatStart or state.time)
+
+	if Hekili.CombatStart > 0 then
+		state.combatTime 	= state.time - Hekili.CombatStart
+	else
+		state.combatTime	= 0
+	end
+	
 	state.timeToDie		= Hekili.GetTTD()
 	state.tCount,
 	state.mtCount,
@@ -1467,13 +1473,13 @@ function mod.RefreshState( state )
 	if vbCount > 0 then
 		state.items[virmens_bite]			= true
 
-		local cdStart, cdDuration, cdEnable = GetItemCooldown(76089)
+		local cdStart, cdLength, cdEnable = GetItemCooldown(76089)
 
-		if cdStart == 0 and cdLength == 0 then
+		if (cdStart == 0 and cdLength == 0) then
 			cdStart, cdLength = GetSpellCooldown(lightning_shield)
 		end
 
-		if cdEnable == 1 and cdStart > 0 then
+		if cdStart > 0 then
 			state.cooldowns[virmens_bite] = cdStart + cdLength - state.time
 		else
 			state.cooldowns[virmens_bite] = 0
