@@ -151,6 +151,20 @@ function Hekili:GetOptions()
 								width = 'full',
 							},
 							
+						}
+					}
+				}
+			},
+			['UI'] = {
+				type = 'group',
+				name = 'UI Settings',
+				order = 1,
+				args = {
+					['Single Target Group'] = {
+						type = 'group',
+						name = 'Single Target Group',
+						order = 0,
+						args = {
 							['Single Target Enabled'] = {
 								type = 'toggle',
 								name = 'Enable Single Target',
@@ -166,57 +180,10 @@ function Hekili:GetOptions()
 								cmdHidden = true,
 								set = 'SetOption',
 								get = 'GetOption',
-								order = 2,
+								order = 0,
+								width = 'full'
 							},
 
-							['Multi-Target Enabled'] = {
-								type = 'toggle',
-								name = 'Enable Multi-Target',
-								desc = function ()
-											local output
-											if self.DB.char['Single Target Enabled'] == true then
-												output = 'Disable Hekili for single-target rotation (presently enabled).'
-											else
-												output = 'Enable Hekili for single-target rotation (presently disabled).'
-											end
-											return output			
-										end,
-								cmdHidden = true,
-								set = 'SetOption',
-								get = 'GetOption',
-								order = 3,
-							}
-						}
-					}
-				}
-			},
-			['UI'] = {
-				type = 'group',
-				name = 'UI Settings',
-				order = 1,
-				args = {
-					['Single Target Group'] = {
-						type = 'group',
-						name = 'Single Target Group',
-						order = 0,
-						args = {
-							['Single Target Group Enabled'] = {
-								type	= 'toggle',
-								name	= 'Enable Buttons',
-								desc	= function ()
-											local output
-											if self.DB.char['Single Target Group Enabled'] == true then
-												output = 'Disable the UI buttons for single-target rotation (presently enabled).'
-											else
-												output = 'Enable the UI buttons for single-target rotation (presently disabled).'
-											end
-											return output			
-										end,
-								width	= 'full',
-								set		= 'SetOption',
-								get		= 'GetOption',
-								order	= 0,
-							},
 							['Single Target Icons Displayed'] = {
 								type	= 'range',
 								name	= 'Icons Displayed',
@@ -282,22 +249,23 @@ function Hekili:GetOptions()
 						name = 'Multi-Target Group',
 						order = 1,
 						args = {
-							['Multi-Target Group Enabled'] = {
-								type	= 'toggle',
-								name	= 'Enable Buttons',
-								desc	= function ()
+							['Multi-Target Enabled'] = {
+								type = 'toggle',
+								name = 'Enable Multi-Target',
+								desc = function ()
 											local output
-											if self.DB.char['Multi-Target Group Enabled'] == true then
-												output = 'Disable the UI buttons for multi-target rotation (presently enabled).'
+											if self.DB.char['Single Target Enabled'] == true then
+												output = 'Disable Hekili for single-target rotation (presently enabled).'
 											else
-												output = 'Enable the UI buttons for multi-target rotation (presently disabled).'
+												output = 'Enable Hekili for single-target rotation (presently disabled).'
 											end
 											return output			
 										end,
-								width	= 'full',
-								set		= 'SetOption',
-								get		= 'GetOption',
-								order	= 0,
+								cmdHidden = true,
+								set = 'SetOption',
+								get = 'GetOption',
+								order = 0,
+								width = 'full'
 							},
 							['Multi-Target Cooldowns'] = {
 								type	= 'toggle',
