@@ -96,8 +96,10 @@ function Hekili:GetOptions()
 						type = 'select',
 						name = 'Visibility',
 						values = {
-							['Always Show']			= 'Always Show',
-							['Show with Target']	= 'Show with Target',
+							['Always Show']								= 'Always Show',
+							['Always Show (except arenas/BGs)']			= 'Always Show (except arenas/BGs)',
+							['Show with Target']						= 'Show with Target',
+							['Show with Target (except arenas/BGs)']	= 'Show with Target (except arenas/BGs)'
 						},
 						desc = 'Choose when the AddOn should be visible.',
 						cmdHidden = true,

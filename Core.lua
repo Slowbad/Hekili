@@ -5,12 +5,23 @@
 
 local SpellRange = LibStub("SpellRange-1.0")
 
+
+-- Check for PvP
+local pvpZones = {
+	arena = true,
+	pvp = true,
+}
+
+
 function Hekili:ProcessPriorityList( id )
 
 	local module = Hekili.ActiveModule
 	
-	if not module or not module.enabled[id] or
-		(self.DB.char['Visibility'] == 'Show with Target' and (not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
+	local _, zoneType = IsInInstance()
+	
+	if ( not module or not module.enabled[id] ) or
+		( self.DB.char['Visibility']:match('Show with Target') and (not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
+		( self.DB.char['Visibility']:match('(except arenas/BGs)') and ( pvpZones[zoneType] ) ) or
 		(UnitHasVehicleUI('player')) then
 		for i = 1, 5 do
 			Hekili.UI.AButtons[id][i]:Hide()
