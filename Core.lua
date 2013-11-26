@@ -20,8 +20,8 @@ function Hekili:ProcessPriorityList( id )
 	local _, zoneType = IsInInstance()
 	
 	if ( not module or not module.enabled[id] ) or
-		( self.DB.char['Visibility'] == 'Show with Target' and (not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
-		( self.DB.char['Visibility'] == 'Show in Combat' and not UnitAffectingCombat('player') ) or
+		( self.DB.char['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
+		( self.DB.char['Visibility'] == 'Show in Combat' and ( not UnitAffectingCombat('player') and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) ) or
 		( self.DB.char['PvP Visibility'] == false and pvpZones[zoneType] ) or
 		( self.DB.char['Single-Target Enabled'] == false and id == 'ST' ) or
 		( self.DB.char['Multi-Target Enabled'] == false and id == 'AE' ) or
@@ -169,7 +169,7 @@ end
 
 function Hekili:UpdateGreenText()
 
-	if self.ActiveModule == self.Modules[ '(none)' ] then
+	if self.ActiveModule == self.Modules[ '(none)' ] or not self.UseAbility then
 		return
 	end
 

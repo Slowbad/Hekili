@@ -127,7 +127,7 @@ function Hekili:GetOptions()
 								set = 'SetOption',
 								get = 'GetOption',
 								order = 1
-							},
+							}
 						}
 					},
 					['Modules'] = {
