@@ -276,10 +276,8 @@ end ]]
 function Hekili:UNIT_SPELLCAST_SENT( _, UID )
 
 	if UID == 'player' then
-		self:HeartBeat()
-		self.UI.Engine.Delay = self.UI.Engine.Interval
-		self:UpdateGreenText()
-		self.UI.Engine.TextDelay = self.UI.Engine.TextInterval
+		if self.UI.Engine.Delay > 0.05 then self.UI.Engine.Delay = 0.05 end
+		if self.UI.Engine.TextDelay > 0.05 then self.UI.Engine.TextDelay = 0.05 end
 	end
 	
 end
@@ -289,10 +287,8 @@ end
 function Hekili:UNIT_SPELLCAST_SUCCEEDED( _, UID )
 	
 	if UID == 'player' then
-		self:HeartBeat()
-		self.UI.Engine.Delay = self.UI.Engine.Interval
-		self:UpdateGreenText()
-		self.UI.Engine.TextDelay = self.UI.Engine.TextInterval
+		if self.UI.Engine.Delay > 0.05 then self.UI.Engine.Delay = 0.05 end
+		if self.UI.Engine.TextDelay > 0.05 then self.UI.Engine.TextDelay = 0.05 end
 	end
 	
 end
