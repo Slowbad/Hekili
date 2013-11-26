@@ -8,7 +8,7 @@ function OutputFlags( option, category )
 	local count = 0
 
 	if Hekili.ActiveModule then
-		for k,v in pairs(Hekili.ActiveModule.flags) do
+		for k,v in pairs(Hekili.ActiveModule.spells) do
 			if v[category] then
 				if count >= 1 then abilities = abilities .. ', ' end
 				abilities = abilities .. k
@@ -92,28 +92,49 @@ function Hekili:GetOptions()
 						get = 'GetOption',
 						order = 2,
 					},
-					['Visibility'] = {
-						type = 'select',
-						name = 'Visibility',
-						values = {
-							['Always Show']								= 'Always Show',
-							['Always Show (except arenas/BGs)']			= 'Always Show (except arenas/BGs)',
-							['Show with Target']						= 'Show with Target',
-							['Show with Target (except arenas/BGs)']	= 'Show with Target (except arenas/BGs)'
-						},
-						desc = 'Choose when the AddOn should be visible.',
-						cmdHidden = true,
-						set = 'SetOption',
-						get = 'GetOption',
+					['Visibility Settings'] = {
+						type = 'group',
+						name = 'Visibility Settings',
+						inline = true,
 						order = 3,
-						width = 'full',
+						args = {
+							['Visibility'] = {
+								type = 'select',
+								name = 'Visibility',
+								values = {
+									['Always Show']			= 'Always Show',
+									['Show in Combat']		= 'Show in Combat',
+									['Show with Target']	= 'Show with Target',
+								},
+								desc = 'Choose when the priority display(s) should be visible.',
+								set = 'SetOption',
+								get = 'GetOption',
+								order = 0,
+								width = 'full',
+							},
+							['PvP Visibility'] = {
+								type = 'toggle',
+								name = 'Include BG/Arena',
+								desc = function ()
+											local output
+											if self.DB.char['PvP Visibility'] then
+												output = 'Hide the priority displays in arenas and battlegrounds (presently shown).'
+											else
+												output = 'Show the priority displays in arenas and battlegrounds (presently hidden).'
+											end
+											return output			
+										end,
+								set = 'SetOption',
+								get = 'GetOption',
+								order = 1
+							},
+						}
 					},
-
 					['Modules'] = {
 						type = "group",
 						name = "Module Settings",
 						inline = true,
-						order = 4,
+						order = 5,
 						args = {
 							['Primary Specialization Module'] = {
 								type = 'select',
@@ -151,8 +172,32 @@ function Hekili:GetOptions()
 								get = 'GetOption',
 								order = 1,
 								width = 'full',
+							}
+						}
+					},
+					['Engine'] = {
+						type = "group",
+						name = "Engine Settings",
+						inline = true,
+						order = 6,
+						args = {
+							['Engine Description'] = {
+								type	= 'description',
+								name	= 'Set the frequency with which you want the addon to update your priority displays.  More frequent updates require more processor time (and can impact your frame rate); less frequent updates use less CPU, but may cause the display to be sluggish or to respond slowly to game events.  The default setting is 10 updates per second.',
+								order	= 0
 							},
-							
+							['Updates Per Second'] = {
+								type	= 'range',
+								name	= 'Updates Per Second',
+								desc	= 'Set the number of times the addon should refresh its priority display each second.',
+								min		= 4,
+								max		= 10,
+								step	= 1,
+								get		= 'GetOption',
+								set		= 'SetOption',
+								width	= 'full',
+								order	= 1
+							}						
 						}
 					}
 				}
@@ -197,6 +242,17 @@ function Hekili:GetOptions()
 								step	= 1,
 								order	= 1,
 							},
+							['Multi-Target Integration'] = {
+								type	= 'range',
+								name	= 'Multi Integration',
+								desc	= 'Use the multi-target priority in the Single Target display if this number of targets (or more) are detected (0 to disable).',
+								min		= 0,
+								max		= 10,
+								step	= 1,
+								get		= 'GetOption',
+								set		= 'SetOption',
+								order	= 2
+							},
 							['Single Target Queue Direction'] = {
 								type	= "select",
 								name	= 'Queue Direction',
@@ -205,7 +261,7 @@ function Hekili:GetOptions()
 								set		= 'SetOption',
 								style	= 'dropdown',
 								width	= 'full',
-								order	= 2,
+								order	= 3,
 								values	= {
 									RIGHT	= 'Right (L to R)',
 									LEFT	= 'Left (R to L)',
@@ -220,7 +276,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 3
+								order	= 4
 							},
 							['Single Target Icon Spacing'] = {
 								type	= 'range',
@@ -231,7 +287,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 4
+								order	= 5
 							},
 							['Single Target Queued Icon Size'] = {
 								type	= 'range',
@@ -242,7 +298,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 5
+								order	= 6
 							},
 						},
 					},
@@ -433,9 +489,9 @@ function Hekili:GetOptions()
 					},
 
 					['Cooldown Enabled'] = {
-						type = 'toggle',
-						name = 'Show Cooldowns',
-						desc = function ()
+						type	= 'toggle',
+						name	= 'Show Cooldowns',
+						desc	= function ()
 									local output
 									if self.DB.char['Cooldown Enabled'] == true then
 										output = 'Hide cooldowns from both rotations (presently enabled)'
@@ -444,16 +500,16 @@ function Hekili:GetOptions()
 									end
 									return output			
 								end,
-						cmdHidden = true,
-						set = 'SetOption',
-						get = function() return GetBindingKey("HEKILI_TOGGLE_COOLDOWNS") end,
-						order = 9,
+						cmdHidden	= true,
+						set 		= 'SetOption',
+						get 		= 'GetOption',
+						order	 = 9,
 					},
 
 					['Show Hardcasts'] = {
 						type	= 'toggle',
 						name	= 'Show Hardcasts',
-						desc = function ()
+						desc 	= function ()
 									local output
 									if self.DB.char['Cooldown Enabled'] == true then
 										output = 'Hide hardcasts from both rotations (presently shown)'
@@ -533,24 +589,29 @@ end
 function Hekili:GetDefaults()
 	local defaults = {
 		char = {
-			enabled = true,
-			locked = false,
-			verbose = true,
-			['ST X'] = 0,
-			['ST Y'] = 0,
-			['ST Relative To'] = 'CENTER',
-			['AE X'] = 0,
-			['AE Y'] = -100,
-			['AE Relative To'] = 'CENTER',
+			enabled								= true,
+			locked								= false,
+			verbose								= false,
+
+			['Updates Per Second']				= 10,
+
+			['ST X']							= 0,
+			['ST Y']							= 0,
+			['ST Relative To']					= 'CENTER',
+			['AE X']							= 0,
+			['AE Y']							= -100,
+			['AE Relative To']					= 'CENTER',
 			['Primary Specialization Module']	= 'Enhancement Shaman SimC 5.4.1',
 			['Secondary Specialization Module']	= 'Enhancement Shaman SimC 5.4.1',
 			['Single Target Enabled']			= true,
 			['Multi-Target Enabled']			= true,
 			['Visibility']						= 'Always Show',
+			['PvP Visibility']					= true,
 			['Cooldown Enabled']				= false,
 			['Cooldown Hotkey'] 				= '',
 			['Single Target Group Enabled']		= true,
 			['Single Target Icons Displayed']	= 5,
+			['Multi-Target Integration']		= 0,
 			['Single Target Queue Direction']	= 'RIGHT',
 			['Single Target Primary Icon Size'] = 50,
 			['Single Target Icon Spacing']		= 5,
@@ -636,6 +697,9 @@ function Hekili:SetOption(info, input)
 	elseif opt == "locked" then
 		self:LockAllButtons(input)
 
+	elseif opt == 'Updates Per Second' then
+		self.UI.Engine.Interval = (1.0 / input)
+
 	elseif opt == 'Primary Specialization Module' then
 		if GetActiveSpecGroup() == 1 and self.Modules[ self.DB.char['Primary Specialization Module'] ] then
 			self.ActiveModule = self.Modules[ self.DB.char['Primary Specialization Module'] ]
@@ -694,6 +758,9 @@ function Hekili:SetOption(info, input)
 			SetBinding(input, "HEKILI_TOGGLE_HARDCASTS")
 			self.DB.char[opt] = input
 		end
+		
+	elseif opt == 'Name Filter' then
+		self.DB.char[opt] = self:ApplyNameFilters( input )
 		
 	elseif opt == 'Single Target Queue Direction' then
 		for i = 2, 5 do
@@ -809,6 +876,35 @@ function Hekili:GetOption(info)
 	end
 end
 
+
+
+function Hekili:ApplyNameFilters( input )
+	local updatedFilter = ''
+	local count = 0
+
+	if not input then input = self.DB.char[ 'Name Filter' ] end
+
+	if self.ActiveModule and self.ActiveModule.spells then
+		for k, v in pairs(self.ActiveModule.spells) do
+			if input:find(k) then
+				v.name = true
+				count = count + 1
+				
+				if count == 1 then 					
+					updatedFilter = k
+				else
+					updatedFilter = updatedFilter .. ', ' .. k
+				end
+			else
+				v.name = nil
+			end
+		end
+	end
+	
+	return updatedFilter
+end
+		
+	
 
 function Hekili:IsVerbose()
 	return self.DB.char['verbose']

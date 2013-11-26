@@ -127,7 +127,7 @@ function Hekili:CreatePriorityButton( set, number )
 		end
 	end	
 
-	button:Show()
+	button:Hide()
 
 	return button
 end
@@ -156,8 +156,6 @@ function Hekili:LockAllButtons( lock )
 		Hekili.UI.AButtons.ST[i]:EnableMouse(not lock)
 		Hekili.UI.AButtons.AE[i]:SetMovable(not lock)
 		Hekili.UI.AButtons.AE[i]:EnableMouse(not lock)
-		-- Hekili.UI.AButtons.CD[i]:SetMovable(not lock)
-		-- Hekili.UI.AButtons.CD[i]:EnableMouse(not lock)
 	end
 
 end
@@ -165,45 +163,57 @@ end
 
 function Hekili:InitCoreUI()
 
-	if Hekili.CoreInitialized then
+	if self.CoreInitialized then
 		return
 	end
 
-	Hekili.UI.Engine = CreateFrame("Frame", "Hekili_Engine_Frame", UIParent)
-	Hekili.UI.Engine:SetFrameStrata("BACKGROUND")
-	Hekili.UI.Engine:SetClampedToScreen(true)
-	Hekili.UI.Engine:SetMovable(false)
-	Hekili.UI.Engine:EnableMouse(false)
-	Hekili.UI.Engine:SetAllPoints(UIParent)
+	self.UI.Engine = CreateFrame("Frame", "Hekili_Engine_Frame", UIParent)
+	self.UI.Engine:SetFrameStrata("BACKGROUND")
+	self.UI.Engine:SetClampedToScreen(true)
+	self.UI.Engine:SetMovable(false)
+	self.UI.Engine:EnableMouse(false)
+	self.UI.Engine:SetAllPoints(UIParent)
 
 	-- Engine Values
-	Hekili.UI.Engine.Interval = 0.1
-	Hekili.UI.Engine.Delay = 0
+	self.UI.Engine.Interval = (1.0 / self.DB.char['Updates Per Second'])
+	self.UI.Engine.Delay = 0
 
-    Hekili.UI.Engine:SetScript("OnUpdate", function(self, elapsed)
+	self.UI.Engine.TextInterval = 0.1
+	self.UI.Engine.TextDelay = 0
+
+    self.UI.Engine:SetScript("OnUpdate", function(self, elapsed)
 		self.Delay = self.Delay - elapsed
-		if Hekili.DB.char.enabled and self.Delay <= 0 and UnitHealth("player") > 0 then
-			Hekili:HeartBeat()
-			self.Delay = self.Interval
+		self.TextDelay = self.TextDelay - elapsed
+
+		if Hekili:IsEnabled() and UnitHealth('player') > 0 then
+			if self.Delay <= 0 then
+				Hekili:HeartBeat()
+				self.Delay = self.Interval
+			end
+			
+			if self.TextDelay <= 0 then
+				Hekili:UpdateGreenText()
+				self.TextDelay = self.TextInterval
+			end
 		end
 	end)
 
 	-- For tooltip parsing.
-	if not Hekili.Tooltip then Hekili.Tooltip = CreateFrame("GameTooltip", "HekiliTooltip", UIParent, "GameTooltipTemplate") end
+	if not self.Tooltip then self.Tooltip = CreateFrame("GameTooltip", "HekiliTooltip", UIParent, "GameTooltipTemplate") end
 
 	-- Display Elements
-	Hekili.UI.AButtons = {}
-	Hekili.UI.AButtons['ST'] = {}
+	self.UI.AButtons = {}
+	self.UI.AButtons['ST'] = {}
 	for i = 1, 5 do
-		Hekili.UI.AButtons.ST[i] = Hekili:CreatePriorityButton( 'ST', i )
-		if Hekili.LBF then Hekili.stGroup:AddButton( Hekili.UI.AButtons.ST[i], { Icon = Hekili.UI.AButtons.ST[i].Texture, Cooldown = Hekili.UI.AButtons.ST[i].Cooldown } ) end	
+		self.UI.AButtons.ST[i] = self:CreatePriorityButton( 'ST', i )
+		if self.LBF then self.stGroup:AddButton( self.UI.AButtons.ST[i], { Icon = self.UI.AButtons.ST[i].Texture, Cooldown = self.UI.AButtons.ST[i].Cooldown } ) end	
 	end
 
-	Hekili.UI.AButtons['AE'] = {}
+	self.UI.AButtons['AE'] = {}
 	for i = 1, 5 do
-		Hekili.UI.AButtons.AE[i] = Hekili:CreatePriorityButton( 'AE', i )
-		if Hekili.LBF then Hekili.aeGroup:AddButton( Hekili.UI.AButtons.AE[i], { Icon = Hekili.UI.AButtons.AE[i].Texture, Cooldown = Hekili.UI.AButtons.AE[i].Cooldown } ) end	
+		self.UI.AButtons.AE[i] = self:CreatePriorityButton( 'AE', i )
+		if self.LBF then self.aeGroup:AddButton( self.UI.AButtons.AE[i], { Icon = self.UI.AButtons.AE[i].Texture, Cooldown = self.UI.AButtons.AE[i].Cooldown } ) end	
 	end
 
-	Hekili.CoreInitialized = true
+	self.CoreInitialized = true
 end
