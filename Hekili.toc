@@ -51,9 +51,12 @@
 Embeds.xml
 
 Hekili.lua
-Priorities.lua
+Utils.lua
+Modules.lua
 EnhShaman.lua
+EleShaman.lua
 Options.lua
 UI.lua
+Events.lua
 
 Core.lua

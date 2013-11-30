@@ -30,6 +30,49 @@ function OutputFlags( option, category )
 	return output			
 end
 
+
+
+function Hekili:IsFiltered( ability )
+	local mod = self.ActiveModule
+	local spell
+
+	if not mod or not mod.spells or not mod.spells[ability] then
+		return false
+	else
+		spell = mod.spells[ability]
+	end
+	
+	if spell.talent and not self.DB.char[ 'Show Talents' ] then
+		return true
+	elseif spell.racial and not self.DB.char[ 'Show Racials' ] then
+		return true
+	elseif spell.interrupt and not self.DB.char[ 'Show Interrupts' ] then
+		return true
+	elseif spell.precombat and not self.DB.char[ 'Show Precombat' ] then
+		return true
+	elseif spell.profession and not self.DB.char[ 'Show Professions' ] then
+		return true
+	elseif spell.bloodlust and not self.DB.char[ 'Show Bloodlust' ] then
+		return true
+	elseif spell.consumable and not self.DB.char[ 'Show Consumables' ] then
+		return true
+	elseif spell.name then
+		return true
+	elseif spell.cooldown then
+		if spell.cdUpdated < self.eqChanged and not spell.item then
+			spell.cooldown	= ttCooldown(spell.id) or 0
+			spell.cdUpdated	= GetTime()
+		end
+		
+		if spell.cooldown > self.DB.char['Cooldown Threshold'] then
+			return true
+		end
+	end
+	
+	return false
+end
+
+
 function Hekili:GetOptions()
 
 	local Options = {
@@ -421,165 +464,165 @@ function Hekili:GetOptions()
 				order = 2,
 				args = {
 					['Cooldowns'] = {
-						type	= 'header',
-						name	= 'Cooldown Filters',
-						order	= 0,
-						width	= 'full',
-					},
-					['Show Bloodlust'] = {
-						type	= 'toggle',
-						name	= 'Show Bloodlust',
-						desc	= function () return OutputFlags( 'Show Bloodlust', 'bloodlust' ) end,
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 1,
-					},
-					['Show Consumables'] = {
-						type	= 'toggle',
-						name	= 'Show Consumables',
-						desc	= function () return OutputFlags( 'Show Consumables', 'consumable' ) end,
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 2,
-					},
-					['Show Professions'] = {
-						type	= 'toggle',
-						name	= 'Show Professions',
-						desc	= function () return OutputFlags( 'Show Professions', 'profession' ) end,
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 3,
-					},
-					['Show Racials'] = {
-						type	= 'toggle',
-						name	= 'Show Racials',
-						desc	= function () return OutputFlags( 'Show Racials', 'racial' ) end,
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 4,
-					},
-					['Show Talents'] = {
-						type	= 'toggle',
-						name	= 'Show Talents',
-						desc	= function () return OutputFlags( 'Show Talents', 'talent' ) end,
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 5,
-					},
-					['Cooldown Threshold'] = {
-						type 	= 'range',
-						name 	= 'Cooldown Threshold',
-						desc 	= 'Set the maximum cooldown to be shown (to filter out longer abilities).',
-						min		= 30,
-						max		= 600,
-						step	= 1,
-						get		= 'GetOption',
-						set		= 'SetOption',
-						order	= 6
+						type = "group",
+						name = "Cooldown Filters",
+						inline = true,
+						order = 0,
+						args = {
+							['Show Bloodlust'] = {
+								type	= 'toggle',
+								name	= 'Show Bloodlust',
+								desc	= function () return OutputFlags( 'Show Bloodlust', 'bloodlust' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 0,
+							},
+							['Show Consumables'] = {
+								type	= 'toggle',
+								name	= 'Show Consumables',
+								desc	= function () return OutputFlags( 'Show Consumables', 'consumable' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 1,
+							},
+							['Show Professions'] = {
+								type	= 'toggle',
+								name	= 'Show Professions',
+								desc	= function () return OutputFlags( 'Show Professions', 'profession' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 2,
+							},
+							['Show Racials'] = {
+								type	= 'toggle',
+								name	= 'Show Racials',
+								desc	= function () return OutputFlags( 'Show Racials', 'racial' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 3,
+							},
+							['Show Talents'] = {
+								type	= 'toggle',
+								name	= 'Show Talents',
+								desc	= function () return OutputFlags( 'Show Talents', 'talent' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 4,
+							},
+							['Cooldown Threshold'] = {
+								type 	= 'range',
+								name 	= 'Cooldown Threshold',
+								desc 	= 'Set the maximum cooldown to be shown (to filter out longer abilities).',
+								min		= 30,
+								max		= 600,
+								step	= 1,
+								get		= 'GetOption',
+								set		= 'SetOption',
+								order	= 5
+							},
+						}
 					},
 					['General Filters'] = {
-						type	= 'header',
-						name	= 'General Filters',
-						order	= 7
-					},
-					['General Filter Description'] = {
-						type	= 'description',
-						name	= 'Filtering in this subsection applies to all categories (cooldowns, multi-target, and single target).',
-						order	= 8
-					},
+						type = "group",
+						name = "General Filters",
+						inline = true,
+						order = 1,
+						args = {
+							['Cooldown Enabled'] = {
+								type	= 'toggle',
+								name	= 'Show Cooldowns',
+								desc	= function ()
+											local output
+											if self.DB.char['Cooldown Enabled'] == true then
+												output = 'Hide cooldowns from both rotations (presently enabled)'
+											else
+												output = 'Show cooldowns from both rotations (presently disabled).'
+											end
+											return output			
+										end,
+								cmdHidden	= true,
+								set 		= 'SetOption',
+								get 		= 'GetOption',
+								order	 = 0,
+							},
 
-					['Cooldown Enabled'] = {
-						type	= 'toggle',
-						name	= 'Show Cooldowns',
-						desc	= function ()
-									local output
-									if self.DB.char['Cooldown Enabled'] == true then
-										output = 'Hide cooldowns from both rotations (presently enabled)'
-									else
-										output = 'Show cooldowns from both rotations (presently disabled).'
-									end
-									return output			
-								end,
-						cmdHidden	= true,
-						set 		= 'SetOption',
-						get 		= 'GetOption',
-						order	 = 9,
-					},
+							['Show Hardcasts'] = {
+								type	= 'toggle',
+								name	= 'Show Hardcasts',
+								desc 	= function ()
+											local output
+											if self.DB.char['Cooldown Enabled'] == true then
+												output = 'Hide hardcasts from both rotations (presently shown)'
+											else
+												output = 'Hide hardcasts from both rotations (presently hidden).'
+											end
+											return output			
+										end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 1,
+							},
 
-					['Show Hardcasts'] = {
-						type	= 'toggle',
-						name	= 'Show Hardcasts',
-						desc 	= function ()
-									local output
-									if self.DB.char['Cooldown Enabled'] == true then
-										output = 'Hide hardcasts from both rotations (presently shown)'
-									else
-										output = 'Hide hardcasts from both rotations (presently hidden).'
-									end
-									return output			
-								end,
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 10,
-					},
+							['Show Interrupts'] = {
+								type	= 'toggle',
+								name	= 'Show Interrupts',
+								desc	= function () return OutputFlags( 'Show Interrupts', 'interrupt' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 2,
+							},
 
-					['Show Interrupts'] = {
-						type	= 'toggle',
-						name	= 'Show Interrupts',
-						desc	= function () return OutputFlags( 'Show Interrupts', 'interrupt' ) end,
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 11,
-					},
+							['Show Precombat'] = {
+								type	= 'toggle',
+								name	= 'Show Precombat',
+								desc	= function () return OutputFlags( 'Show Precombat', 'precombat' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 3,
+							},
 
-					['Show Precombat'] = {
-						type	= 'toggle',
-						name	= 'Show Precombat',
-						desc	= function () return OutputFlags( 'Show Precombat', 'precombat' ) end,
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 12,
+							['Name Filter'] = {
+								type	= 'input',
+								name	= 'Name Filter',
+								get		= 'GetOption',
+								set		= 'SetOption',
+								multiline = 5,
+								desc	= 'Enter the ability names you wish to filter, separated by commas/spaces/returns.',
+								order	= 4,
+								width	= 'full'
+							},
+						}
 					},
-					
-					['Name Filter'] = {
-						type	= 'input',
-						name	= 'Name Filter',
-						get		= 'GetOption',
-						set		= 'SetOption',
-						multiline = 5,
-						desc	= 'Enter the ability names you wish to filter, separated by commas/spaces/returns.',
-						order	= 13,
-						width	= 'full'
-					},
-
 					['Hotkeys'] = {
-						type	= 'header',
-						name	= 'Hotkeys',
-						order	= 14
-					},
+						type = "group",
+						name = "Key Bindings",
+						inline = true,
+						order = 2,
+						args = {
+							['Cooldown Hotkey'] = {
+								type	= 'keybinding',
+								name	= 'Toggle Cooldowns',
+								desc	= 'Bind or unbind a hotkey to toggle cooldowns on/off.',
+								cmdHidden = true,
+								set = 'SetOption',
+								get = 'GetOption',
+								order = 15,
+							},
 
-					['Cooldown Hotkey'] = {
-						type	= 'keybinding',
-						name	= 'Cooldown Hotkey',
-						desc	= 'Bind or unbind a hotkey to toggle cooldowns on/off.',
-						cmdHidden = true,
-						set = 'SetOption',
-						get = 'GetOption',
-						order = 15,
-					},
-
-					['Hardcast Hotkey'] = {
-						type	= 'keybinding',
-						name	= 'Hardcast Hotkey',
-						desc	= 'Bind or unbind a hotkey to toggle hardcasts on/off.',
-						cmdHidden = true,
-						set		= 'SetOption',
-						get		= 'GetOption',
-						order	= 16
+							['Hardcast Hotkey'] = {
+								type	= 'keybinding',
+								name	= 'Toggle Hardcasts',
+								desc	= 'Bind or unbind a hotkey to toggle hardcasts on/off.',
+								cmdHidden = true,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 16
+							}
+						}
 					}
-				},
-			},					
-		},
+				}
+			}		
+		}
 	}
 
 	return Options

@@ -5,6 +5,22 @@
 
 local SpellRange = LibStub("SpellRange-1.0")
 
+-- Caching to hopefully improve performance.
+Hekili.textureCache = setmetatable( {}, { __index =	function(t,v)
+														local a = GetSpellTexture(v)
+														if GetSpellTexture(v) then t[v] = a end
+														return a
+													end } )
+
+Hekili.textureCache['Lava Beam'] = 'Interface\\Icons\\Spell_Fire_SoulBurn'
+Hekili.textureCache['Stormblast'] = 'Interface\\Icons\\Spell_Lightning_LightningBolt01'
+Hekili.textureCache['Virmen\'s Bite'] = 'Interface\\ICONS\\TRADE_ALCHEMY_POTIOND6'
+Hekili.textureCache['Potion of the Jade Serpent'] = 'Interface\\Icons\\trade_alchemy_potiond4'
+
+local function GetSpellTexture(a)
+	return Hekili.textureCache[a]
+end
+
 
 -- Check for PvP
 local pvpZones = {
@@ -32,11 +48,16 @@ function Hekili:ProcessPriorityList( id )
 		return
 	end
 
-	local state = module.state[id]
+	local state = self.State[id]
 
 	module.RefreshState( state )
 
 	local startTime = state.time
+
+	if state.pCast and state.pCast > 0 and module.spells[ state.pCasting ] then
+		module.spells[ state.pCasting ].handler( state, true )
+		module.AdvanceState( state, state.pCast )
+	end
 
 	local glovesID = GetInventoryItemID("player", 10)
 	local gloves, gTexture
@@ -53,22 +74,112 @@ function Hekili:ProcessPriorityList( id )
 		local useCooldown		= 999
 		local useCDThreshold	= 30
 
-		for line, action in ipairs(module.actionList) do
+	--[[
 			if ( action.type == 'precombat' and ( self.DB.char[ 'Show Precombat' ] or UnitAffectingCombat('player') ) ) or
 			   ( action.type == 'cooldown' and ( self.DB.char[ 'Cooldown Enabled' ] and ( id == 'ST' or self.DB.char[ 'Multi-Target Cooldowns' ] ) ) ) or
 			   ( action.type == 'aoe' and ( id == 'AE' or ( self.DB.char[ 'Multi-Target Integration' ] ~= 0 and state.tCount >= self.DB.char[ 'Multi-Target Integration' ] ) ) ) or
 			   ( action.type == 'single' and ( id == 'ST' or ( self.DB.char[ 'Multi-Target Integration' ] == 0 or state.tCount < self.DB.char[ 'Multi-Target Integration' ] ) ) ) then
+		]]	
+
+
+		if self.DB.char[ 'Show Precombat' ] then
+			for line, action in ipairs(module.actionList.precombat) do
 
 				local ckAction, ckWait, ckHardcast, ckCooldown
+				local skipped = false
 
 				ckAction, ckWait, ckHardcast = action.check( state )
 
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or Hekili.DB.char['Show Hardcasts'] ) then
+				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.char['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
+					
+					-- May want to add some smoothing to this.
+					if ckCooldown < ( useCooldown + ckWait ) then
+						useAction		= ckAction
+						useCooldown		= ckCooldown
+						useCaption		= action.caption
+					end
+				end
 
+				if useCooldown == 0 then
+					break
+				end
+			end
+		end
+
+		if useCooldown > 0 and ( self.DB.char[ 'Cooldown Enabled' ] and ( id == 'ST' or self.DB.char[ 'Multi-Target Cooldowns' ] ) ) then
+			for line, action in ipairs(module.actionList.cooldown) do
+
+				local ckAction, ckWait, ckHardcast, ckCooldown
+				local skipped = false
+
+				ckAction, ckWait, ckHardcast = action.check( state )
+
+				if not ckWait then ckWait = 0 end
+				if not ckHardcast then ckHardcast = false end
+
+				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.char['Show Hardcasts'] ) then
+					ckCooldown = state.cooldowns[ ckAction ]
+					
+					-- May want to add some smoothing to this.
+					if ckCooldown < ( useCooldown + ckWait ) then
+						useAction		= ckAction
+						useCooldown		= ckCooldown
+						useCaption		= action.caption
+					end
+				end
+
+				if useCooldown == 0 then
+					break
+				end
+			end
+		end
+
+		if useCooldown > 0 and ( id == 'AE' or ( self.DB.char[ 'Multi-Target Integration' ] ~= 0 and state.tCount >= self.DB.char[ 'Multi-Target Integration' ] ) ) then
+			for line, action in ipairs(module.actionList.aoe) do
+
+				local ckAction, ckWait, ckHardcast, ckCooldown
+				local skipped = false
+
+				ckAction, ckWait, ckHardcast = action.check( state )
+
+				if not ckWait then ckWait = 0 end
+				if not ckHardcast then ckHardcast = false end
+
+				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.char['Show Hardcasts'] ) then
+					ckCooldown = state.cooldowns[ ckAction ]
+					
+					-- May want to add some smoothing to this.
+					if ckCooldown < ( useCooldown + ckWait ) then
+						useAction		= ckAction
+						useCooldown		= ckCooldown
+						useCaption		= action.caption
+					end
+				end
+
+				if useCooldown == 0 then
+					break
+				end
+			end
+		end
+
+		if useCooldown > 0 and ( id == 'ST' ) then
+			for line, action in ipairs(module.actionList.single) do
+
+				local ckAction, ckWait, ckHardcast, ckCooldown
+				local skipped = false
+
+				ckAction, ckWait, ckHardcast = action.check( state )
+
+				if not ckWait then ckWait = 0 end
+				if not ckHardcast then ckHardcast = false end
+
+				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.char['Show Hardcasts'] ) then
+					ckCooldown = state.cooldowns[ ckAction ]
+					
 					-- May want to add some smoothing to this.
 					if ckCooldown < ( useCooldown + ckWait ) then
 						useAction		= ckAction
@@ -107,12 +218,15 @@ function Hekili:ProcessPriorityList( id )
 			Hekili.UseAbility[id][i].time			= state.time
 			Hekili.UseAbility[id][i].start			= startTime
 
-			local start, duration = GetSpellCooldown(useAction)
+			local start, duration
 
-			-- Override for Virmen's Bite, need to workaround this for other class/specs.
-			if useAction == "Virmen's Bite" and not start and not duration then
-				start, duration = GetItemCooldown(76089)
-			elseif not start and not duration then
+			if module.spells[ useAction ].item then
+				start, duration = GetItemCooldown( module.spells[ useAction ].id )
+			else
+				start, duration = GetSpellCooldown(useAction)
+			end
+
+			if not start and not duration then
 				start, duration = GetSpellCooldown("Lightning Shield")
 			end
 
@@ -122,12 +236,7 @@ function Hekili:ProcessPriorityList( id )
 				Hekili.UI.AButtons[id][i].Cooldown:SetCooldown(0, 0)
 			end
 
-			-- Need to work around this.
-			if useAction == "Stormblast" then
-				Hekili.UI.AButtons[id][i].Texture:SetTexture(GetSpellTexture(115356))
-			elseif useAction == "Virmen's Bite" then
-				Hekili.UI.AButtons[id][i].Texture:SetTexture('Interface\\ICONS\\TRADE_ALCHEMY_POTIOND6')
-			elseif useAction == "Synapse Springs" then
+			if useAction == "Synapse Springs" then
 				Hekili.UI.AButtons[id][i].Texture:SetTexture(gTexture)
 			else
 				Hekili.UI.AButtons[id][i].Texture:SetTexture(GetSpellTexture(useAction))
@@ -157,10 +266,12 @@ function Hekili:ProcessPriorityList( id )
 			Hekili.UI.AButtons[id][i]:Hide()
 		end
 		
-		if SpellRange.IsSpellInRange(Hekili.UseAbility[id][i].name, 'target') == 0 then
-			Hekili.UI.AButtons[id][i].Texture:SetVertexColor(1, 0, 0)
-		else
-			Hekili.UI.AButtons[id][i].Texture:SetVertexColor(1, 1, 1)
+		if Hekili.UI.AButtons[id][i]:IsShown() then
+			if SpellRange.IsSpellInRange(Hekili.UseAbility[id][i].name, 'target') == 0 then
+				Hekili.UI.AButtons[id][i].Texture:SetVertexColor(1, 0, 0)
+			else
+				Hekili.UI.AButtons[id][i].Texture:SetVertexColor(1, 1, 1)
+			end
 		end
 	end
 
@@ -185,10 +296,12 @@ function Hekili:UpdateGreenText()
 		end
 
 		for i = 2, self.DB.char['Single Target Icons Displayed'] do
-			if self.ActiveModule.spells[ self.UseAbility.ST[i].name ].offGCD then
-				self.UI.AButtons.ST[i].topText:SetText( self.UI.AButtons.ST[i-1].topText:GetText() )
-			else
-				self.UI.AButtons.ST[i].topText:SetText( tostring( round( self.UseAbility.ST[i].time - simTime, 1 ) ) )
+			if self.UseAbility.ST[i] and self.UseAbility.ST[i].name then
+				if self.ActiveModule.spells[ self.UseAbility.ST[i].name ].offGCD then
+					self.UI.AButtons.ST[i].topText:SetText( self.UI.AButtons.ST[i-1].topText:GetText() )
+				else
+					self.UI.AButtons.ST[i].topText:SetText( tostring( round( self.UseAbility.ST[i].time - simTime, 1 ) ) )
+				end
 			end
 		end
 
@@ -206,10 +319,12 @@ function Hekili:UpdateGreenText()
 		end
 
 		for i = 2, self.DB.char['Multi-Target Icons Displayed'] do
-			if self.ActiveModule.spells[ self.UseAbility.AE[i].name ].offGCD then
-				self.UI.AButtons.AE[i].topText:SetText( self.UI.AButtons.AE[i-1].topText:GetText() )
-			else
-				self.UI.AButtons.AE[i].topText:SetText( tostring( round( self.UseAbility.AE[i].time - simTime, 1 ) ) )
+			if self.UseAbility.AE[i] and self.UseAbility.AE[i].name then
+				if self.ActiveModule.spells[ self.UseAbility.AE[i].name ].offGCD then
+					self.UI.AButtons.AE[i].topText:SetText( self.UI.AButtons.AE[i-1].topText:GetText() )
+				else
+					self.UI.AButtons.AE[i].topText:SetText( tostring( round( self.UseAbility.AE[i].time - simTime, 1 ) ) )
+				end
 			end
 		end
 
@@ -252,6 +367,10 @@ function Hekili:OnInitialize()
 	
 	self:UnregisterAllEvents()
 
+	self.lastCast		= {}
+	self.lastCast.spell	= ''
+	self.lastCast.time	= 0
+
 	self.BossFight		= false
 	self.CombatStart	= 0
 	self.eqChanged		= GetTime()
@@ -259,39 +378,6 @@ function Hekili:OnInitialize()
 	
 end
 
-
---[[ Improve responsiveness when using the refresh rate is down.
-function Hekili:UNIT_SPELLCAST_START( _, UID )
-
-	if UID == 'player' then
-		self:HeartBeat()
-		self.UI.Engine.Delay = self.UI.Engine.Interval
-		self:UpdateGreenText()
-		self.UI.Engine.TextDelay = self.UI.Engine.TextInterval
-	end
-	
-end ]]
-
--- Improve responsiveness when using the refresh rate is down.
-function Hekili:UNIT_SPELLCAST_SENT( _, UID )
-
-	if UID == 'player' then
-		if self.UI.Engine.Delay > 0.05 then self.UI.Engine.Delay = 0.05 end
-		if self.UI.Engine.TextDelay > 0.05 then self.UI.Engine.TextDelay = 0.05 end
-	end
-	
-end
-
-
--- Improve responsiveness when using the refresh rate is down.
-function Hekili:UNIT_SPELLCAST_SUCCEEDED( _, UID )
-	
-	if UID == 'player' then
-		if self.UI.Engine.Delay > 0.05 then self.UI.Engine.Delay = 0.05 end
-		if self.UI.Engine.TextDelay > 0.05 then self.UI.Engine.TextDelay = 0.05 end
-	end
-	
-end
 
 
 -- Borrowed TTD linear regression model from 'Nemo' by soulwhip (with permission).
@@ -379,8 +465,7 @@ function Hekili:OnEnable()
 		self:RegisterEvent("PLAYER_REGEN_DISABLED")
 		self:RegisterEvent("PLAYER_REGEN_ENABLED")
 
-		-- Trigger additional refreshes.
-		self:RegisterEvent("UNIT_SPELLCAST_SENT")
+		-- Trigger additional refreshes and cache the last spell cast.
 		self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 
 		-- Mainly for capturing changes to cooldowns from trinkets.
@@ -420,96 +505,4 @@ function Hekili:OnDisable()
 end
 
 
---------------------
--- EVENT HANDLING --
 
-function Hekili:PLAYER_LOGOUT()
-	self:SaveCoordinates()
-end
-
-
--- Target time to die has to be handled by the AddOn itself.
-function Hekili:UNIT_HEALTH( _, UID)
-
-	if UID ~= "target" then
-		return
-	end
-	
-	if not Hekili.TTD then Hekili.InitTTD() end
-
-	if ( Hekili.TTD.GUID ~= UnitGUID(UID) and not UnitIsFriend('player', UID) ) then
-		Hekili.InitTTD()
-	end
-	
-	if ( UnitHealth(UID) == UnitHealthMax(UID) ) then
-		Hekili.InitTTD()
-		return
-	end
-
-	local now = GetTime()
-	
-	if ( not Hekili.TTD.n ) then Hekili.InitTTD() end
-	
-	Hekili.TTD.n			= Hekili.TTD.n + 1
-	Hekili.TTD.timeSum		= Hekili.TTD.timeSum + now
-	Hekili.TTD.healthSum	= Hekili.TTD.healthSum + UnitHealth(UID)
-	Hekili.TTD.healthMean	= Hekili.TTD.healthMean + (now * UnitHealth(UID))
-	Hekili.TTD.timeMean		= Hekili.TTD.timeMean + (now * now)
-	
-	local difference	= (Hekili.TTD.healthSum * Hekili.TTD.timeMean - Hekili.TTD.healthMean * Hekili.TTD.timeSum)
-	local projectedTTD	= nil
-	
-	if difference > 0 then
-		projectedTTD = difference / (Hekili.TTD.healthSum * Hekili.TTD.timeSum - Hekili.TTD.healthMean * Hekili.TTD.n) - now
-	end
-
-	if not projectedTTD or projectedTTD < 0 or Hekili.TTD.n < 7 then
-		return
-	else
-		projectedTTD = ceil(projectedTTD)
-	end
-
-	Hekili.TTD.sec = projectedTTD
-end
-
-
-function Hekili:ACTIVE_TALENT_GROUP_CHANGED()
-	self:SanityCheck()
-end
-
-
-function Hekili:INSTANCE_ENCOUNTER_ENGAGE_UNIT()
-	Hekili.BossCombat		= true
-end
-
-
-function Hekili:PLAYER_EQUIPMENT_CHANGED()
-	Hekili.eqChanged		= GetTime()
-end
-
-
-function Hekili:PLAYER_REGEN_DISABLED(...)
-    Hekili.CombatStart		= GetTime()
-end
-
-
-function Hekili:PLAYER_REGEN_ENABLED(...)
-	Hekili.BossCombat		= false
-	Hekili.CombatStart		= 0
-end
-
-function Hekili:COMBAT_LOG_EVENT_UNFILTERED(...)
-
-	if self.ActiveModule and self.ActiveModule.CLEU then
-		self.ActiveModule:CLEU(self, ...)
-	end
-
-end
-
-function Hekili:UPDATE_BINDINGS()
-	self.DB.char['Cooldown Hotkey'] = GetBindingKey("HEKILI_TOGGLE_COOLDOWNS") or ''
-	self.DB.char['Hardcast Hotkey'] = GetBindingKey("HEKILI_TOGGLE_HARDCASTS") or ''
-end
-
--- EVENT HANDLING --
---------------------
