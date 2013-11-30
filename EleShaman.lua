@@ -680,7 +680,7 @@ mod:AddToActionList('cooldown',
 					'',
 					'actions+=/fire_elemental_totem,if=!active',
 					function( state )
-						if not state.totems[totem_fire].up or state.totems[totem_fire].name ~= fire_elemental_totem then
+						if (not state.talents[primal_elementalist] or state.totems[totem_earth].name ~= earth_elemental_totem) and (state.totems[totem_fire].name ~= fire_elemental_totem) then
 							return fire_elemental_totem
 						end
 						return nil
@@ -935,7 +935,7 @@ mod:AddToActionList('single',
 					'',
 					'actions.single+=/earth_elemental_totem,if=!active&cooldown.fire_elemental_totem.remains>=60',
 					function( state )
-						if state.combatTime > 60 and not state.totems[totem_earth].up or state.totems[totem_earth].name ~= earth_elemental_totem and state.cooldowns[fire_elemental_totem] >= 60 then
+						if (not state.talents[primal_elementalist] or not state.totems[totem_fire].name == fire_elemental_totem) and (state.totems[totem_earth].name ~= earth_elemental_totem and state.cooldowns[fire_elemental_totem] >= 60) then
 							return earth_elemental_totem
 						end
 						return nil

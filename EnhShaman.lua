@@ -756,7 +756,8 @@ mod:AddToActionList('cooldown',
 					'',
 					'actions+=/fire_elemental_totem,if=!active',
 					function( state )
-						if not state.totems[totem_fire].up or state.totems[totem_fire].up and state.totems[totem_fire].name ~= fire_elemental_totem then
+						-- if you have Primal Elementalist, make sure that you're not in a situation to try to drop Fire Elemental Totem with Earth Elemental Totem up or they'll both go poof (two pet bars).
+						if (not state.talents[primal_elementalist] or state.totems[totem_earth].name ~= earth_elemental_totem) and (state.totems[totem_fire].name ~= fire_elemental_totem) then
 							return fire_elemental_totem
 						end
 						return nil
@@ -972,7 +973,7 @@ mod:AddToActionList('aoe',
 					'',
 					'actions.aoe+=/earth_elemental_totem,if=!active&cooldown.fire_elemental_totem.remains>=50',
 					function( state )
-						if not state.totems[totem_earth].up and state.cooldowns[fire_elemental_totem] >= 50 then
+						if (not state.talents[primal_elementalist] or not state.totems[totem_fire].name == fire_elemental_totem) and (state.totems[totem_earth].name ~= earth_elemental_totem and state.cooldowns[fire_elemental_totem] >= 50) then
 							return earth_elemental_totem
 						end
 						return nil
