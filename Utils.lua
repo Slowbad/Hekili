@@ -30,8 +30,7 @@ function ttCooldown( sID )
 			if sTime then return tonumber(sTime) end
 		end
 	end
-	Hekili:Print("Got no cooldown for spell " .. sID .. ".")
-	return nil
+	return 0
 end
 
 -- Check for weapon buffs (WF/FT).

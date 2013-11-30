@@ -60,7 +60,7 @@ function Hekili:IsFiltered( ability )
 		return true
 	elseif spell.cooldown then
 		if spell.cdUpdated < self.eqChanged and not spell.item then
-			spell.cooldown	= ttCooldown(spell.id) or 0
+			spell.cooldown	= ttCooldown(spell.id)
 			spell.cdUpdated	= GetTime()
 		end
 		
