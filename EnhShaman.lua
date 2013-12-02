@@ -679,7 +679,7 @@ mod:AddToActionList('cooldown',
 					'',
 					'actions+=/stormlash_totem,if=!active&!buff.stormlash.up&(buff.bloodlust.up|time>=60)',
 					function( state )
-						if (not state.pBuffs[stormlash_totem].up) and ( (state.pBuffs[heroism].up or state.pBuffs[bloodlust].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) or state.combatTime >= 60 ) then
+						if (not state.pBuffs[stormlash_totem].up) and state.combatTime > 5 then -- or state.pBuffs[bloodlust].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) ) then
 							return stormlash_totem
 						end
 						return nil
@@ -687,10 +687,10 @@ mod:AddToActionList('cooldown',
 
 mod:AddToActionList('cooldown',
 					virmens_bite,
-					'Potion',
+					'Potion', -- removed combat time check.
 					'actions+=/virmens_bite_potion,if=time>60&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active|target.time_to_die<=60)',
 					function ( state )
-						if state.combatTime > 60 and ( (state.totems[totem_fire].up and state.totems[totem_fire].name == fire_elemental_totem) or state.timeToDie <= 60 ) then
+						if ( state.totems[totem_fire].name == fire_elemental_totem or state.timeToDie <= 60 ) then
 							return virmens_bite
 						end
 						return nil
@@ -742,7 +742,7 @@ mod:AddToActionList('cooldown',
 
 mod:AddToActionList('cooldown',
 					elemental_mastery,
-					'-Primal',
+					'-PE',
 					'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&!talent.primal_elementalist.enabled',
 					function( state )
 						if state.talents[elemental_mastery] and	not state.talents[primal_elementalist] then
@@ -779,7 +779,7 @@ mod:AddToActionList('cooldown',
 					'',
 					'actions+=/lifeblood,if=(glyph.fire_elemental_totem.enabled&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active))|!glyph.fire_elemental_totem.enabled',
 					function( state )
-						if not state.glyphs[fire_elemental_totem] or (state.glyphs[fire_elemental_totem] and state.totems[totem_fire].up and state.totems[totem_fire].name == fire_elemental_totem) then
+						if not state.glyphs[fire_elemental_totem] or (state.glyphs[fire_elemental_totem] and state.totems[totem_fire].name == fire_elemental_totem) then
 							return lifeblood
 						end
 						return nil
@@ -1055,6 +1055,17 @@ mod:AddToActionList('single',
 					end )
 
 mod:AddToActionList('single',
+					spiritwalkers_grace,
+					'EB',
+					'actions.single+=/spiritwalkers_grace,moving=1',
+					function( state )
+						if state.moving and state.talents[elemental_blast] then
+							return spiritwalkers_grace
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
 					elemental_blast,
 					'',
 					'actions.single+=/elemental_blast,if=talent.elemental_blast.enabled&buff.maelstrom_weapon.react>=1',
@@ -1235,19 +1246,8 @@ mod:AddToActionList('single',
 					'',
 					'actions.single+=/earth_elemental_totem,if=!active',
 					function( state )
-						if not state.totems[totem_earth].up or state.totems[totem_earth].name ~= earth_elemental_totem then -- and state.cooldowns[fire_elemental_totem] >= 60 then
+						if (not state.talents[primal_elementalist] or not state.totems[totem_fire].name == fire_elemental_totem) and (state.totems[totem_earth].name ~= earth_elemental_totem and state.cooldowns[fire_elemental_totem] >= 50) then
 							return earth_elemental_totem
-						end
-						return nil
-					end )
-
-mod:AddToActionList('single',
-					spiritwalkers_grace,
-					'',
-					'actions.single+=/spiritwalkers_grace,moving=1',
-					function( state )
-						if state.moving then
-							return spiritwalkers_grace
 						end
 						return nil
 					end )

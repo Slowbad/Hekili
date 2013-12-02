@@ -3,7 +3,7 @@
 -- Hekili of <Turbo Cyborg Ninjas> - Ner'zhul [A]
 -- November 2013
 
-local mod = Hekili:NewModule("Elemental Shaman SimC 5.4.1", "Shaman", "Elemental", true, true, true)
+local mod = Hekili:NewModule("Elemental Shaman - TotemSpot - 5.4.1", "Shaman", "Elemental", true, true, true)
 
 -- Spells, just to give readable aliases and to help with future localization.
 local ancestral_swiftness 	= GetSpellInfo(16188)
@@ -140,7 +140,7 @@ mod:AddAbility( bloodlust, 2825, 'offGCD', 'bloodlust' )
 
 mod:AddAbility( chain_lightning, 421 )
 	mod:AddHandler( chain_lightning, function ( state, precast )
-		cast = 2.5 / state.sHaste
+		cast = 1.5 / state.sHaste
 		local hardcast = true
 	
 		if state.pBuffs[ancestral_swiftness].up and not precast then
@@ -323,6 +323,10 @@ mod:AddAbility( lava_beam, 114074 )
 		cast = 2.0 / state.sHaste
 		local hardcast = true
 		
+		state.pBuffs[unleash_flame].up			= false
+		state.pBuffs[unleash_flame].count		= 0
+		state.pBuffs[unleash_flame].remains		= 0
+
 		if state.pBuffs[ancestral_swiftness].up and not precast then
 			state.pBuffs[ancestral_swiftness].up		= false
 			state.pBuffs[ancestral_swiftness].count		= 0
@@ -340,6 +344,10 @@ mod:AddAbility( lava_burst, 51505 )
 		cast = 2.0 / state.sHaste
 		local hardcast = true
 		
+		state.pBuffs[unleash_flame].up			= false
+		state.pBuffs[unleash_flame].count		= 0
+		state.pBuffs[unleash_flame].remains		= 0
+
 		if not precast then
 			if state.pBuffs[lava_surge].up then
 				state.pBuffs[lava_surge].up = false
@@ -356,7 +364,7 @@ mod:AddAbility( lava_burst, 51505 )
 			end
 		end
 
-		if state.pBuffs[ascendance].up and state.pBuffs[ascendance].remains > cast then
+		if (state.pBuffs[ascendance].up and state.pBuffs[ascendance].remains > cast) or (precast and state.pBuffs[lava_surge].up) then
 			state.cooldowns[lava_burst] = 0
 		else
 			state.cooldowns[lava_burst] = 8.0
@@ -590,7 +598,7 @@ mod:AddToActionList('cooldown',
 					'',
 					'actions+=/bloodlust,if=target.health.pct<25|time>5',
 					function( state )
-						if (IsUsableSpell(bloodlust) and state.tHealthPct < 25 and state.combatTime > 5)
+						if IsUsableSpell(bloodlust) and (state.tHealthPct < 25 or state.combatTime > 5)
 							and (not state.pDebuffs[sated].up and not state.pDebuffs[exhaustion].up and not state.pDebuffs[temporal_displacement].up and not state.pDebuffs[insanity].up) then
 							return bloodlust
 						end
@@ -602,7 +610,7 @@ mod:AddToActionList('cooldown',
 					'',
 					'actions+=/heroism,if=target.health.pct<25|time>5',
 					function( state )
-						if (IsUsableSpell(heroism) and state.tHealthPct < 25 and state.combatTime > 5)
+						if IsUsableSpell(heroism) and (state.tHealthPct < 25 or state.combatTime > 5)
 							and (not state.pDebuffs[sated].up and not state.pDebuffs[exhaustion].up and not state.pDebuffs[temporal_displacement].up and not state.pDebuffs[insanity].up) then
 							return heroism
 						end
@@ -610,11 +618,21 @@ mod:AddToActionList('cooldown',
 					end )
 
 mod:AddToActionList('cooldown',
+					synapse_springs,
+					'Gloves',
+					'actions.single=use_item,name=[gloves],if=((cooldown.ascendance.remains>10|level<87)&cooldown.fire_elemental_totem.remains>10)|buff.ascendance.up|buff.bloodlust.up|totem.fire_elemental_totem.active',
+					function( state )
+						if state.items[synapse_springs] then
+							return synapse_springs
+						end
+					end )
+
+mod:AddToActionList('cooldown',
 					stormlash_totem,
 					'',
 					'actions+=/stormlash_totem,if=!active&!buff.stormlash.up&(buff.bloodlust.up|time>=60)',
 					function( state )
-						if (not state.pBuffs[stormlash_totem].up) and ( (state.pBuffs[heroism].up or state.pBuffs[bloodlust].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) or state.combatTime >= 60 ) then
+						if (not state.pBuffs[stormlash_totem].up) and state.combatTime > 5 then -- and ( (state.pBuffs[heroism].up or state.pBuffs[bloodlust].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) ) then
 							return stormlash_totem
 						end
 						return nil
@@ -622,10 +640,10 @@ mod:AddToActionList('cooldown',
 
 mod:AddToActionList('cooldown',
 					jade_serpent,
-					'Potion', -- removed combat time check (if you didn't pre-pot, maybe you want to use it now) and checking to see if the totem is actually going to get the full benefit of the pot.
-					'actions+=/jade_serpent_potion,if=time>60&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active|target.time_to_die<=60)',
+					'Potion',
+					'',
 					function ( state )
-						if ( (state.totems[totem_fire].up and state.totems[totem_fire].name == fire_elemental_totem and state.totems[totem_fire].remains >= 25) or state.timeToDie <= 60 ) then
+						if state.totems[totem_fire].name == fire_elemental_totem or state.pBuffs[ascendance].up or state.timeToDie <= 60 then
 							return jade_serpent
 						end
 						return nil
@@ -634,9 +652,9 @@ mod:AddToActionList('cooldown',
 mod:AddToActionList('cooldown',
 					berserking,
 					'',
-					'actions+=/berserking,if=!buff.bloodlust.up&!buff.elemental_mastery.up&(set_bonus.tier15_4pc_caster=1|(buff.ascendance.cooldown_remains=0&(dot.flame_shock.remains>buff.ascendance.duration|level<87)))',
+					'',
 					function( state )
-						if IsUsableSpell(berserking) and not (state.pBuffs[bloodlust].up or state.pBuffs[heroism].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) and not state.pBuffs[elemental_mastery].up and (state.set_bonuses['t15'] >= 4 or (state.cooldowns[ascendance] == 0 and state.tDebuffs[flame_shock].remains > 15)) then
+						if IsUsableSpell(berserking) then
 							return berserking
 						end
 						return nil
@@ -645,39 +663,17 @@ mod:AddToActionList('cooldown',
 mod:AddToActionList('cooldown',
 					blood_fury,
 					'',
-					'actions+=/blood_fury,if=buff.bloodlust.up|buff.ascendance.up|((cooldown.ascendance.remains>10|level<87)&cooldown.fire_elemental_totem.remains>10)',
+					'',
 					function( state )
-						if IsUsableSpell(blood_fury) and (state.pBuffs[bloodlust].up or state.pBuffs[heroism].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) or state.pBuffs[ascendance].up or ( state.cooldowns[ascendance] > 10 and state.cooldowns[fire_elemental_totem] > 10) then
+						if IsUsableSpell(blood_fury) then
 							return blood_fury
 						end
 						return nil
 					end )
 
 mod:AddToActionList('cooldown',
-					elemental_mastery,
-					'',
-					'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&(time>15&((!buff.bloodlust.up&time<120)|(!buff.berserking.up&!buff.bloodlust.up&buff.ascendance.up)|(time>=200&(cooldown.ascendance.remains>30|level<87))))',
-					function( state )
-						if state.talents[elemental_mastery] and	(state.combatTime > 15 and (not (state.pBuffs[bloodlust].up or state.pBuffs[heroism].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) and state.combatTime < 120) or (not state.pBuffs[berserking].up and not (state.pBuffs[bloodlust].up or state.pBuffs[heroism].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) and not state.pBuffs[ascendance].up) or ( state.combatTime >= 200 and state.cooldowns[ascendance].remains > 30 ) ) then 
-							return elemental_mastery
-						end
-						return nil
-					end )
-
-mod:AddToActionList('cooldown',
-					ancestral_swiftness,
-					'',
-					'actions+=/ancestral_swiftness,if=talent.ancestral_swiftness.enabled&!buff.ascendance.up',
-					function( state )
-						if state.talents[ancestral_swiftness] and not state.pBuffs[ascendance].up then
-							return ancestral_swiftness
-						end
-						return nil
-					end )
-
-mod:AddToActionList('cooldown',
 					fire_elemental_totem,
-					'',
+					'', -- have to watch for EET up if you have PE talented, or else they'll annihilate each other.
 					'actions+=/fire_elemental_totem,if=!active',
 					function( state )
 						if (not state.talents[primal_elementalist] or state.totems[totem_earth].name ~= earth_elemental_totem) and (state.totems[totem_fire].name ~= fire_elemental_totem) then
@@ -687,24 +683,57 @@ mod:AddToActionList('cooldown',
 					end )
 
 mod:AddToActionList('cooldown',
-					lifeblood,
+					ascendance,
+					'3+',
 					'',
-					'actions+=/lifeblood,if=(glyph.fire_elemental_totem.enabled&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active))|!glyph.fire_elemental_totem.enabled',
 					function( state )
-						if not state.glyphs[fire_elemental_totem] or (state.glyphs[fire_elemental_totem] and state.totems[totem_fire].up and state.totems[totem_fire].name == fire_elemental_totem) then
-							return lifeblood
+						if not state.pBuffs[ascendance].up and state.tCount >= 3 then
+							return ascendance
 						end
 						return nil
 					end )
 
 mod:AddToActionList('cooldown',
 					ascendance,
-					'', -- 
-					'actions+=/ascendance,if=active_enemies>1|(dot.flame_shock.remains>buff.ascendance.duration&(target.time_to_die<20|buff.bloodlust.up|time>=60)&cooldown.lava_burst.remains>0)',
+					'FS15+',
+					'',
 					function( state )
-						-- if not state.pBuffs[ascendance].up and (state.tCount > 1 or (state.tDebuffs[flame_shock].remains > 15 and (state.timeToDie < 20 or (state.pBuffs[bloodlust].up or state.pBuffs[heroism].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) or state.combatTime >= 60) and state.cooldowns[lava_burst] > 0)) then
-						if not state.pBuffs[ascendance].up and state.tCount > 1 or (state.tDebuffs[flame_shock].remains > 15 and state.cooldowns[lava_burst] > 0) then
+						if not state.pBuffs[ascendance].up and (state.tDebuffs[flame_shock].remains > 15 and state.cooldowns[lava_burst] > state.sGCD) then
 							return ascendance
+						end
+						return nil
+					end )
+
+
+mod:AddToActionList('cooldown',
+					elemental_mastery,
+					'', -- Ascendance is up or FET is up, or their cooldowns are > 30.
+					'',
+					function( state )
+						if state.talents[elemental_mastery] and (state.pBuffs[ascendance].up or state.totems[totem_fire].name == fire_elemental_totem or (state.cooldowns[ascendance] > 30 and state.cooldowns[fire_elemental_totem] > 30)) then
+							return elemental_mastery
+						end
+						return nil
+					end )
+
+mod:AddToActionList('cooldown',
+					lifeblood,
+					'',
+					'actions+=/lifeblood,if=(glyph.fire_elemental_totem.enabled&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active))|!glyph.fire_elemental_totem.enabled',
+					function( state )
+						if not state.glyphs[fire_elemental_totem] or (state.glyphs[fire_elemental_totem] and state.totems[totem_fire].name == fire_elemental_totem) then
+							return lifeblood
+						end
+						return nil
+					end )
+
+mod:AddToActionList('cooldown',
+					ancestral_swiftness,
+					'', -- There's no reason not to use AS during Ascendance, so I'm scratching this off.
+					'',
+					function( state )
+						if state.talents[ancestral_swiftness] then
+							return ancestral_swiftness
 						end
 						return nil
 					end )
@@ -717,9 +746,86 @@ mod:AddToActionList('cooldown',
 -- AOE --
 
 mod:AddToActionList('aoe',
+					magma_totem,
+					'7+',
+					'6+:  Cast Magma Totem before AoE phase or if there are 7+ targets.',
+					function( state )
+						if state.tCount >= 7 and not state.totems[totem_fire].up then
+							return magma_totem
+						end
+						return nil
+					end )
+
+mod:AddToActionList('aoe',
+					earthquake,
+					'6+',
+					'6+:  Cast Earthquake targets.',
+					function( state )
+						if state.tCount >= 6 then
+							return earthquake, nil, (not  state.pBuffs[ancestral_swiftness].up)
+						end
+						return nil
+					end )
+
+mod:AddToActionList('aoe',
+					lava_beam,
+					'6+',
+					'6+:  Cast Chain Lightning (Lava Beam w/ Ascendance)',
+					function( state )
+						if state.pBuffs[ascendance].up and state.tCount >= 6 then
+							return lava_beam, nil, (not state.pBuffs[ancestral_swiftness].up)
+						end
+						return nil
+					end )
+					
+mod:AddToActionList('aoe',
+					chain_lightning,
+					'6+',
+					'6+:  Cast Chain Lightning (Lava Beam w/ Ascendance)',
+					function( state )
+						if not state.pBuffs[ascendance].up and state.tCount >= 6 then
+							return chain_lightning, nil, (not state.pBuffs[ancestral_swiftness].up)
+						end
+						return nil
+					end )
+
+mod:AddToActionList('aoe',
+					lava_beam,
+					'3+',
+					'3+:  Over-ride rotation with Chain Lightning when 3+ targets can be hit.',
+					function( state )
+						if state.pBuffs[ascendance].up and state.tCount >=3 and state.pManaPct > 10 then
+							return lava_beam, nil, (not state.pBuffs[ancestral_swiftness].up)
+						end
+						return nil
+					end )
+
+mod:AddToActionList('aoe',
+					chain_lightning,
+					'3+',
+					'3+:  Over-ride rotation with Chain Lightning when 3+ targets can be hit.',
+					function( state )
+						if state.tCount >= 3 and state.pManaPct > 10 then
+							return chain_lightning, nil, (not state.pBuffs[ancestral_swiftness].up)
+						end
+						return nil
+					end )
+
+mod:AddToActionList('aoe',
+					thunderstorm,
+					'Mana',
+					'Hekili:  Regen some mana if needed and enemy is in melee range.',
+					function( state )
+						if state.tCount >= 7 and state.pManaPct < 80 and IsSpellInRange("Primal Strike", "target") then
+							return thunderstorm
+						end
+						return nil
+					end )
+
+mod:AddToActionList('aoe',
 					lava_beam,
 					'',
-					'actions.aoe=lava_beam',
+					'',
 					function( state )
 						if state.pBuffs[ascendance].up then
 							return lava_beam, nil, (not state.pBuffs[ancestral_swiftness].up)
@@ -728,100 +834,11 @@ mod:AddToActionList('aoe',
 					end )
 
 mod:AddToActionList('aoe',
-					magma_totem,
-					'>2',
-					'actions.aoe+=/magma_totem,if=active_enemies>2&!totem.fire.active',
-					function( state )
-						if not state.totems[totem_fire].up and state.tCount > 2 then
-							return magma_totem
-						end
-						return nil
-					end )
-
-mod:AddToActionList('aoe',
-					searing_totem,
-					'2-',
-					'actions.aoe+=/searing_totem,if=active_enemies<=2&!totem.fire.active',
-					function( state )
-						if not state.totems[totem_fire].up and state.tCount <= 2 then
-							return searing_totem
-						end
-						return nil
-					end )
-
-mod:AddToActionList('aoe',
-					lava_burst,
-					'2-',
-					'actions.aoe+=/lava_burst,if=active_enemies<3&dot.flame_shock.remains>cast_time&cooldown_react',
-					function( state )
-						if state.tCount < 3 and state.tDebuffs[flame_shock].remains > 2.0 then
-							return lava_burst, nil, (not state.pBuffs[ancestral_swiftness].up)
-						end
-						return nil
-					end )
-
-mod:AddToActionList('aoe',
-					flame_shock,
-					'Cycle',
-					'actions.aoe+=/flame_shock,cycle_targets=1,if=!ticking&active_enemies<3',
-					function( state )
-						-- This only works if Magma Totem is up and hitting things, otherwise tCount will == fsCount.
-						if state.tDebuffs[flame_shock].up and state.tCount > state.fsCount and state.tCount < 3 then
-							return flame_shock
-						end
-						return nil
-					end )
-
-mod:AddToActionList('aoe',
-					flame_shock,
-					'',
-					'N/A - use FS if it will expire before it comes off CD again',
-					function( state )
-						if state.tCount < 3 and (not state.tDebuffs[flame_shock].up or state.tDebuffs[flame_shock].remains < 5) then
-							return flame_shock
-						end
-						return nil
-					end )
-
-mod:AddToActionList('aoe',
-					earthquake,
-					'5+',
-					'actions.aoe+=/earthquake,if=active_enemies>4',
-					function( state )
-						if state.tCount > 4 then
-							return earthquake, nil, (not state.pBuffs[ancestral_swiftness].up)
-						end
-						return nil
-					end )
-
-mod:AddToActionList('aoe',
-					thunderstorm,
-					'',
-					'actions.aoe+=/thunderstorm,if=mana.pct_nonproc<80',
-					function( state )
-						if state.pManaPct < 80 then
-							return thunderstorm
-						end
-						return nil
-					end )
-
-mod:AddToActionList('aoe',
 					chain_lightning,
 					'',
-					'actions.aoe+=/chain_lightning,if=mana.pct_nonproc>10',
-					function( state )
-						if state.pManaPct > 10 then
-							return chain_lightning, nil, (not state.pBuffs[ancestral_swiftness].up)
-						end
-						return nil
-					end )
-
-mod:AddToActionList('aoe',
-					lightning_bolt,
 					'',
-					'actions.aoe+=/lightning_bolt',
 					function( state )
-						return lightning_bolt, nil, (not state.pBuffs[ancestral_swiftness].up)
+						return chain_lightning, nil, (not state.pBuffs[ancestral_swiftness].up)
 					end )
 
 -- AOE --
@@ -843,56 +860,56 @@ mod:AddToActionList('single',
 					end )
 
 mod:AddToActionList('single',
-					synapse_springs,
-					'Gloves',
-					'actions.single=use_item,name=[gloves],if=((cooldown.ascendance.remains>10|level<87)&cooldown.fire_elemental_totem.remains>10)|buff.ascendance.up|buff.bloodlust.up|totem.fire_elemental_totem.active',
+					flame_shock,
+					'FS0',
+					'1. Cast Flame Shock IF the DoT has expired or has 1 tick remaining.',
 					function( state )
-						if state.items[synapse_springs] and ( state.cooldowns[ascendance] > 10 and state.cooldowns[fire_elemental_totem] > 10 ) or state.pBuffs[ascendance].up or (state.pBuffs[bloodlust].up or state.pBuffs[heroism].up or state.pBuffs[ancient_hysteria].up or state.pBuffs[time_warp].up) or (state.totems[totem_fire].up and state.totems[totem_fire].name == fire_elemental_totem) then
-							return synapse_springs
-						end
-					end )
-
-mod:AddToActionList('single',
-					unleash_elements,
-					'UF',
-					'actions.single+=/unleash_elements,if=talent.unleashed_fury.enabled&!buff.ascendance.up',
-					function( state )
-						if state.talents[unleashed_fury] and state.pBuffs[flametongue_weapon].up and not state.pBuffs[ascendance].up then
-							return unleash_elements
-						end
-						return nil
-					end )
-
-mod:AddToActionList('single',
-					spiritwalkers_grace,
-					'',
-					'actions.single+=/spiritwalkers_grace,moving=1,if=buff.ascendance.up',
-					function( state )
-						if state.moving and state.pBuffs[ascendance].up then
-							return spiritwalkers_grace
-						end
-						return nil
-					end )
-
-
-mod:AddToActionList('single',
-					lava_burst,
-					'',
-					'actions.single+=/lava_burst,if=dot.flame_shock.remains>cast_time&(buff.ascendance.up|cooldown_react)',
-					function( state )
-						if (state.lastCast == flame_shock or state.tDebuffs[flame_shock].remains > (2.0 / state.sHaste)) or (state.tDebuffs[flame_shock].up and state.pBuffs[lava_surge].up) then
-							return lava_burst, nil, (not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[lava_surge].up)
+						if not state.tDebuffs[flame_shock].up or state.tDebuffs[flame_shock].remains < (3 / state.sHaste) then
+							return flame_shock
 						end
 						return nil
 					end )
 
 mod:AddToActionList('single',
 					flame_shock,
-					'<6sec',
-					'actions.single+=/flame_shock,if=ticks_remain<2',
+					'2+',
+					'2 - 5 targets: Single target rotation + cast Flame Shock on 1 additional target.',
 					function( state )
-						if state.tDebuffs[flame_shock].remains < 6 then
+						if (state.tCount >= 2 and state.tCount <= 5) and not state.tDebuffs[flame_shock].up then
 							return flame_shock
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
+					flame_shock,
+					'Cycle',
+					'2 - 5 targets: Single target rotation + cast Flame Shock on 1 additional target.',
+					function( state )
+						if (state.tCount >= 2 and state.tCount <= 5) and state.fsCount < 2 and state.tDebuffs[flame_shock].up then
+							return flame_shock
+						end
+						return nil
+					end )
+					
+mod:AddToActionList('single',
+					unleash_elements,
+					'UF',
+					'2. IF you have the L90 talent Unleashed Fury, cast Unleash Elements.',
+					function( state )
+						if state.talents[unleashed_fury] and state.pBuffs[flametongue_weapon].up then
+							return unleash_elements
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
+					lava_burst,
+					'',
+					'3. Cast Lava Burst IF it is off cooldown AND Flame Shock is on the target.',
+					function( state )
+						if (state.lastCast == flame_shock) or (state.tDebuffs[flame_shock].remains > (2.0 / state.sHaste)) or (state.tDebuffs[flame_shock].up and state.pBuffs[lava_surge].up) then
+							return lava_burst, nil, (not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[lava_surge].up)
 						end
 						return nil
 					end )
@@ -900,7 +917,7 @@ mod:AddToActionList('single',
 mod:AddToActionList('single',
 					elemental_blast,
 					'',
-					'actions.single+=/elemental_blast,if=talent.elemental_blast.enabled',
+					'4. IF you have the L90 talent Elemental Blast, cast Elemental Blast.',
 					function( state )
 						if state.talents[elemental_blast] then
 							return elemental_blast, nil, (not state.pBuffs[ancestral_swiftness].up)
@@ -910,59 +927,47 @@ mod:AddToActionList('single',
 
 mod:AddToActionList('single',
 					earth_shock,
-					'7x',
-					'actions.single+=/earth_shock,if=buff.lightning_shield.react=buff.lightning_shield.max_stack',
+					'LS6+',
+					'5. Cast Earth Shock IF Lightning Shield is at 6-7 charges.',
 					function( state )
-						if state.pBuffs[lightning_shield].count == 7 then
+						if state.pBuffs[lightning_shield].count >= 6 then
 							return earth_shock
 						end
 						return nil
 					end )
 					
 mod:AddToActionList('single',
-					flame_shock,
-					'preAsc',
-					'actions.single+=/flame_shock,if=time>60&remains<=buff.ascendance.duration&cooldown.ascendance.remains+buff.ascendance.duration<duration',
-					function( state )
-						if state.combatTime > 60 and state.tDebuffs[flame_shock].remains < 15 and (state.cooldowns[ascendance] + 15 < 30 ) then
-							return flame_shock
-						end
-						return nil
-					end )
-					
-mod:AddToActionList('single',
-					earth_elemental_totem,
-					'',
-					'actions.single+=/earth_elemental_totem,if=!active&cooldown.fire_elemental_totem.remains>=60',
-					function( state )
-						if (not state.talents[primal_elementalist] or not state.totems[totem_fire].name == fire_elemental_totem) and (state.totems[totem_earth].name ~= earth_elemental_totem and state.cooldowns[fire_elemental_totem] >= 60) then
-							return earth_elemental_totem
-						end
-						return nil
-					end )
-
-mod:AddToActionList('single',
 					searing_totem,
 					'',
-					'actions.single+=/searing_totem,if=cooldown.fire_elemental_totem.remains>20&!totem.fire.active',
+					'7. Drop Searing Totem IF you have no active fire totem AND Fire Elemental Totem cooldown has more than 15 seconds remaining.',
 					function( state )
-						if not state.totems[totem_fire].up then
+						if not state.totems[totem_fire].up and (not Hekili.DB.char['Cooldown Enabled'] or state.cooldowns[fire_elemental_totem] > 15) then
 							return searing_totem
 						end
 						return nil
 					end )
 
 mod:AddToActionList('single',
-					spiritwalkers_grace,
-					'',
-					'actions.single+=/spiritwalkers_grace,moving=1,if=((talent.elemental_blast.enabled&cooldown.elemental_blast.remains=0)|(cooldown.lava_burst.remains=0&!buff.lava_surge.react))|(buff.raid_movement.duration>=action.unleash_elements.gcd+action.earth_shock.gcd)',
+					chain_lightning,
+					'2+',
+					'Substitute Chain Lightning in place of Lightning Bolt any time two targets can be hit.',
 					function( state )
-						if state.moving and ((state.talents[elemental_blast] and state.cooldowns[elemental_blast] == 0) or (state.cooldowns[lava_burst] == 0 and not state.pBuffs[lava_surge].up)) then
-							return spiritwalkers_grace
+						if state.tCount >= 2 then
+							return chain_lightning, nil, (not state.pBuffs[ancestral_swiftness].up)
 						end
 						return nil
 					end )
 
+mod:AddToActionList('single',
+					earth_elemental_totem,
+					'',
+					'Hekili: If Fire Elemental Totem cooldown is greater than 60 seconds, we can pop Earth Elemental Totem.',
+					function( state )
+						if (not state.talents[primal_elementalist] or not state.totems[totem_fire].name == fire_elemental_totem) and (state.cooldowns[fire_elemental_totem] >= 60) then
+							return earth_elemental_totem
+						end
+						return nil
+					end )
 
 mod:AddToActionList('single',
 					lightning_bolt,

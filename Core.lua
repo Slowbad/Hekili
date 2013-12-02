@@ -424,6 +424,10 @@ function Hekili:SanityCheck()
 				self.DB.char['Primary Specialization Module'] = '(none)'
 				pmod = '(none)'
 			end
+		else -- pmod is not real
+			self:Print("Module |cFFFF9900" .. pmod .. "|r was not loaded or its name may have changed; unloading.")
+			self.DB.char['Primary Specialization Module'] = '(none)'
+			pmod = '(none)'
 		end
 		self.ActiveModule = self.Modules[ pmod ]
 		
@@ -438,6 +442,10 @@ function Hekili:SanityCheck()
 				self.DB.char['Secondary Specialization Module'] = '(none)'
 				smod = '(none)'
 			end
+		else -- smod is not real
+			self:Print("Module |cFFFF9900" .. smod .. "|r was not loaded or its name may have changed; unloading.")
+			self.DB.char['Secondary Specialization Module'] = '(none)'
+			smod = '(none)'
 		end
 		self.ActiveModule = self.Modules[ smod ]
 	end	

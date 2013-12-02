@@ -58,6 +58,7 @@ function Hekili:ACTIVE_TALENT_GROUP_CHANGED()
 	table.wipe(self.State.ST)
 	table.wipe(self.State.AE)
 	self:SanityCheck()
+	self:ApplyNameFilters()
 end
 
 
