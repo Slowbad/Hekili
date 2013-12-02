@@ -23,8 +23,8 @@ function Hekili:CreatePriorityButton( set, number )
 	local btnSpacing = 5
 		
 	button:SetFrameStrata("BACKGROUND")
-	button:EnableMouse(not Hekili.DB.char.locked)
-	button:SetMovable(not Hekili.DB.char.locked)
+	button:EnableMouse(not Hekili.DB.profile.locked)
+	button:SetMovable(not Hekili.DB.profile.locked)
 	button:SetClampedToScreen(true)
 
 	local group
@@ -69,7 +69,7 @@ function Hekili:CreatePriorityButton( set, number )
 
 	if number == 1 then
 		-- Position the first icon.
-		button:SetPoint(self.DB.char[set .. ' Relative To'], self.DB.char[set .. ' X'], self.DB.char[set .. ' Y'])
+		button:SetPoint(self.DB.profile[set .. ' Relative To'], self.DB.profile[set .. ' X'], self.DB.profile[set .. ' Y'])
 		-- button:SetPoint("CENTER", "Hekili_Engine_Frame", "CENTER", 0, initial_offset[set])
 		
 		button:SetScript("OnEnter", function(self)
@@ -135,15 +135,77 @@ end
 
 function Hekili:SaveCoordinates()
 	local _, _, relative, x, y = Hekili.UI.AButtons['ST'][1]:GetPoint()
-	self.DB.char['ST Relative To'] = relative
-	self.DB.char['ST X'] = x
-	self.DB.char['ST Y'] = y
+	self.DB.profile['ST Relative To'] = relative
+	self.DB.profile['ST X'] = x
+	self.DB.profile['ST Y'] = y
 
 	_, _, relative, x, y = Hekili.UI.AButtons['AE'][1]:GetPoint()
-	self.DB.char['AE Relative To'] = relative
-	self.DB.char['AE X'] = x
-	self.DB.char['AE Y'] = y
+	self.DB.profile['AE Relative To'] = relative
+	self.DB.profile['AE X'] = x
+	self.DB.profile['AE Y'] = y
 end
+
+
+function Hekili:RefreshUI()
+	self.UI.AButtons['ST'][1]:ClearAllPoints()
+	self.UI.AButtons['ST'][1]:SetPoint(self.DB.profile['ST Relative To'], self.DB.profile['ST X'], self.DB.profile['ST Y'])
+	self.UI.AButtons['ST'][1]:EnableMouse(not self.DB.profile.locked)
+	self.UI.AButtons['ST'][1]:SetMovable(not self.DB.profile.locked)
+	self.UI.AButtons['ST'][1]:SetSize(self.DB.profile['Single Target Primary Icon Size'], self.DB.profile['Single Target Primary Icon Size'])
+	self.UI.AButtons['ST'][1].topText:SetSize(self.DB.profile['Single Target Primary Icon Size'], self.DB.profile['Single Target Primary Icon Size'] / 2)
+	self.UI.AButtons['ST'][1].btmText:SetSize(self.DB.profile['Single Target Primary Icon Size'], self.DB.profile['Single Target Primary Icon Size'] / 2)
+
+	for i = 2, 5 do
+		self.UI.AButtons['ST'][i]:SetSize(self.DB.profile['Single Target Queued Icon Size'], self.DB.profile['Single Target Queued Icon Size'])
+		self.UI.AButtons['ST'][i].topText:SetSize(self.DB.profile['Single Target Queued Icon Size'], self.DB.profile['Single Target Queued Icon Size'] / 2)
+		self.UI.AButtons['ST'][i].btmText:SetSize(self.DB.profile['Single Target Queued Icon Size'], self.DB.profile['Single Target Queued Icon Size'] / 2)
+		self.UI.AButtons['ST'][i]:ClearAllPoints()
+
+		if self.DB.profile['Single Target Queue Direction'] == 'RIGHT' then
+			self.UI.AButtons['ST'][i]:SetPoint(self.invDirection[ self.DB.profile['Single Target Queue Direction'] ], self.UI.AButtons['ST'][i-1], self.DB.profile['Single Target Queue Direction'], self.DB.profile['Single Target Icon Spacing'], 0)
+		else
+			self.UI.AButtons['ST'][i]:SetPoint(self.invDirection[ self.DB.profile['Single Target Queue Direction'] ], self.UI.AButtons['ST'][i-1], self.DB.profile['Single Target Queue Direction'], -1 * self.DB.profile['Single Target Icon Spacing'], 0)
+		end
+	end
+
+	if self.LBF then
+		self.stGroup:ReSkin()
+	end
+
+
+	self.UI.AButtons['AE'][1]:ClearAllPoints()
+	self.UI.AButtons['AE'][1]:SetPoint(self.DB.profile['AE Relative To'], self.DB.profile['AE X'], self.DB.profile['AE Y'])
+	self.UI.AButtons['AE'][1]:EnableMouse(not self.DB.profile.locked)
+	self.UI.AButtons['AE'][1]:SetMovable(not self.DB.profile.locked)
+	self.UI.AButtons['AE'][1]:SetSize(self.DB.profile['Multi-Target Primary Icon Size'], self.DB.profile['Multi-Target Primary Icon Size'])
+	self.UI.AButtons['AE'][1].topText:SetSize(self.DB.profile['Multi-Target Primary Icon Size'], self.DB.profile['Multi-Target Primary Icon Size'] / 2)
+	self.UI.AButtons['AE'][1].btmText:SetSize(self.DB.profile['Multi-Target Primary Icon Size'], self.DB.profile['Multi-Target Primary Icon Size'] / 2)
+
+	for i = 2, 5 do
+		self.UI.AButtons['AE'][i]:SetSize(self.DB.profile['Multi-Target Queued Icon Size'], self.DB.profile['Multi-Target Queued Icon Size'])
+		self.UI.AButtons['AE'][i].topText:SetSize(self.DB.profile['Multi-Target Queued Icon Size'], self.DB.profile['Multi-Target Queued Icon Size'] / 2)
+		self.UI.AButtons['AE'][i].btmText:SetSize(self.DB.profile['Multi-Target Queued Icon Size'], self.DB.profile['Multi-Target Queued Icon Size'] / 2)
+		self.UI.AButtons['AE'][i]:ClearAllPoints()
+
+		if self.DB.profile['Multi-Target Queue Direction'] == 'RIGHT' then
+			self.UI.AButtons['AE'][i]:SetPoint(self.invDirection[ self.DB.profile['Multi-Target Queue Direction'] ], self.UI.AButtons['AE'][i-1], self.DB.profile['Multi-Target Queue Direction'], self.DB.profile['Multi-Target Icon Spacing'], 0)
+		else
+			self.UI.AButtons['AE'][i]:SetPoint(self.invDirection[ self.DB.profile['Multi-Target Queue Direction'] ], self.UI.AButtons['AE'][i-1], self.DB.profile['Multi-Target Queue Direction'], -1 * self.DB.profile['Multi-Target Icon Spacing'], 0)
+		end
+	end
+
+	if self.LBF then
+		self.aeGroup:ReSkin()
+	end
+
+
+end
+
+
+function Hekili:RefreshBindings()
+	self.DB.profile['Cooldown Hotkey'] = GetBindingKey("HEKILI_TOGGLE_COOLDOWNS") or ''
+	self.DB.profile['Hardcast Hotkey'] = GetBindingKey("HEKILI_TOGGLE_HARDCASTS") or ''
+end	
 
 
 function Hekili:LockAllButtons( lock )
@@ -175,7 +237,7 @@ function Hekili:InitCoreUI()
 	self.UI.Engine:SetAllPoints(UIParent)
 
 	-- Engine Values
-	self.UI.Engine.Interval = (1.0 / self.DB.char['Updates Per Second'])
+	self.UI.Engine.Interval = (1.0 / self.DB.profile['Updates Per Second'])
 	self.UI.Engine.Delay = 0
 
 	self.UI.Engine.TextInterval = 0.1

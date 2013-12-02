@@ -7,8 +7,8 @@ function OutputFlags( option, category )
 	local abilities = ''
 	local count = 0
 
-	if Hekili.ActiveModule then
-		for k,v in pairs(Hekili.ActiveModule.spells) do
+	if Hekili.Active then
+		for k,v in pairs(Hekili.Active.spells) do
 			if v[category] then
 				if count >= 1 then abilities = abilities .. ', ' end
 				abilities = abilities .. k
@@ -17,7 +17,7 @@ function OutputFlags( option, category )
 		end
 	end
 
-	if Hekili.DB.char[option] == true then
+	if Hekili.DB.profile[option] == true then
 		output = 'Hide ' .. category .. ' abilities from the priority display (presently shown).'
 	else
 		output = 'Show ' .. category .. ' abilities from the priority display (presently hidden).'
@@ -33,7 +33,7 @@ end
 
 
 function Hekili:IsFiltered( ability )
-	local mod = self.ActiveModule
+	local mod = self.Active
 	local spell
 
 	if not mod or not mod.spells or not mod.spells[ability] then
@@ -42,19 +42,19 @@ function Hekili:IsFiltered( ability )
 		spell = mod.spells[ability]
 	end
 	
-	if spell.talent and not self.DB.char[ 'Show Talents' ] then
+	if spell.talent and not self.DB.profile[ 'Show Talents' ] then
 		return true
-	elseif spell.racial and not self.DB.char[ 'Show Racials' ] then
+	elseif spell.racial and not self.DB.profile[ 'Show Racials' ] then
 		return true
-	elseif spell.interrupt and not self.DB.char[ 'Show Interrupts' ] then
+	elseif spell.interrupt and not self.DB.profile[ 'Show Interrupts' ] then
 		return true
-	elseif spell.precombat and not self.DB.char[ 'Show Precombat' ] then
+	elseif spell.precombat and not self.DB.profile[ 'Show Precombat' ] then
 		return true
-	elseif spell.profession and not self.DB.char[ 'Show Professions' ] then
+	elseif spell.profession and not self.DB.profile[ 'Show Professions' ] then
 		return true
-	elseif spell.bloodlust and not self.DB.char[ 'Show Bloodlust' ] then
+	elseif spell.bloodlust and not self.DB.profile[ 'Show Bloodlust' ] then
 		return true
-	elseif spell.consumable and not self.DB.char[ 'Show Consumables' ] then
+	elseif spell.consumable and not self.DB.profile[ 'Show Consumables' ] then
 		return true
 	elseif spell.name then
 		return true
@@ -64,7 +64,7 @@ function Hekili:IsFiltered( ability )
 			spell.cdUpdated	= GetTime()
 		end
 		
-		if spell.cooldown > self.DB.char['Cooldown Threshold'] then
+		if spell.cooldown > self.DB.profile['Cooldown Threshold'] then
 			return true
 		end
 	end
@@ -81,18 +81,18 @@ function Hekili:GetOptions()
 		type = 'group',
 		childGroups = 'tab',
 		args = {
-         	['Basic'] = {
-            	type = "group",
-            	name = "Basic Settings",
-            	childGroups = 'tree',
-            	order = 0,
-            	args = {
+			['Basic'] = {
+				type = "group",
+				name = "Basic Settings",
+				childGroups = 'tree',
+				order = 0,
+				args = {
 					enabled = {
 						type = 'toggle',
 						name = 'Enabled',
 						desc = function ()
 									local output
-									if self.DB.char.enabled == true then
+									if Hekili.DB.profile.enabled == true then
 										output = 'Disable this AddOn (presently enabled).'
 									else
 										output = 'Enable this AddOn (presently disabled).'
@@ -108,7 +108,7 @@ function Hekili:GetOptions()
 						name = 'Locked',
 						desc = function ()
 									local output
-									if self.DB.char.locked == true then
+									if Hekili.DB.profile.locked == true then
 										output = 'Unlock the priority action buttons (presently locked).'
 									else
 										output = 'Lock this AddOn (presently unlocked).'
@@ -124,7 +124,7 @@ function Hekili:GetOptions()
 						name = 'Verbose',
 						desc = function ()
 									local output
-									if self.DB.char.verbose == true then
+									if Hekili.DB.profile.verbose == true then
 										output = 'Hide detailed status information for this AddOn (presently shown).'
 									else
 										output = 'Show detailed status information for this AddOn (presently hidden).'
@@ -160,7 +160,7 @@ function Hekili:GetOptions()
 								name = 'Include BG/Arena',
 								desc = function ()
 											local output
-											if self.DB.char['PvP Visibility'] then
+											if Hekili.DB.profile['PvP Visibility'] then
 												output = 'Hide the priority displays in arenas and battlegrounds (presently shown).'
 											else
 												output = 'Show the priority displays in arenas and battlegrounds (presently hidden).'
@@ -179,43 +179,26 @@ function Hekili:GetOptions()
 						inline = true,
 						order = 5,
 						args = {
-							['Primary Specialization Module'] = {
+							['Module'] = {
 								type = 'select',
-								name = 'Primary Specialization Module',
+								name = 'Module',
 								values = function()
 											local ptable = {}
-											for k,_ in pairs(Hekili.Modules) do
-												ptable[k] = k
+											for k,v in pairs(Hekili.Modules) do
+												if v.class == UnitClass("player") and v.spec == select(2, GetSpecializationInfo(GetSpecialization())) then
+													ptable[k] = k
+												end
 											end
 											ptable["(none)"] = "(none)"
 											return ptable
 										end,
-								desc = 'Select the priority module for your primary specialization.',
+								desc = 'Select the priority module for your current specialization profile.',
 								cmdHidden = true,
 								set = 'SetOption',
 								get = 'GetOption',
 								order = 0,
 								width = 'full',
 							},
-
-							['Secondary Specialization Module'] = {
-								type = 'select',
-								name = 'Secondary Specialization Module',
-								values = function()
-											local ptable = {}
-											for k,_ in pairs(Hekili.Modules) do
-												ptable[k] = k
-											end
-											ptable["(none)"] = "(none)"
-											return ptable
-										end,
-								desc = 'Select the priority module for your secondary specialization.',
-								cmdHidden = true,
-								set = 'SetOption',
-								get = 'GetOption',
-								order = 1,
-								width = 'full',
-							}
 						}
 					},
 					['Engine'] = {
@@ -260,7 +243,7 @@ function Hekili:GetOptions()
 								name = 'Enable Single Target',
 								desc = function ()
 											local output
-											if self.DB.char['Single Target Enabled'] == true then
+											if Hekili.DB.profile['Single Target Enabled'] == true then
 												output = 'Disable Hekili for single-target rotation (presently enabled).'
 											else
 												output = 'Enable Hekili for single-target rotation (presently disabled).'
@@ -355,7 +338,7 @@ function Hekili:GetOptions()
 								name = 'Enable Multi-Target',
 								desc = function ()
 											local output
-											if self.DB.char['Single Target Enabled'] == true then
+											if Hekili.DB.profile['Single Target Enabled'] == true then
 												output = 'Disable Hekili for single-target rotation (presently enabled).'
 											else
 												output = 'Enable Hekili for single-target rotation (presently disabled).'
@@ -373,7 +356,7 @@ function Hekili:GetOptions()
 								name	= 'Allow Cooldowns',
 								desc	= function ()
 											local output
-											if self.DB.char['Multi-Target Cooldowns'] == true then
+											if Hekili.DB.profile['Multi-Target Cooldowns'] == true then
 												output = 'Disallow cooldowns from showing in the multi-target rotation when cooldowns are enabled (presently allowed).'
 											else
 												output = 'Allow cooldowns to show in the multi-target rotation when cooldowns are enabled (presently disallowed).'
@@ -533,7 +516,7 @@ function Hekili:GetOptions()
 								name	= 'Show Cooldowns',
 								desc	= function ()
 											local output
-											if self.DB.char['Cooldown Enabled'] == true then
+											if Hekili.DB.profile['Cooldown Enabled'] == true then
 												output = 'Hide cooldowns from both rotations (presently enabled)'
 											else
 												output = 'Show cooldowns from both rotations (presently disabled).'
@@ -551,7 +534,7 @@ function Hekili:GetOptions()
 								name	= 'Show Hardcasts',
 								desc 	= function ()
 											local output
-											if self.DB.char['Cooldown Enabled'] == true then
+											if Hekili.DB.profile['Cooldown Enabled'] == true then
 												output = 'Hide hardcasts from both rotations (presently shown)'
 											else
 												output = 'Hide hardcasts from both rotations (presently hidden).'
@@ -624,14 +607,14 @@ function Hekili:GetOptions()
 			}		
 		}
 	}
-
+	
 	return Options
 end
 
 
 function Hekili:GetDefaults()
 	local defaults = {
-		char = {
+		profile = {
 			enabled								= true,
 			locked								= false,
 			verbose								= false,
@@ -644,8 +627,7 @@ function Hekili:GetDefaults()
 			['AE X']							= 0,
 			['AE Y']							= -100,
 			['AE Relative To']					= 'CENTER',
-			['Primary Specialization Module']	= 'Enhancement Shaman SimC 5.4.1',
-			['Secondary Specialization Module']	= 'Enhancement Shaman SimC 5.4.1',
+			['Module']							= 'Enhancement Shaman SimC 5.4.1',
 			['Single Target Enabled']			= true,
 			['Multi-Target Enabled']			= true,
 			['Visibility']						= 'Always Show',
@@ -678,16 +660,6 @@ function Hekili:GetDefaults()
 			['Hardcast Hotkey'] 				= '',
 			['Cooldown Threshold']				= 300,
 			['Name Filter']						= ''
-		},
-		profile = {
-			['CD Talents']						= true,
-			['CD Racials']						= false,
-			['CD Interrupts']					= true,
-			['CD Precombat']					= true,
-			['CD Professions']					= false,
-			['CD Bloodlust']					= false,
-			['CD Consumables']					= false,
-			['CD Threshold']					= 180
 		}
 	}
 
@@ -696,25 +668,25 @@ end
 
 
 function Hekili:ToggleEnable()
-	if self.DB.char.enabled then
-		Hekili.DB.char.enabled = false
+	if self.DB.profile.enabled then
+		self.DB.profile.enabled = false
 		Hekili:Disable()
 	else
-		Hekili.DB.char.enabled = true
+		self.DB.profile.enabled = true
 		Hekili:Enable()
 	end
 end
 
 
 function Hekili:ToggleCooldowns()
-	Hekili.DB.char['Cooldown Enabled'] = not Hekili.DB.char['Cooldown Enabled']
-	if self:IsVerbose() then self:Print("Option |cFF00FF00Cooldown Enabled|r set to |cFF00FF00" .. tostring(self.DB.char['Cooldown Enabled']) .. "|r.") end
+	self.DB.profile['Cooldown Enabled'] = not self.DB.profile['Cooldown Enabled']
+	if self:IsVerbose() then self:Print("Option |cFF00FF00Cooldown Enabled|r set to |cFF00FF00" .. tostring(self.DB.profile['Cooldown Enabled']) .. "|r.") end
 end
 
 
 function Hekili:ToggleHardcasts()
-	Hekili.DB.char['Show Hardcasts'] = not Hekili.DB.char['Show Hardcasts']
-	if self:IsVerbose() then self:Print("Option |cFF00FF00Show Hardcasts|r set to |cFF00FF00" .. tostring(self.DB.char['Show Hardcasts']) .. "|r.") end
+	self.DB.profile['Show Hardcasts'] = not self.DB.profile['Show Hardcasts']
+	if self:IsVerbose() then self:Print("Option |cFF00FF00Show Hardcasts|r set to |cFF00FF00" .. tostring(self.DB.profile['Show Hardcasts']) .. "|r.") end
 end
 
 
@@ -727,7 +699,7 @@ function Hekili:SetOption(info, input)
 	end
 	
 	if (info.type ~= 'keybinding') then
-		self.DB.char[opt] = input
+		self.DB.profile[opt] = input
 	end
 	
 	if opt == "enabled" then
@@ -743,18 +715,12 @@ function Hekili:SetOption(info, input)
 	elseif opt == 'Updates Per Second' then
 		self.UI.Engine.Interval = (1.0 / input)
 
-	elseif opt == 'Primary Specialization Module' then
-		if GetActiveSpecGroup() == 1 and self.Modules[ self.DB.char['Primary Specialization Module'] ] then
-			self.ActiveModule = self.Modules[ self.DB.char['Primary Specialization Module'] ]
+	elseif opt == 'Module' then
+		if self.Modules[ self.DB.profile['Module'] ] then
+			self.Active = self.Modules[ self.DB.profile['Module'] ]
 		end
 		self:SanityCheck()
 		
-	elseif opt == 'Secondary Specialization Module' then
-		if GetActiveSpecGroup() == 2 and self.Modules[ self.DB.char['Secondary Specialization Module'] ] then
-			self.ActiveModule = self.Modules[ self.DB.char['Secondary Specialization Module'] ]
-		end
-		self:SanityCheck()
-
 	elseif opt == 'Single Target Enabled' then
 		if input == false then
 			for i = 1, 5 do
@@ -774,8 +740,8 @@ function Hekili:SetOption(info, input)
 
 	elseif opt == 'Cooldown Hotkey' then
 		-- Clear the old binding.
-		if self.DB.char[opt] ~= '' then
-			self.DB.char[opt] = ''
+		if self.DB.profile[opt] ~= '' then
+			self.DB.profile[opt] = ''
 		end
 		
 		if GetBindingKey("HEKILI_TOGGLE_COOLDOWNS") then
@@ -784,13 +750,13 @@ function Hekili:SetOption(info, input)
 		
 		if input ~= '' then
 			SetBinding(input, "HEKILI_TOGGLE_COOLDOWNS")
-			self.DB.char[opt] = input
+			self.DB.profile[opt] = input
 		end
 
 	elseif opt == 'Hardcast Hotkey' then
 		-- Clear the old binding.
-		if self.DB.char[opt] ~= '' then
-			self.DB.char[opt] = ''
+		if self.DB.profile[opt] ~= '' then
+			self.DB.profile[opt] = ''
 		end
 		
 		if GetBindingKey("HEKILI_TOGGLE_HARDCASTS") then
@@ -799,110 +765,35 @@ function Hekili:SetOption(info, input)
 		
 		if input ~= '' then
 			SetBinding(input, "HEKILI_TOGGLE_HARDCASTS")
-			self.DB.char[opt] = input
+			self.DB.profile[opt] = input
 		end
 		
 	elseif opt == 'Name Filter' then
-		self.DB.char[opt] = self:ApplyNameFilters( input )
+		self.DB.profile[opt] = self:ApplyNameFilters( input )
 		
 	elseif opt == 'Single Target Queue Direction' then
-		for i = 2, 5 do
-			self.UI.AButtons.ST[i]:ClearAllPoints()
-			if input == 'RIGHT' then
-				self.UI.AButtons.ST[i]:SetPoint(self.invDirection[ input ], self.UI.AButtons.ST[i-1], input, self.DB.char['Single Target Icon Spacing'], 0)
-			else
-				self.UI.AButtons.ST[i]:SetPoint(self.invDirection[ input ], self.UI.AButtons.ST[i-1], input, -1 * self.DB.char['Single Target Icon Spacing'], 0)
-			end
-		end
+		self:RefreshUI()
 		
 	elseif opt == 'Single Target Primary Icon Size' then
-		self.UI.AButtons.ST[1]:ClearAllPoints()
-		self.UI.AButtons.ST[1]:SetPoint(self.DB.char['ST Relative To'], self.DB.char['ST X'], self.DB.char['ST Y'])
-		self.UI.AButtons.ST[1]:SetWidth(input)
-		self.UI.AButtons.ST[1]:SetHeight(input)
-		self.UI.AButtons.ST[1].topText:SetSize(input, input / 2)
-		self.UI.AButtons.ST[1].btmText:SetSize(input, input / 2)
-		
-		if self.LBF then
-			self.stGroup:ReSkin()
-		end
+		self:RefreshUI()
 		
 	elseif opt == 'Single Target Icon Spacing' then
-		for i = 2, 5 do
-			self.UI.AButtons.ST[i]:ClearAllPoints()
-			if self.DB.char['Single Target Queue Direction'] == 'RIGHT' then
-				self.UI.AButtons.ST[i]:SetPoint(self.invDirection[self.DB.char['Single Target Queue Direction']], self.UI.AButtons.ST[i-1], self.DB.char['Single Target Queue Direction'], self.DB.char['Single Target Icon Spacing'], 0)
-			else
-				self.UI.AButtons.ST[i]:SetPoint(self.invDirection[self.DB.char['Single Target Queue Direction']], self.UI.AButtons.ST[i-1], self.DB.char['Single Target Queue Direction'], -1 * self.DB.char['Single Target Icon Spacing'], 0)
-			end
-		end
+		self:RefreshUI()
 		
 	elseif opt == 'Single Target Queued Icon Size' then
-		for i = 2, 5 do
-			if self.DB.char['Single Target Queue Direction'] == 'RIGHT' then
-				self.UI.AButtons.ST[i]:SetPoint(self.invDirection[self.DB.char['Single Target Queue Direction']], self.UI.AButtons.ST[i-1], self.DB.char['Single Target Queue Direction'], self.DB.char['Single Target Icon Spacing'], 0)
-			else
-				self.UI.AButtons.ST[i]:SetPoint(self.invDirection[self.DB.char['Single Target Queue Direction']], self.UI.AButtons.ST[i-1], self.DB.char['Single Target Queue Direction'], -1 * self.DB.char['Single Target Icon Spacing'], 0)
-			end
-			self.UI.AButtons.ST[i]:SetWidth(input)
-			self.UI.AButtons.ST[i]:SetHeight(input)
-			self.UI.AButtons.ST[i].topText:SetSize(input, input / 2)
-			self.UI.AButtons.ST[i].btmText:SetSize(input, input / 2)
-		end
-
-		if self.LBF then
-			self.stGroup:ReSkin()
-		end
+		self:RefreshUI()
 
 	elseif opt == 'Multi-Target Queue Direction' then
-		for i = 2, 5 do
-			Hekili.UI.AButtons.AE[i]:ClearAllPoints()
-			if input == 'RIGHT' then
-				Hekili.UI.AButtons.AE[i]:SetPoint(Hekili.invDirection[ input ], Hekili.UI.AButtons.AE[i-1], input, self.DB.char['Multi-Target Icon Spacing'], 0)
-			else
-				Hekili.UI.AButtons.AE[i]:SetPoint(Hekili.invDirection[ input ], Hekili.UI.AButtons.AE[i-1], input, -1 * self.DB.char['Multi-Target Icon Spacing'], 0)
-			end
-		end
+		self:RefreshUI()
 
 	elseif opt == 'Multi-Target Primary Icon Size' then
-		Hekili.UI.AButtons.AE[1]:ClearAllPoints()
-		Hekili.UI.AButtons.AE[1]:SetPoint(self.DB.char['AE Relative To'], self.DB.char['AE X'], self.DB.char['AE Y'])
-		Hekili.UI.AButtons.AE[1]:SetWidth(input)
-		Hekili.UI.AButtons.AE[1]:SetHeight(input)
-		self.UI.AButtons.AE[i].topText:SetSize(input, input / 2)
-		self.UI.AButtons.AE[i].btmText:SetSize(input, input / 2)
-		
-		if self.LBF then
-			self.aeGroup:ReSkin()
-		end
+		self:RefreshUI()
 				
 	elseif opt == 'Multi-Target Queued Icon Size' then
-		for i = 2, 5 do
-			self.UI.AButtons.AE[i]:ClearAllPoints()
-			if self.DB.char['Multi-Target Queue Direction'] == 'RIGHT' then
-				self.UI.AButtons.AE[i]:SetPoint(self.invDirection[self.DB.char['Multi-Target Queue Direction']], self.UI.AButtons.AE[i-1], self.DB.char['Multi-Target Queue Direction'], self.DB.char['Multi-Target Icon Spacing'], 0)
-			else
-				self.UI.AButtons.AE[i]:SetPoint(self.invDirection[self.DB.char['Multi-Target Queue Direction']], self.UI.AButtons.AE[i-1], self.DB.char['Multi-Target Queue Direction'], -1 * self.DB.char['Multi-Target Icon Spacing'], 0)
-			end
-			self.UI.AButtons.AE[i]:SetWidth(input)
-			self.UI.AButtons.AE[i]:SetHeight(input)
-			self.UI.AButtons.AE[i].topText:SetSize(input, input / 2)
-			self.UI.AButtons.AE[i].btmText:SetSize(input, input / 2)
-		end
-
-		if self.LBF then
-			self.aeGroup:ReSkin()
-		end
+		self:RefreshUI()
 		
 	elseif opt == 'Multi-Target Icon Spacing' then
-		for i = 2, 5 do
-			self.UI.AButtons.AE[i]:ClearAllPoints()
-			if self.DB.char['Multi-Target Queue Direction'] == 'RIGHT' then
-				self.UI.AButtons.AE[i]:SetPoint(self.invDirection[self.DB.char['Multi-Target Queue Direction']], self.UI.AButtons.AE[i-1], self.DB.char['Multi-Target Queue Direction'], self.DB.char['Multi-Target Icon Spacing'], 0)
-			else
-				self.UI.AButtons.AE[i]:SetPoint(self.invDirection[self.DB.char['Multi-Target Queue Direction']], self.UI.AButtons.AE[i-1], self.DB.char['Multi-Target Queue Direction'], -1 * self.DB.char['Multi-Target Icon Spacing'], 0)
-			end
-		end
+		self:RefreshUI()
 
 	end
 end
@@ -911,8 +802,8 @@ end
 function Hekili:GetOption(info)
 	local opt = info[#info]
 	
-	if self.DB.char[opt] ~= nil then
-		return self.DB.char[opt]
+	if self.DB.profile[opt] ~= nil then
+		return self.DB.profile[opt]
 	else
 		if Hekili:IsVerbose() then Hekili:Print("Error in GetOption(" .. opt .. "): no such option value.") end
 		return nil
@@ -925,10 +816,10 @@ function Hekili:ApplyNameFilters( input )
 	local updatedFilter = ''
 	local count = 0
 
-	if not input then input = self.DB.char[ 'Name Filter' ] end
+	if not input then input = self.DB.profile[ 'Name Filter' ] end
 
-	if self.ActiveModule and self.ActiveModule.spells then
-		for k, v in pairs(self.ActiveModule.spells) do
+	if self.Active and self.Active.spells then
+		for k, v in pairs(self.Active.spells) do
 			if input:find(k) then
 				v.name = true
 				count = count + 1
@@ -950,5 +841,5 @@ end
 	
 
 function Hekili:IsVerbose()
-	return self.DB.char['verbose']
+	return self.DB.profile['verbose']
 end

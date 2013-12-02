@@ -57,6 +57,8 @@ function Hekili:ACTIVE_TALENT_GROUP_CHANGED()
 	table.wipe(self.UseAbility)
 	table.wipe(self.State.ST)
 	table.wipe(self.State.AE)
+	self:RefreshUI()
+	self:RefreshBindings()
 	self:SanityCheck()
 	self:ApplyNameFilters()
 end
@@ -84,15 +86,14 @@ end
 
 function Hekili:COMBAT_LOG_EVENT_UNFILTERED(...)
 
-	if self.ActiveModule and self.ActiveModule.CLEU then
-		self.ActiveModule:CLEU(self, ...)
+	if self.Active and self.Active.CLEU then
+		self.Active:CLEU(self, ...)
 	end
 
 end
 
 function Hekili:UPDATE_BINDINGS()
-	self.DB.char['Cooldown Hotkey'] = GetBindingKey("HEKILI_TOGGLE_COOLDOWNS") or ''
-	self.DB.char['Hardcast Hotkey'] = GetBindingKey("HEKILI_TOGGLE_HARDCASTS") or ''
+	self:RefreshBindings()
 end
 
 

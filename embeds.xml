@@ -9,4 +9,5 @@
   <Include file="Libs\AceConfig-3.0\AceConfig-3.0.xml"/>
   <Include file="Libs\AceEvent-3.0\AceEvent-3.0.xml"/>
   <Script file="Libs\LibSpellRange-1.0\LibSpellRange-1.0.lua"/>
+  <Script file="Libs\LibDualSpec-1.0\LibDualSpec-1.0.lua"/>
 </Ui>

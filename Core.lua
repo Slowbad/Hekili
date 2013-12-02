@@ -31,16 +31,16 @@ local pvpZones = {
 
 function Hekili:ProcessPriorityList( id )
 
-	local module = Hekili.ActiveModule
+	local module = Hekili.Active
 	
 	local _, zoneType = IsInInstance()
 	
 	if ( not module or not module.enabled[id] ) or
-		( self.DB.char['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
-		( self.DB.char['Visibility'] == 'Show in Combat' and ( not UnitAffectingCombat('player') and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) ) or
-		( self.DB.char['PvP Visibility'] == false and pvpZones[zoneType] ) or
-		( self.DB.char['Single-Target Enabled'] == false and id == 'ST' ) or
-		( self.DB.char['Multi-Target Enabled'] == false and id == 'AE' ) or
+		( self.DB.profile['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
+		( self.DB.profile['Visibility'] == 'Show in Combat' and ( not UnitAffectingCombat('player') and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) ) or
+		( self.DB.profile['PvP Visibility'] == false and pvpZones[zoneType] ) or
+		( self.DB.profile['Single-Target Enabled'] == false and id == 'ST' ) or
+		( self.DB.profile['Multi-Target Enabled'] == false and id == 'AE' ) or
 		( UnitHasVehicleUI('player') ) then
 		for i = 1, 5 do
 			Hekili.UI.AButtons[id][i]:Hide()
@@ -74,15 +74,7 @@ function Hekili:ProcessPriorityList( id )
 		local useCooldown		= 999
 		local useCDThreshold	= 30
 
-	--[[
-			if ( action.type == 'precombat' and ( self.DB.char[ 'Show Precombat' ] or UnitAffectingCombat('player') ) ) or
-			   ( action.type == 'cooldown' and ( self.DB.char[ 'Cooldown Enabled' ] and ( id == 'ST' or self.DB.char[ 'Multi-Target Cooldowns' ] ) ) ) or
-			   ( action.type == 'aoe' and ( id == 'AE' or ( self.DB.char[ 'Multi-Target Integration' ] ~= 0 and state.tCount >= self.DB.char[ 'Multi-Target Integration' ] ) ) ) or
-			   ( action.type == 'single' and ( id == 'ST' or ( self.DB.char[ 'Multi-Target Integration' ] == 0 or state.tCount < self.DB.char[ 'Multi-Target Integration' ] ) ) ) then
-		]]	
-
-
-		if self.DB.char[ 'Show Precombat' ] then
+		if self.DB.profile[ 'Show Precombat' ] then
 			for line, action in ipairs(module.actionList.precombat) do
 
 				local ckAction, ckWait, ckHardcast, ckCooldown
@@ -93,7 +85,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.char['Show Hardcasts'] ) then
+				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
 					
 					-- May want to add some smoothing to this.
@@ -110,7 +102,7 @@ function Hekili:ProcessPriorityList( id )
 			end
 		end
 
-		if useCooldown > 0 and ( self.DB.char[ 'Cooldown Enabled' ] and ( id == 'ST' or self.DB.char[ 'Multi-Target Cooldowns' ] ) ) then
+		if useCooldown > 0 and ( self.DB.profile[ 'Cooldown Enabled' ] and ( id == 'ST' or self.DB.profile[ 'Multi-Target Cooldowns' ] ) ) then
 			for line, action in ipairs(module.actionList.cooldown) do
 
 				local ckAction, ckWait, ckHardcast, ckCooldown
@@ -121,7 +113,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.char['Show Hardcasts'] ) then
+				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
 					
 					-- May want to add some smoothing to this.
@@ -138,7 +130,7 @@ function Hekili:ProcessPriorityList( id )
 			end
 		end
 
-		if useCooldown > 0 and ( id == 'AE' or ( self.DB.char[ 'Multi-Target Integration' ] ~= 0 and state.tCount >= self.DB.char[ 'Multi-Target Integration' ] ) ) then
+		if useCooldown > 0 and ( id == 'AE' or ( self.DB.profile[ 'Multi-Target Integration' ] ~= 0 and state.tCount >= self.DB.profile[ 'Multi-Target Integration' ] ) ) then
 			for line, action in ipairs(module.actionList.aoe) do
 
 				local ckAction, ckWait, ckHardcast, ckCooldown
@@ -149,7 +141,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.char['Show Hardcasts'] ) then
+				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
 					
 					-- May want to add some smoothing to this.
@@ -177,7 +169,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.char['Show Hardcasts'] ) then
+				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
 					
 					-- May want to add some smoothing to this.
@@ -197,8 +189,8 @@ function Hekili:ProcessPriorityList( id )
 		if not useAction or (useCooldown > useCDThreshold and i > 1) then
 			Hekili.UI.AButtons[id][i]:Hide()
 		else
-			if ( id == 'ST' and self.DB.char['Single Target Enabled'] and i <= self.DB.char['Single Target Icons Displayed'] ) or
-				( id == 'AE' and self.DB.char['Multi-Target Enabled'] and i <= self.DB.char['Multi-Target Icons Displayed'] ) then
+			if ( id == 'ST' and self.DB.profile['Single Target Enabled'] and i <= self.DB.profile['Single Target Icons Displayed'] ) or
+				( id == 'AE' and self.DB.profile['Multi-Target Enabled'] and i <= self.DB.profile['Multi-Target Icons Displayed'] ) then
 				Hekili.UI.AButtons[id][i]:Show()
 			end
 
@@ -250,8 +242,8 @@ function Hekili:ProcessPriorityList( id )
 		end
 	end
 
-	if id == 'AE' and self.DB.char['Multi-Target Enabled'] then
-		if self.DB.char['Multi-Target Illumination'] > 0 and state.tCount >= self.DB.char['Multi-Target Illumination'] then
+	if id == 'AE' and self.DB.profile['Multi-Target Enabled'] then
+		if self.DB.profile['Multi-Target Illumination'] > 0 and state.tCount >= self.DB.profile['Multi-Target Illumination'] then
 			ActionButton_ShowOverlayGlow(Hekili.UI.AButtons[id][1])
 			Hekili.UI.AButtons[id][1].targets:SetText(state.fsCount .. ' (' .. state.tCount .. ')')
 		else
@@ -261,8 +253,8 @@ function Hekili:ProcessPriorityList( id )
 	end
 
 	for i = 1, 5 do
-		if (self.DB.char['Single Target Enabled'] and id == 'ST' and i > Hekili.DB.char['Single Target Icons Displayed']) or
-			(self.DB.char['Multi-Target Enabled'] and id == 'AE' and i > Hekili.DB.char['Multi-Target Icons Displayed']) then
+		if (self.DB.profile['Single Target Enabled'] and id == 'ST' and i > Hekili.DB.profile['Single Target Icons Displayed']) or
+			(self.DB.profile['Multi-Target Enabled'] and id == 'AE' and i > Hekili.DB.profile['Multi-Target Icons Displayed']) then
 			Hekili.UI.AButtons[id][i]:Hide()
 		end
 		
@@ -280,13 +272,13 @@ end
 
 function Hekili:UpdateGreenText()
 
-	if self.ActiveModule == self.Modules[ '(none)' ] or not self.UseAbility then
+	if self.Active == self.Modules[ '(none)' ] or not self.UseAbility then
 		return
 	end
 
 	local simTime = GetTime()
 	
-	if self.DB.char['Single Target Enabled'] and self.UseAbility.ST and self.UseAbility.ST[1]  then
+	if self.DB.profile['Single Target Enabled'] and self.UseAbility.ST and self.UseAbility.ST[1]  then
 
 		if self.UseAbility.ST[1].time <= simTime then
 			self.UI.AButtons.ST[1].topText:SetText( '0' )
@@ -295,9 +287,9 @@ function Hekili:UpdateGreenText()
 			self.UI.AButtons.ST[1].topText:SetText( tostring( round( self.UseAbility.ST[1].time - simTime, 1 ) ) )
 		end
 
-		for i = 2, self.DB.char['Single Target Icons Displayed'] do
+		for i = 2, self.DB.profile['Single Target Icons Displayed'] do
 			if self.UseAbility.ST[i] and self.UseAbility.ST[i].name then
-				if self.ActiveModule.spells[ self.UseAbility.ST[i].name ].offGCD then
+				if self.Active.spells[ self.UseAbility.ST[i].name ].offGCD then
 					self.UI.AButtons.ST[i].topText:SetText( self.UI.AButtons.ST[i-1].topText:GetText() )
 				else
 					self.UI.AButtons.ST[i].topText:SetText( tostring( round( self.UseAbility.ST[i].time - simTime, 1 ) ) )
@@ -309,7 +301,7 @@ function Hekili:UpdateGreenText()
 
 	end
 
-	if self.DB.char['Multi-Target Enabled'] and self.UseAbility.AE and self.UseAbility.AE[1] then
+	if self.DB.profile['Multi-Target Enabled'] and self.UseAbility.AE and self.UseAbility.AE[1] then
 
 		if self.UseAbility.AE[1].time <= simTime then
 			self.UI.AButtons.AE[1].topText:SetText( '0' )
@@ -318,9 +310,9 @@ function Hekili:UpdateGreenText()
 			self.UI.AButtons.AE[1].topText:SetText( tostring( round( self.UseAbility.AE[1].time - simTime, 1 ) ) )
 		end
 
-		for i = 2, self.DB.char['Multi-Target Icons Displayed'] do
+		for i = 2, self.DB.profile['Multi-Target Icons Displayed'] do
 			if self.UseAbility.AE[i] and self.UseAbility.AE[i].name then
-				if self.ActiveModule.spells[ self.UseAbility.AE[i].name ].offGCD then
+				if self.Active.spells[ self.UseAbility.AE[i].name ].offGCD then
 					self.UI.AButtons.AE[i].topText:SetText( self.UI.AButtons.AE[i-1].topText:GetText() )
 				else
 					self.UI.AButtons.AE[i].topText:SetText( tostring( round( self.UseAbility.AE[i].time - simTime, 1 ) ) )
@@ -338,10 +330,10 @@ function Hekili:HeartBeat()
 		return
 	end
 
-	if self.ActiveModule.auditTrackers then self.ActiveModule.auditTrackers() end
+	if self.Active.auditTrackers then self.Active.auditTrackers() end
 
-	if self.DB.char['Single Target Enabled'] then	self:ProcessPriorityList( 'ST' ) end
-	if self.DB.char['Multi-Target Enabled'] then	self:ProcessPriorityList( 'AE' ) end
+	if self.DB.profile['Single Target Enabled'] then	self:ProcessPriorityList( 'ST' ) end
+	if self.DB.profile['Multi-Target Enabled'] then	self:ProcessPriorityList( 'AE' ) end
 	self:UpdateGreenText()
 end
 
@@ -350,17 +342,20 @@ end
 --	AddOn has been loaded by the WoW client (1x).
 function Hekili:OnInitialize()
 	-- Chat Command is handled by AceOptions (for now).
-	-- Hekili:RegisterChatCommand("hekili", "CommandProcessor")
 
 	self.DB = LibStub("AceDB-3.0"):New("HekiliDB", self:GetDefaults())
-	-- self.DB.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
-	-- self.DB.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
-	-- self.DB.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
+	
+	local options = self:GetOptions()
+	options.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.DB)
+	
+	-- Add dual-spec support
+	local LibDualSpec = LibStub('LibDualSpec-1.0')
+	LibDualSpec:EnhanceDatabase(self.DB, "Hekili")
+	LibDualSpec:EnhanceOptions(options.args.profiles, self.DB)
 
-	LibStub("AceConfig-3.0"):RegisterOptionsTable("Hekili", self:GetOptions(), {"hekili", "kili"})
+	LibStub("AceConfig-3.0"):RegisterOptionsTable("Hekili", options)
 	self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Hekili")
-	LibStub("AceConfig-3.0"):RegisterOptionsTable("Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.DB))
-	self.optionsFrame.Profiles = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Profiles", "Profiles", "Hekili")
+	Hekili:RegisterChatCommand("hekili", function() InterfaceOptionsFrame_OpenToCategory(Hekili.optionsFrame) end)
 
 	-- Prepare graphical elements (and the engine frame).
 	self:InitCoreUI()
@@ -407,48 +402,27 @@ function Hekili:SanityCheck()
 
 	local class = UnitClass("player")
 	local specialization = select(2, GetSpecializationInfo(GetSpecialization()))
-	local activeSpec = GetActiveSpecGroup()
 
-	local pmod = self.DB.char['Primary Specialization Module']
-	local smod = self.DB.char['Secondary Specialization Module']
+	local mod = self.DB.profile['Module']
 
-	-- Check Primary Specialization table.
-	if activeSpec == 1 then
-		if pmod ~= '(none)' and self.Modules[ pmod ] then
-			if self.Modules[pmod].class ~= class then
-				self:Print("Module |cFFFF9900" .. pmod .. "|r is not appropriate for your class; unloading.")
-				self.DB.char['Primary Specialization Module'] = '(none)'
-				pmod = '(none)'
-			elseif self.Modules[pmod].spec ~= specialization then
-				self:Print("Module |cFFFF9900" .. pmod .. "|r is not appropriate for your specialization; unloading.")
-				self.DB.char['Primary Specialization Module'] = '(none)'
-				pmod = '(none)'
-			end
-		else -- pmod is not real
-			self:Print("Module |cFFFF9900" .. pmod .. "|r was not loaded or its name may have changed; unloading.")
-			self.DB.char['Primary Specialization Module'] = '(none)'
-			pmod = '(none)'
+	if mod == '(none)' then
+		-- do nothing
+	elseif self.Modules[ mod ] then
+		if self.Modules[mod].class ~= class then
+			self:Print("Module |cFFFF9900" .. mod .. "|r is not appropriate for your class; unloading.")
+			self.DB.profile['Module'] = '(none)'
+			mod = '(none)'
+		elseif self.Modules[mod].spec ~= specialization then
+			self:Print("Module |cFFFF9900" .. mod .. "|r is not appropriate for your specialization; unloading.")
+			self.DB.profile['Module'] = '(none)'
+			mod = '(none)'
 		end
-		self.ActiveModule = self.Modules[ pmod ]
-		
-	elseif activeSpec == 2 then
-		if smod ~= '(none)' and self.Modules[ smod ] then
-			if self.Modules[smod].class ~= class then
-				self:Print("Module |cFFFF9900" .. smod .. "|r is not appropriate for your class; unloading.")
-				self.DB.char['Secondary Specialization Module'] = '(none)'
-				smod = '(none)'
-			elseif self.Modules[smod].spec ~= specialization then
-				self:Print("Module |cFFFF9900" .. smod .. "|r is not appropriate for your specialization; unloading.")
-				self.DB.char['Secondary Specialization Module'] = '(none)'
-				smod = '(none)'
-			end
-		else -- smod is not real
-			self:Print("Module |cFFFF9900" .. smod .. "|r was not loaded or its name may have changed; unloading.")
-			self.DB.char['Secondary Specialization Module'] = '(none)'
-			smod = '(none)'
-		end
-		self.ActiveModule = self.Modules[ smod ]
-	end	
+	else -- mod is not real
+		self:Print("Module |cFFFF9900" .. mod .. "|r was not loaded or its name may have changed; unloading.")
+		self.DB.profile['Module'] = '(none)'
+		mod = '(none)'
+	end
+	self.Active = self.Modules[ mod ]
 
 end
 
@@ -458,7 +432,9 @@ end
 --	AddOn has been (re)enabled by the user.
 function Hekili:OnEnable()
 
-	if self.DB.char.enabled then
+	self:RefreshBindings()
+
+	if self.DB.profile.enabled then
 		-- Combat Log
 		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 

@@ -941,7 +941,7 @@ mod:AddToActionList('single',
 					'',
 					'7. Drop Searing Totem IF you have no active fire totem AND Fire Elemental Totem cooldown has more than 15 seconds remaining.',
 					function( state )
-						if not state.totems[totem_fire].up and (not Hekili.DB.char['Cooldown Enabled'] or state.cooldowns[fire_elemental_totem] > 15) then
+						if not state.totems[totem_fire].up and (not Hekili.DB.profile['Cooldown Enabled'] or state.cooldowns[fire_elemental_totem] > 15) then
 							return searing_totem
 						end
 						return nil
@@ -1662,7 +1662,7 @@ end
 function mod:CLEU(AddOn, event, time, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _, spellID, spellName, _, _, interrupt)
 
 	-- If you don't care about multiple targets, I don't!
-	if AddOn.DB.char['Multi-Target Enabled'] == false and AddOn.DB.char['Multi-Target Integration'] == 0 then
+	if AddOn.DB.profile['Multi-Target Enabled'] == false and AddOn.DB.profile['Multi-Target Integration'] == 0 then
 		return true
 	end
 
