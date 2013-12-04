@@ -32,7 +32,7 @@ end
 
 
 
-function Hekili:IsFiltered( ability )
+function Hekili:IsFiltered( ability, cooldown )
 	local mod = self.Active
 	local spell
 
@@ -42,31 +42,35 @@ function Hekili:IsFiltered( ability )
 		spell = mod.spells[ability]
 	end
 	
-	if spell.talent and not self.DB.profile[ 'Show Talents' ] then
-		return true
-	elseif spell.racial and not self.DB.profile[ 'Show Racials' ] then
-		return true
-	elseif spell.interrupt and not self.DB.profile[ 'Show Interrupts' ] then
+	if cooldown then
+		if spell.bloodlust and not self.DB.profile[ 'Show Bloodlust' ] then
+			return true
+		elseif spell.consumable and not self.DB.profile[ 'Show Consumables' ] then
+			return true
+		elseif spell.profession and not self.DB.profile[ 'Show Professions' ] then
+			return true
+		elseif cooldown and spell.racial and not self.DB.profile[ 'Show Racials' ] then
+			return true
+		elseif spell.cooldown then
+			if spell.cdUpdated < self.eqChanged and not spell.item then
+				spell.cooldown	= ttCooldown(spell.id)
+				spell.cdUpdated	= GetTime()
+			end
+		
+			if spell.cooldown > self.DB.profile['Cooldown Threshold'] then
+				return true
+			end
+		end
+	end
+	
+	if spell.interrupt and not self.DB.profile[ 'Show Interrupts' ] then
 		return true
 	elseif spell.precombat and not self.DB.profile[ 'Show Precombat' ] then
 		return true
-	elseif spell.profession and not self.DB.profile[ 'Show Professions' ] then
-		return true
-	elseif spell.bloodlust and not self.DB.profile[ 'Show Bloodlust' ] then
-		return true
-	elseif spell.consumable and not self.DB.profile[ 'Show Consumables' ] then
+	elseif spell.talent and not self.DB.profile[ 'Show Talents' ] then
 		return true
 	elseif spell.name then
 		return true
-	elseif spell.cooldown then
-		if spell.cdUpdated < self.eqChanged and not spell.item then
-			spell.cooldown	= ttCooldown(spell.id)
-			spell.cdUpdated	= GetTime()
-		end
-		
-		if spell.cooldown > self.DB.profile['Cooldown Threshold'] then
-			return true
-		end
 	end
 	
 	return false
@@ -484,14 +488,6 @@ function Hekili:GetOptions()
 								get		= 'GetOption',
 								order	= 3,
 							},
-							['Show Talents'] = {
-								type	= 'toggle',
-								name	= 'Show Talents',
-								desc	= function () return OutputFlags( 'Show Talents', 'talent' ) end,
-								set		= 'SetOption',
-								get		= 'GetOption',
-								order	= 4,
-							},
 							['Cooldown Threshold'] = {
 								type 	= 'range',
 								name 	= 'Cooldown Threshold',
@@ -501,7 +497,8 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 5
+								order	= 4,
+								width	= 'double'
 							},
 						}
 					},
@@ -564,6 +561,15 @@ function Hekili:GetOptions()
 								order	= 3,
 							},
 
+							['Show Talents'] = {
+								type	= 'toggle',
+								name	= 'Show Talents',
+								desc	= function () return OutputFlags( 'Show Talents', 'talent' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 4,
+							},
+
 							['Name Filter'] = {
 								type	= 'input',
 								name	= 'Name Filter',
@@ -571,7 +577,7 @@ function Hekili:GetOptions()
 								set		= 'SetOption',
 								multiline = 5,
 								desc	= 'Enter the ability names you wish to filter, separated by commas/spaces/returns.',
-								order	= 4,
+								order	= 5,
 								width	= 'full'
 							},
 						}

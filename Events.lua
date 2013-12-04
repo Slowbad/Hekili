@@ -54,9 +54,9 @@ end
 
 
 function Hekili:ACTIVE_TALENT_GROUP_CHANGED()
-	table.wipe(self.UseAbility)
-	table.wipe(self.State.ST)
-	table.wipe(self.State.AE)
+	if self.UseAbility then table.wipe(self.UseAbility) end
+	if self.State.ST then table.wipe(self.State.ST) end
+	if self.State.AE then table.wipe(self.State.AE) end
 	self:RefreshUI()
 	self:RefreshBindings()
 	self:SanityCheck()
