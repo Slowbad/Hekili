@@ -70,6 +70,33 @@ local totem_water	= 3
 local totem_air		= 4
 
 
+-- Tell the addon what spell to use to determine the GCD.
+mod:SetGCD(lightning_shield)
+
+
+-- Tell the addon to keep track of how many targets are afflicted by your debuffs.
+mod:WatchAura(flame_shock)
+
+
+-- AddTracker:	Name
+--				Type		Caption		Show			Timer		Override
+--	     Aura:	Name		Unit
+--   Cooldown:	Ability
+--      Totem:	Element		Totem Name
+-- /AddTracker
+
+mod:AddTracker(	'Flame Shock on Target (show target count)',
+				'Aura',		'Targets',	'Show Always',	true,		true,
+				flame_shock,			'target' )
+				
+mod:AddTracker(	'Lightning Shield on Player (show aura stacks)',
+				'Aura',		'Stacks',	'Show Always',	false,		true,
+				lightning_shield,		'player')
+
+mod:AddTracker( 'Fire Totems',	
+				'Totem',	'None',		'Present',		true,		false,
+				'fire',					'' )
+
 mod:AddAbility( ancestral_swiftness, 16188, 'offGCD', 'talent' )
 	mod:AddHandler( ancestral_swiftness, function ( state )
 		cast = 0
@@ -1057,7 +1084,7 @@ end
 
 
 
-function mod.RefreshState( state )
+function mod:RefreshState( state )
 
 	state.time			= GetTime()
 
@@ -1070,9 +1097,8 @@ function mod.RefreshState( state )
 	state.moving		= (GetUnitSpeed("player") > 0)
 	
 	state.timeToDie		= Hekili.GetTTD()
-	state.tCount,
-	state.mtCount,
-	state.fsCount		= mod.activeTargets()
+	state.tCount		= Hekili:TargetCount()
+	state.fsCount		= Hekili:AuraCount(flame_shock)
 
 	if Hekili.lastCast and (state.time - Hekili.lastCast.time < 0.5) then
 		state.lastCast = Hekili.lastCast.spell
@@ -1441,7 +1467,7 @@ function mod.RefreshState( state )
 end
 
 
-function mod.AdvanceState( state, elapsed )
+function mod:AdvanceState( state, elapsed )
 
 	state.time			= state.time + elapsed
 	state.combatTime	= state.combatTime + elapsed
@@ -1568,152 +1594,5 @@ function mod.AdvanceState( state, elapsed )
 
 	-- TARGET DEBUFFS --
 	--------------------
-
-end
-
-
-mod.trackHits.source	= 0
-mod.trackHits.pulse		= 0
-mod.trackHits.count		= 0
-mod.trackHits.timeOut	= 5.0
-
-mod.trackHits.qPulse	= 0
-mod.trackHits.qCount	= 0
-mod.trackHits.qTimeOut	= 2.0
-
-mod.trackDebuffs[flame_shock] = {}
-
-
-function mod.countHits( verb )
-
-	if verb then
-		for k,v in pairs(mod.trackHits) do
-			print(k .. ' = ' .. v .. '.')
-		end
-	end
-
-	if mod.trackHits.qCount > mod.trackHits.count then
-		return mod.trackHits.qCount
-	else
-		return mod.trackHits.count and mod.trackHits.count or 0
-	end
-
-end
-
-
-function mod.countDebuffs( spell, verb )
-	local num = 0
-
-	if verb then Hekili:Print('Counting ' .. spell .. '.') end
-
-	if mod.trackDebuffs[ spell ] then
-		if verb then Hekili:Print(spell .. ' has spell table.') end
-
-		for k,_ in pairs(mod.trackDebuffs[spell]) do
-			num = num + 1
-		end
-	end
-
-	if verb then Hekili:Print(spell .. ' had ' .. num .. '.') end
-	return num
-end
-
-
-function mod.activeTargets( verb )
-
-	local debuffs = 0
-
-	for k,v in pairs(mod.trackDebuffs) do
-		local tmpDebuffs = mod.countDebuffs( k, verb )
-
-		if tmpDebuffs > debuffs then debuffs = tmpDebuffs end
-	end
-
-	local hits = mod.countHits( verb )
-
-	if hits > debuffs then
-		return hits, hits, debuffs
-	else
-		return debuffs, hits, debuffs
-	end
-end
-
-
-
-function mod.auditTrackers( )
-	for spell, spellTable in pairs(mod.trackDebuffs) do
-		for unit, lastTick in pairs(spellTable) do
-			if GetTime() - lastTick > 5.0 then spellTable[unit] = nil end
-		end
-	end
-
-	if GetTime() - mod.trackHits.pulse > mod.trackHits.timeOut then
-		mod.trackHits.pulse		= 0
-		mod.trackHits.count		= 0
-	end
-	
-	if GetTime() - mod.trackHits.qPulse > mod.trackHits.qTimeOut then
-		mod.trackHits.qPulse	= 0
-		mod.trackHits.qCount	= 0
-	end
-end
-
-
-function mod:CLEU(AddOn, event, time, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _, spellID, spellName, _, _, interrupt)
-
-	-- If you don't care about multiple targets, I don't!
-	if AddOn.DB.profile['Multi-Target Enabled'] == false and AddOn.DB.profile['Multi-Target Integration'] == 0 then
-		return true
-	end
-
-	-- Detect our own Magma Totem; should later expand to detect AOE from our Fire Elemental if its output is consistent.
-	if subtype == 'SPELL_SUMMON' and sourceGUID == UnitGUID('player') and destName == 'Magma Totem' then
-		self.trackHits.source	= destGUID
-		self.trackHits.pulse	= GetTime()
-		self.trackHits.count	= 0
-	end
-
-
-	if subtype == 'SPELL_DAMAGE' and self.trackHits and sourceGUID == self.trackHits.source and spellName == 'Magma Totem' then
-		if self.trackHits.pulse == 0 or (GetTime() - self.trackHits.pulse > 0.5) then
-			self.trackHits.pulse	= GetTime()
-			self.trackHits.count	= 0
-		end
-		self.trackHits.count	= self.trackHits.count + 1
-	end
-
-	if subtype == 'SPELL_DAMAGE' and sourceGUID == UnitGUID('player') and spellName == earthquake then
-		if self.trackHits.qPulse == 0 or (GetTime() - self.trackHits.qPulse > 0.5) then
-			self.trackHits.qPulse	= GetTime()
-			self.trackHits.qCount	= 0
-		end
-		self.trackHits.qCount	= self.trackHits.qCount + 1
-	end
-
-	if subtype == 'SPELL_AURA_APPLIED' or subtype == 'SPELL_AURA_REFRESH' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' or subtype == 'SPELL_DAMAGE' then
-		if spellName == 'Flame Shock' and sourceGUID == UnitGUID('player') then
-			if not self.trackDebuffs[spellName] then self.trackDebuffs[spellName] = {} end
-			self.trackDebuffs[spellName][destGUID]	= GetTime()
-		end
-	end
-
-	if subtype == 'UNIT_DIED' or subtype == 'UNIT_DESTROYED' then
-		if self.trackDebuffs[spellName] and self.trackDebuffs[spellName][destGUID] then
-			self.trackDebuffs[spellName][destGUID] = nil
-		end
-
-		if self.trackHits and self.trackHits.source and self.trackHits.source == destGUID then
-			self.trackHits.source	= 0
-			self.trackHits.pulse	= 0
-			self.trackHits.count	= 0
-		end
-	end
-
-	-- Check to reduce Flame Shock targets.
-    if subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL' then
-		if spellName == 'Flame Shock' and sourceGUID == UnitGUID('player') then
-			self.trackDebuffs[spellName][destGUID] = nil
-		end
-    end
 
 end

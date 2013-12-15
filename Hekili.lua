@@ -12,15 +12,36 @@ Hekili.LBF = LibStub("Masque", true)
 if Hekili.LBF then
 	Hekili.stGroup = Hekili.LBF:Group("Hekili", "Single Target")
 	Hekili.aeGroup = Hekili.LBF:Group("Hekili", "Multi-Target")
+	Hekili.trGroup = Hekili.LBF:Group("Hekili", "Trackers")
 end
 
-BINDING_HEADER_HEKILI_HEADER = "Hekili Priority Helper"
+Hekili.LSM = LibStub:GetLibrary("LibSharedMedia-3.0")
+
+BINDING_HEADER_HEKILI_HEADER = "Hekili"
+
 BINDING_NAME_HEKILI_TOGGLE = "Enable/Disable Hekili"
 BINDING_NAME_HEKILI_TOGGLE_COOLDOWNS = "Toggle Display of Cooldowns"
 BINDING_NAME_HEKILI_TOGGLE_HARDCASTS = "Toggle Display of Hardcasts"
+BINDING_NAME_HEKILI_TOGGLE_SINGLE = "Toggle Single Target Display"
+BINDING_NAME_HEKILI_TOGGLE_MULTI = "Toggle Multi-Target Display"
 
 Hekili.Modules = {}
 
 Hekili.State = {}
-Hekili.State.ST = {}
-Hekili.State.AE = {}
+
+Hekili.Actions = {}
+Hekili.Actions['ST'] = {}
+Hekili.Actions['AE'] = {}
+
+for i = 1, 5 do
+	Hekili.Actions['ST'][i] = {}
+	Hekili.Actions['AE'][i] = {}
+end
+
+
+totems = {
+	fire	= 1,
+	earth	= 2,
+	water	= 3,
+	air		= 4
+}

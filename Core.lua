@@ -12,6 +12,7 @@ Hekili.textureCache = setmetatable( {}, { __index =	function(t,v)
 														return a
 													end } )
 
+-- Caching texture names reduces calls to the API...  And lets us inject some texture names for dynamic abilities that GetSpellTexture() hates by default.
 Hekili.textureCache['Lava Beam'] = 'Interface\\Icons\\Spell_Fire_SoulBurn'
 Hekili.textureCache['Stormblast'] = 'Interface\\Icons\\Spell_Lightning_LightningBolt01'
 Hekili.textureCache['Virmen\'s Bite'] = 'Interface\\ICONS\\TRADE_ALCHEMY_POTIOND6'
@@ -22,13 +23,20 @@ local function GetSpellTexture(a)
 end
 
 
--- Check for PvP
+-- Check for PvP.
 local pvpZones = {
 	arena = true,
 	pvp = true,
 }
 
 
+-- Synapse Springs detection.
+local synapse_springs		= GetSpellInfo(126731)
+local gloveUpdate = 0
+
+local iteration = 0
+
+-- Priority DB.
 function Hekili:ProcessPriorityList( id )
 
 	local module = Hekili.Active
@@ -48,37 +56,50 @@ function Hekili:ProcessPriorityList( id )
 		return
 	end
 
-	local state = self.State[id]
+	local state = self.State
+	-- table.wipe(state)
 
-	module.RefreshState( state )
+	module:RefreshState( state )
 
 	local startTime = state.time
 
-	if state.pCast and state.pCast > 0 and module.spells[ state.pCasting ] then
+	if state.pCast > 0 and module.spells[ state.pCasting ] then
 		module.spells[ state.pCasting ].handler( state, true )
-		module.AdvanceState( state, state.pCast )
+		module:AdvanceState( state, state.pCast )
 	end
 
-	local glovesID = GetInventoryItemID("player", 10)
-	local gloves, gTexture
+	if state.items[synapse_springs] and state.time > gloveUpdate then
+		local glovesID = GetInventoryItemID("player", 10)
+		local gloves, gTexture
 
-	if glovesID then
-		gloves, _, _, _, _, _, _, _, _, gTexture = GetItemInfo(GetInventoryItemID("player", 10))
+		if glovesID then
+			gloves, _, _, _, _, _, _, _, _, gTexture = GetItemInfo(GetInventoryItemID("player", 10))
+			self.textureCache[synapse_springs] = gTexture
+			gloveUpdate = state.time
+		end
 	end
 
-	local startGCD, GCD = GetSpellCooldown("Lightning Shield")
 
+	-- Reset Actions
+	for i = 1, 5 do
+		if self.Actions[id][i] then
+			for k,v in pairs( self.Actions[id][i] ) do
+				self.Actions[id][i][k] = nil
+			end
+		end
+	end
+	
+	
+	-- BUILD ACTIONS TABLE.
 	for i = 1, 5 do
 		local useAction			= nil
-		local useDescription	= nil
+		local useCaption		= nil
 		local useCooldown		= 999
-		local useCDThreshold	= 30
 
 		if self.DB.profile[ 'Show Precombat' ] then
 			for line, action in ipairs(module.actionList.precombat) do
 
 				local ckAction, ckWait, ckHardcast, ckCooldown
-				local skipped = false
 
 				ckAction, ckWait, ckHardcast = action.check( state )
 
@@ -106,7 +127,6 @@ function Hekili:ProcessPriorityList( id )
 			for line, action in ipairs(module.actionList.cooldown) do
 
 				local ckAction, ckWait, ckHardcast, ckCooldown
-				local skipped = false
 
 				ckAction, ckWait, ckHardcast = action.check( state )
 
@@ -134,7 +154,6 @@ function Hekili:ProcessPriorityList( id )
 			for line, action in ipairs(module.actionList.aoe) do
 
 				local ckAction, ckWait, ckHardcast, ckCooldown
-				local skipped = false
 
 				ckAction, ckWait, ckHardcast = action.check( state )
 
@@ -162,7 +181,6 @@ function Hekili:ProcessPriorityList( id )
 			for line, action in ipairs(module.actionList.single) do
 
 				local ckAction, ckWait, ckHardcast, ckCooldown
-				local skipped = false
 
 				ckAction, ckWait, ckHardcast = action.check( state )
 
@@ -185,144 +203,388 @@ function Hekili:ProcessPriorityList( id )
 				end
 			end
 		end
-		
-		if not useAction or (useCooldown > useCDThreshold and i > 1) then
-			Hekili.UI.AButtons[id][i]:Hide()
-		else
-			if ( id == 'ST' and self.DB.profile['Single Target Enabled'] and i <= self.DB.profile['Single Target Icons Displayed'] ) or
-				( id == 'AE' and self.DB.profile['Multi-Target Enabled'] and i <= self.DB.profile['Multi-Target Icons Displayed'] ) then
-				Hekili.UI.AButtons[id][i]:Show()
-			end
 
-			if useCooldown > 0 then
-				module.AdvanceState( state, useCooldown )
-			end
+		-- if not self.Actions[id][i] then self.Actions[id][i] = {} end
 
-			-- Just for behind the scenes info.
-			if not Hekili.UseAbility then Hekili.UseAbility = {} end
-			if not Hekili.UseAbility[id] then Hekili.UseAbility[id] = {} end
-			if not Hekili.UseAbility[id][i] then Hekili.UseAbility[id][i] = {} end
+		if not useAction then break end
 
-			Hekili.UseAbility[id][i].name 			= useAction
-			Hekili.UseAbility[id][i].caption		= useCaption
-			Hekili.UseAbility[id][i].cast			= module.spells[ useAction ].handler( state ) or 0
-			Hekili.UseAbility[id][i].cooldown		= useCooldown
-			Hekili.UseAbility[id][i].time			= state.time
-			Hekili.UseAbility[id][i].start			= startTime
-
-			local start, duration
-
-			if module.spells[ useAction ].item then
-				start, duration = GetItemCooldown( module.spells[ useAction ].id )
-			else
-				start, duration = GetSpellCooldown(useAction)
-			end
-
-			if not start and not duration then
-				start, duration = GetSpellCooldown("Lightning Shield")
-			end
-
-			if i == 1 or (i > 1 and duration ~= GCD) then
-				Hekili.UI.AButtons[id][i].Cooldown:SetCooldown(start, duration)
-			else
-				Hekili.UI.AButtons[id][i].Cooldown:SetCooldown(0, 0)
-			end
-
-			if useAction == "Synapse Springs" then
-				Hekili.UI.AButtons[id][i].Texture:SetTexture(gTexture)
-			else
-				Hekili.UI.AButtons[id][i].Texture:SetTexture(GetSpellTexture(useAction))
-			end		
-
-			if useCaption then
-				Hekili.UI.AButtons[id][i].btmText:SetText(useCaption)
-			end
-
-			if i < 5 then module.AdvanceState( state, Hekili.UseAbility[id][i].cast ) end
+		if useCooldown > 0 then
+			module:AdvanceState( state, useCooldown )
 		end
+
+		self.Actions[id][i].name 		= useAction
+		self.Actions[id][i].cast		= module.spells[ useAction ].handler( state )
+		self.Actions[id][i].offGCD		= module.spells[ useAction ].offGCD
+		self.Actions[id][i].caption		= useCaption
+		self.Actions[id][i].cooldown	= useCooldown
+		self.Actions[id][i].start		= startTime
+		self.Actions[id][i].time		= state.time
+		self.Actions[id][i].offset		= state.time - startTime
+
+		if i < 5 then module:AdvanceState( state, self.Actions[id][i].cast ) end
 	end
-
-	if id == 'AE' and self.DB.profile['Multi-Target Enabled'] then
-		if self.DB.profile['Multi-Target Illumination'] > 0 and state.tCount >= self.DB.profile['Multi-Target Illumination'] then
-			ActionButton_ShowOverlayGlow(Hekili.UI.AButtons[id][1])
-			Hekili.UI.AButtons[id][1].targets:SetText(state.fsCount .. ' (' .. state.tCount .. ')')
-		else
-			ActionButton_HideOverlayGlow(Hekili.UI.AButtons[id][1])
-			Hekili.UI.AButtons[id][1].targets:SetText(nil)
-		end
-	end
-
-	for i = 1, 5 do
-		if (self.DB.profile['Single Target Enabled'] and id == 'ST' and i > Hekili.DB.profile['Single Target Icons Displayed']) or
-			(self.DB.profile['Multi-Target Enabled'] and id == 'AE' and i > Hekili.DB.profile['Multi-Target Icons Displayed']) then
-			Hekili.UI.AButtons[id][i]:Hide()
-		end
-		
-		if Hekili.UI.AButtons[id][i]:IsShown() then
-			if SpellRange.IsSpellInRange(Hekili.UseAbility[id][i].name, 'target') == 0 then
-				Hekili.UI.AButtons[id][i].Texture:SetVertexColor(1, 0, 0)
-			else
-				Hekili.UI.AButtons[id][i].Texture:SetVertexColor(1, 1, 1)
-			end
-		end
-	end
-
+	-- ACTIONS TABLE COMPLETE.
+	
 end
 
 
-function Hekili:UpdateGreenText()
+function Hekili:DisplayActionButtons( id )
 
-	if self.Active == self.Modules[ '(none)' ] or not self.UseAbility then
+	local module = self.Active
+	local startGCD, GCD = GetSpellCooldown( module:GetGCD() )
+
+	for i = 1, 5 do
+		local action = self.Actions[id][i]
+
+		if action.name then		
+			if ( action.cooldown <= 30 or i == 1 ) and
+				(	( self.DB.profile['Single Target Enabled'] and	id == 'ST' and	i <= self.DB.profile['Single Target Icons Displayed'] ) or
+					( self.DB.profile['Multi-Target Enabled'] and	id == 'AE' and	i <= self.DB.profile['Multi-Target Icons Displayed'] )	) then
+
+				self.UI.AButtons[id][i]:Show()
+
+				local start, duration
+				
+				if module.spells[ action.name ].item then
+					start, duration = GetItemCooldown( module.spells[ action.name ].id )
+				else
+					start, duration = GetSpellCooldown( action.name )
+				end
+
+				if not start or start == 0 then
+					start = startGCD
+					duration = GCD
+				end
+
+				if i == 1 or (i > 1 and duration and duration ~= GCD) then
+					self.UI.AButtons[id][i].Cooldown:SetCooldown(start, duration)
+				else
+					self.UI.AButtons[id][i].Cooldown:SetCooldown(0, 0)
+				end
+
+				self.UI.AButtons[id][i].Texture:SetTexture(GetSpellTexture( action.name ))
+				self.UI.AButtons[id][i].btmText:SetText( action.caption )
+				if id == 'ST' and i == 1 then Hekili.UI.AButtons[id][i].btmText:SetJustifyH("CENTER") end
+
+				-- Out of Range.
+				if self.UI.AButtons[id][i]:IsShown() then
+					if SpellRange.IsSpellInRange(self.Actions[id][i].name, 'target') == 0 then
+						self.UI.AButtons[id][i].Texture:SetVertexColor(1, 0, 0)
+					else
+						self.UI.AButtons[id][i].Texture:SetVertexColor(1, 1, 1)
+					end
+				end
+
+				-- self.UI.AButtons[id][i]:Show()
+
+				-- And now, update the text.
+				if i == 1 then
+					if not self.Active.spells[ self.Actions[id][1].name ].offGCD and self.Actions[id][1].offset ~= 0 then
+						self.UI.AButtons[id][1].topText:SetText( string.format("%3.1f", self.Actions[id][1].offset) )
+					else
+						self.UI.AButtons[id][1].topText:SetText('0.0')
+					end
+					
+					-- Special case for embedded tracker for stacks/targets.
+					if id == 'ST' and self.DB.profile['Single Target Tracker'] ~= 'None' and self.Active.trackers[ self.DB.profile['Single Target Tracker'] ] then
+						local track = self.Active.trackers[ self.DB.profile['Single Target Tracker'] ]
+
+						local caption = track.caption
+
+						local text = ''
+						if caption == 'Stacks' then
+							if track.unit then
+								if not UnitCanAttack('player', track.unit) then
+									text = select(4, UnitAura(track.unit, track.aura, nil, "HELPFUL|PLAYER"))
+
+								else -- target or hostile focus
+									text = select(4, UnitAura(track.unit, track.aura, nil, "HARMFUL|PLAYER"))
+
+								end
+								if text == 0 then text = '' end
+								
+							end
+
+						elseif caption == 'Targets' then
+							if track.type == 'Aura' and self:IsAuraWatched( track.aura ) then
+								text = self:AuraCount( track.aura ) .. '/' .. self:TargetCount()
+
+							elseif track.type == 'Cooldown' and self:IsAuraWatched( track.ability ) then
+								text = self:AuraCount( track.ability ) .. '/' .. self:TargetCount()
+
+							else
+								text = self:TargetCount()
+
+							end
+							if text == 0 then text = '' end
+
+						end
+						
+						if text ~= '' then
+							self.UI.AButtons[id][i].btmText:SetText(text)
+							self.UI.AButtons[id][i].btmText:SetJustifyH("RIGHT")
+						end
+					end					
+					
+				else
+					if self.Actions[id][i].offGCD then
+						self.UI.AButtons[id][i].topText:SetText( self.UI.AButtons[id][i-1].topText:GetText() )
+					else
+						self.UI.AButtons[id][i].topText:SetText( string.format("%3.1f", self.Actions[id][i].offset) )
+					end
+				end
+				
+			else
+				self.UI.AButtons[id][i]:Hide()
+				
+			end
+		else
+			self.UI.AButtons[id][i]:Hide()
+			
+		end
+	end
+	
+
+	
+end
+
+
+function Hekili:MaintainActionLists()
+
+	if self.DB.profile.Module == 'None' or not self.Actions or not self.Actions.ST[1].name then
 		return
 	end
 
-	local simTime = GetTime()
+	local now = GetTime()
+
+	local id = 'ST'
+
+	local abStart, abCD
 	
-	if self.DB.profile['Single Target Enabled'] and self.UseAbility.ST and self.UseAbility.ST[1]  then
+	if self.Active.spells[ self.Actions[id][1].name ].item then
+		abStart, abCD = GetItemCooldown( module.spells[ self.Actions[id][1].name ].id )
+	else
+		abStart, abCD = GetSpellCooldown( self.Actions[id][1].name )
+	end
+	
+	local startOff
 
-		if self.UseAbility.ST[1].time <= simTime then
-			self.UI.AButtons.ST[1].topText:SetText( '0' )
-			simTime = self.UseAbility.ST[1].time
-		else
-			self.UI.AButtons.ST[1].topText:SetText( tostring( round( self.UseAbility.ST[1].time - simTime, 1 ) ) )
-		end
+	if abStart and abStart > 0 then
+		startOff = abStart + abCD - now
+	else
+		startOff = 0
+	end
+	
+	self.Actions[id][1].start	= now
+	self.Actions[id][1].time	= now + startOff
+	self.Actions[id][1].offset	= startOff
 
-		for i = 2, self.DB.profile['Single Target Icons Displayed'] do
-			if self.UseAbility.ST[i] and self.UseAbility.ST[i].name then
-				if self.Active.spells[ self.UseAbility.ST[i].name ].offGCD then
-					self.UI.AButtons.ST[i].topText:SetText( self.UI.AButtons.ST[i-1].topText:GetText() )
-				else
-					self.UI.AButtons.ST[i].topText:SetText( tostring( round( self.UseAbility.ST[i].time - simTime, 1 ) ) )
-				end
-			end
-		end
+	for i = 2, 5 do
+		if not self.Actions[id][i].name then break end
+		self.Actions[id][i].start	= self.Actions[id][i-1].start
+		self.Actions[id][i].time	= self.Actions[id][i-1].time + self.Actions[id][i-1].cast + self.Actions[id][i].cooldown
+		self.Actions[id][i].offset	= self.Actions[id][i].time - self.Actions[id][i].start
+	end
+	
+	id = 'AE'
 
-		simTime = GetTime()
-
+	if not self.Actions[id][1].name then
+		return
 	end
 
-	if self.DB.profile['Multi-Target Enabled'] and self.UseAbility.AE and self.UseAbility.AE[1] then
+	local abStart, abCD = GetSpellCooldown( self.Actions[id][1].name )
+	local startOff
 
-		if self.UseAbility.AE[1].time <= simTime then
-			self.UI.AButtons.AE[1].topText:SetText( '0' )
-			simTime = self.UseAbility.AE[1].time
-		else
-			self.UI.AButtons.AE[1].topText:SetText( tostring( round( self.UseAbility.AE[1].time - simTime, 1 ) ) )
-		end
+	if abStart and abStart > 0 then
+		startOff = abStart + abCD - now
+	else
+		startOff = 0
+	end
+	
+	self.Actions[id][1].start	= now
+	self.Actions[id][1].time	= now + startOff
+	self.Actions[id][1].offset	= startOff
 
-		for i = 2, self.DB.profile['Multi-Target Icons Displayed'] do
-			if self.UseAbility.AE[i] and self.UseAbility.AE[i].name then
-				if self.Active.spells[ self.UseAbility.AE[i].name ].offGCD then
-					self.UI.AButtons.AE[i].topText:SetText( self.UI.AButtons.AE[i-1].topText:GetText() )
-				else
-					self.UI.AButtons.AE[i].topText:SetText( tostring( round( self.UseAbility.AE[i].time - simTime, 1 ) ) )
-				end
-			end
-		end
-
+	for i = 2, 5 do
+		if not self.Actions[id][i].name then return end
+		self.Actions[id][i].start	= self.Actions[id][i-1].start
+		self.Actions[id][i].time	= self.Actions[id][i-1].time + self.Actions[id][i-1].cast + self.Actions[id][i].cooldown
+		self.Actions[id][i].offset	= self.Actions[id][i].time - self.Actions[id][i].start
 	end
 end
 
+
+-- Visual Engine.
+function Hekili:UpdateVisuals()
+
+	if self.DB.profile.Module == 'None' or not self.Actions or not self.Actions.ST or not self.Actions.ST[1] then
+		return
+	end
+
+	-- DISPLAY ALL THE THINGS.
+	local module = self.Active
+	local startGCD, GCD = GetSpellCooldown( module:GetGCD() )
+
+	self:DisplayActionButtons( 'ST' )
+	self:DisplayActionButtons( 'AE' )
+
+	-- Light up multi-target.
+	if self.DB.profile['Multi-Target Enabled'] then
+		if self.DB.profile['Multi-Target Illumination'] > 0 and self:TargetCount() >= self.DB.profile['Multi-Target Illumination'] then
+			ActionButton_ShowOverlayGlow(Hekili.UI.AButtons['AE'][1])
+		else
+			ActionButton_HideOverlayGlow(Hekili.UI.AButtons['AE'][1])
+		end
+	end
+
+	-- Hekili: FLAG FOR CLEANUP; this is cumbersome.
+	for i = 1, 5 do
+		if self.DB.profile['Tracker '..i..' Type'] ~= 'None' or not self.DB.profile.locked then
+			local tType = self.DB.profile['Tracker '..i..' Type']
+			local tShow = self.DB.profile['Tracker '..i..' Show']
+			local tAura = self.DB.profile['Tracker '..i..' Aura']
+			local tUnit = self.DB.profile['Tracker '..i..' Unit']
+			local tName = self.DB.profile['Tracker '..i..' Totem Name']
+			local tElement = self.DB.profile['Tracker '..i..' Element']
+			local tAbility = self.DB.profile['Tracker '..i..' Ability']
+
+			local text = ''
+			local present = false
+
+			if tType == 'Aura' then
+				self.UI.Trackers[i].Texture:SetTexture(GetSpellTexture( tAura ) or 'Interface\\ICONS\\Spell_Nature_BloodLust')
+
+				if not UnitCanAttack('player', tUnit) then
+					if UnitAura(tUnit, tAura, nil, "HELPFUL|PLAYER") then present = true end
+				else
+					if UnitAura(tUnit, tAura, nil, "HARMFUL|PLAYER") then present = true end
+				end
+
+			elseif tType == 'Cooldown' then
+				self.UI.Trackers[i].Texture:SetTexture(GetSpellTexture( tAbility ) or 'Interface\\ICONS\\Spell_Nature_BloodLust')
+
+				local startCD, CD = GetSpellCooldown( tAbility )
+				if not CD or (CD <= GCD) then present = true end
+
+			elseif tType == 'Totem' then
+				local hasTotem, ttmName, _, _, ttmTexture = GetTotemInfo( totems[tElement] )
+				
+				if hasTotem and (tName == '' or tName == ttmName) then present = true end
+				
+				self.UI.Trackers[i].Texture:SetTexture(ttmTexture or 'Interface\\ICONS\\Spell_Nature_BloodLust')
+				
+			else
+				self.UI.Trackers[i].Texture:SetTexture('Interface\\ICONS\\Spell_Nature_BloodLust')
+				
+			end
+				
+			if not self.UI.Trackers[i].Texture:GetTexture() then self.UI.Trackers[i].Texture:SetTexture('Interface\\ICONS\\Spell_Nature_BloodLust') end
+
+			if tShow == 'Show Always' or (tShow == 'Present' and present) or (tShow == 'Absent' and not present) or not self.DB.profile.locked then
+				self.UI.Trackers[i]:Show()
+
+				local tCaption
+				
+				if tType == 'Totem' then
+					tCaption = self.DB.profile['Tracker '..i..' Totem Caption']
+				else
+					tCaption = self.DB.profile['Tracker '..i..' Caption']
+				end
+
+				if tCaption == 'Stacks' then
+					if tUnit then
+						if not UnitCanAttack('player', tUnit) then
+							text = select(4, UnitAura(tUnit, tAura, nil, "HELPFUL|PLAYER"))
+
+						else -- target or hostile focus
+							text = select(4, UnitAura(tUnit, tAura, nil, "HARMFUL|PLAYER"))
+
+						end
+					end
+
+				elseif tCaption == 'Targets' then
+					if tType == 'Aura' and self:IsAuraWatched( tAura ) then
+						text = self:AuraCount( tAura ) .. '/' .. self:TargetCount()
+
+					elseif tType == 'Cooldown' and self:IsAuraWatched( tAbility ) then
+						text = self:AuraCount( tAbility ) .. '/' .. self:TargetCount()
+
+					else
+						text = self:TargetCount()
+
+					end
+				
+				end
+			else
+				self.UI.Trackers[i]:Hide()
+				
+			end
+
+			self.UI.Trackers[i].btmText:SetText(text)
+		else
+			self.UI.Trackers[i]:Hide()
+		end
+	end
+	
+	self:UpdateTrackerCooldowns()
+		
+end
+
+
+function Hekili:UpdateTrackerCooldowns()
+	
+	for i = 1, 5 do
+		if self.DB.profile['Tracker '..i..' Type'] ~= 'None' then
+			local tType = self.DB.profile['Tracker '..i..' Type']
+			local tCD	= self.DB.profile['Tracker '..i..' Timer']
+			
+			if tCD == nil then tCD = true end
+			
+			if not tCD then
+				self.UI.Trackers[i].Cooldown:SetCooldown(0, 0)
+
+			elseif tType == 'Cooldown' then
+				local tAbility = self.DB.profile['Tracker '..i..' Ability']				
+
+				if tAbility ~= '' then
+					local start, duration = GetSpellCooldown(tAbility)
+					self.UI.Trackers[i].Cooldown:SetCooldown(start, duration)
+					self.UI.Trackers[i].Cooldown:SetReverse(false)
+				end
+				
+			elseif tType == 'Aura' then
+				local tAura = self.DB.profile['Tracker '..i..' Aura']
+				local tUnit = self.DB.profile['Tracker '..i..' Unit']
+
+				local duration, expires
+
+				if UnitCanAttack('player', tUnit) then
+					_, _, _, _, _, duration, expires = UnitAura(tUnit, tAura, nil, "HARMFUL|PLAYER")
+				else
+					_, _, _, _, _, duration, expires = UnitAura(tUnit, tAura, nil, "HELPFUL|PLAYER")
+				end
+
+				if not duration then duration = 0 end
+				if not expires then expires = 0 end
+
+				self.UI.Trackers[i].Cooldown:SetCooldown(expires - duration, duration)
+				self.UI.Trackers[i].Cooldown:SetReverse(true)
+
+			elseif tType == 'Totem' then
+				local tElement = self.DB.profile['Tracker '..i..' Element']
+
+				local present, ttmName, ttmStart, ttmDuration = GetTotemInfo( totems[tElement] )
+				
+				self.UI.Trackers[i].Cooldown:SetCooldown(ttmStart, ttmDuration)
+				self.UI.Trackers[i].Cooldown:SetReverse(true)
+			end
+				
+		else
+			self.UI.Trackers[i].Cooldown:SetCooldown(0, 0)
+		end
+	end
+
+end
 
 
 function Hekili:HeartBeat()
@@ -330,19 +592,38 @@ function Hekili:HeartBeat()
 		return
 	end
 
-	if self.Active.auditTrackers then self.Active.auditTrackers() end
-
 	if self.DB.profile['Single Target Enabled'] then	self:ProcessPriorityList( 'ST' ) end
-	if self.DB.profile['Multi-Target Enabled'] then	self:ProcessPriorityList( 'AE' ) end
-	self:UpdateGreenText()
+	if self.DB.profile['Multi-Target Enabled'] then		self:ProcessPriorityList( 'AE' ) end
+	
+	if self.DB.profile['Module'] == 'None' then
+		for i = 1, 5 do
+			self.UI.Trackers[i]:Hide()
+		end
+	end
+	
 end
+
+
+function Hekili:RefreshConfig()
+	if self.State then table.wipe(self.State) end
+
+	self:ClearAuras()
+	self:LoadAuras()
+
+	self:RefreshUI()
+	self:LockAllButtons( self.DB.profile.locked )
+
+	self:RefreshBindings()
+
+	self:SanityCheck()
+	self:ApplyNameFilters()
+end
+
 
 
 --	OnInitialize()
 --	AddOn has been loaded by the WoW client (1x).
 function Hekili:OnInitialize()
-	-- Chat Command is handled by AceOptions (for now).
-
 	self.DB = LibStub("AceDB-3.0"):New("HekiliDB", self:GetDefaults())
 	
 	local options = self:GetOptions()
@@ -353,14 +634,13 @@ function Hekili:OnInitialize()
 	LibDualSpec:EnhanceDatabase(self.DB, "Hekili")
 	LibDualSpec:EnhanceOptions(options.args.profiles, self.DB)
 
+	self.DB.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
+	self.DB.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
+	self.DB.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
+
 	LibStub("AceConfig-3.0"):RegisterOptionsTable("Hekili", options)
 	self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Hekili")
 	Hekili:RegisterChatCommand("hekili", function() InterfaceOptionsFrame_OpenToCategory(Hekili.optionsFrame) end)
-
-	-- Prepare graphical elements (and the engine frame).
-	self:InitCoreUI()
-	
-	self:UnregisterAllEvents()
 
 	self.lastCast		= {}
 	self.lastCast.spell	= ''
@@ -370,6 +650,115 @@ function Hekili:OnInitialize()
 	self.CombatStart	= 0
 	self.eqChanged		= GetTime()
 	self.TTD			= {}
+	
+	-- Prepare graphical elements (and the engine frame).
+	self:InitCoreUI()
+	self:UnregisterAllEvents()
+end
+
+
+--	SanityCheck()
+--	Make sure modules are loaded correctly.
+function Hekili:SanityCheck()
+
+	local class = UnitClass("player")
+	
+	local specialization = 'none'
+	if GetSpecialization() then
+		specialization = select(2, GetSpecializationInfo(GetSpecialization()))
+	end
+
+	local mod = self.DB.profile['Module']
+
+	if mod == 'None' then
+		-- do nothing
+	elseif self.Modules[ mod ] then
+		if self.Modules[mod].class ~= class then
+			self:Print("Module |cFFFF9900" .. mod .. "|r is not appropriate for your class; unloading.")
+			self.DB.profile['Module'] = 'None'
+			mod = 'None'
+		elseif self.Modules[mod].spec ~= specialization then
+			self:Print("Module |cFFFF9900" .. mod .. "|r is not appropriate for your specialization; unloading.")
+			self.DB.profile['Module'] = 'None'
+			mod = 'None'
+		end
+	else -- mod is not real
+		self:Print("Module |cFFFF9900" .. mod .. "|r was not loaded or its name may have changed; unloading.")
+		self.DB.profile['Module'] = 'None'
+		mod = 'None'
+	end
+	self.Active = self.Modules[ mod ]
+
+end
+
+
+
+-- 	OnEnable()
+--	AddOn has been (re)enabled by the user.
+function Hekili:OnEnable()
+
+	self:RefreshBindings()
+	self:RefreshUI()
+
+	if self.DB.profile.enabled then
+		-- Combat Log
+		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+
+		-- Sanity checking.
+		self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+		self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+
+		-- Saving positions.
+		self:RegisterEvent("PLAYER_LOGOUT")
+
+		-- Combat time / boss fight status.
+		self:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
+		self:RegisterEvent("PLAYER_REGEN_DISABLED")
+		self:RegisterEvent("PLAYER_REGEN_ENABLED")
+
+		-- Trigger additional refreshes and cache the last spell cast.
+		self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+
+		-- Mainly for capturing changes to cooldowns from trinkets.
+		self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+
+		-- Trackers
+		self:RegisterEvent("PLAYER_TARGET_CHANGED")
+
+		-- Keybinding w/in Hekili options.
+		self:RegisterEvent("UPDATE_BINDINGS")
+
+		-- Time to die.
+		self:RegisterEvent("UNIT_HEALTH")
+
+		-- Make sure the module is appropriate for the character.
+		self:SanityCheck()
+		self:ApplyNameFilters()
+		self:UpdateTrackerCooldowns()
+		self:LoadAuras()
+		
+		if self.LBF then
+			self.stGroup:ReSkin()
+			self.aeGroup:ReSkin()
+			self.trGroup:ReSkin()
+		end
+		
+	else
+		self:Disable()
+	end
+	
+end
+
+
+--	OnDisable()
+--	AddOn has been disabled by the user.
+function Hekili:OnDisable()
+	
+	for i = 1, 5 do
+		self.UI.AButtons['ST'][i]:Hide()
+		self.UI.AButtons['AE'][i]:Hide()
+		self.UI.Trackers[i]:Hide()
+	end
 	
 end
 
@@ -394,99 +783,3 @@ function Hekili.GetTTD()
 		return 300
 	end
 end
-
-
---	SanityCheck()
---	Make sure modules are loaded correctly.
-function Hekili:SanityCheck()
-
-	local class = UnitClass("player")
-	local specialization = select(2, GetSpecializationInfo(GetSpecialization()))
-
-	local mod = self.DB.profile['Module']
-
-	if mod == '(none)' then
-		-- do nothing
-	elseif self.Modules[ mod ] then
-		if self.Modules[mod].class ~= class then
-			self:Print("Module |cFFFF9900" .. mod .. "|r is not appropriate for your class; unloading.")
-			self.DB.profile['Module'] = '(none)'
-			mod = '(none)'
-		elseif self.Modules[mod].spec ~= specialization then
-			self:Print("Module |cFFFF9900" .. mod .. "|r is not appropriate for your specialization; unloading.")
-			self.DB.profile['Module'] = '(none)'
-			mod = '(none)'
-		end
-	else -- mod is not real
-		self:Print("Module |cFFFF9900" .. mod .. "|r was not loaded or its name may have changed; unloading.")
-		self.DB.profile['Module'] = '(none)'
-		mod = '(none)'
-	end
-	self.Active = self.Modules[ mod ]
-
-end
-
-
-
--- 	OnEnable()
---	AddOn has been (re)enabled by the user.
-function Hekili:OnEnable()
-
-	self:RefreshBindings()
-
-	if self.DB.profile.enabled then
-		-- Combat Log
-		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-
-		-- Sanity checking.
-		self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
-
-		-- Saving positions.
-		self:RegisterEvent("PLAYER_LOGOUT")
-
-		-- Combat time / boss fight status.
-		self:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
-		self:RegisterEvent("PLAYER_REGEN_DISABLED")
-		self:RegisterEvent("PLAYER_REGEN_ENABLED")
-
-		-- Trigger additional refreshes and cache the last spell cast.
-		self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-
-		-- Mainly for capturing changes to cooldowns from trinkets.
-		self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
-
-		-- Keybinding w/in Hekili options.
-		self:RegisterEvent("UPDATE_BINDINGS")
-
-		-- Time to die.
-		self:RegisterEvent("UNIT_HEALTH")
-
-		-- Make sure the module is appropriate for the character.
-		self:SanityCheck()
-		self:ApplyNameFilters()
-
-		if self.LBF then
-			self.stGroup:ReSkin()
-			self.aeGroup:ReSkin()
-		end
-		
-	else
-		self:Disable()
-	end
-	
-end
-
-
---	OnDisable()
---	AddOn has been disabled by the user.
-function Hekili:OnDisable()
-	
-	for i = 1, 5 do
-		self.UI.AButtons['ST'][i]:Hide()
-		self.UI.AButtons['AE'][i]:Hide()
-	end
-	
-end
-
-
-

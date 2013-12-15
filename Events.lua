@@ -52,15 +52,21 @@ function Hekili:UNIT_HEALTH( _, UID)
 	Hekili.TTD.sec = projectedTTD
 end
 
+function Hekili:PLAYER_TARGET_CHANGED( _ )
+	self:UpdateTrackerCooldowns()
+end
+
+
+function Hekili:PLAYER_SPECIALIZATION_CHANGED()
+	self:RefreshConfig()
+end
+
 
 function Hekili:ACTIVE_TALENT_GROUP_CHANGED()
-	if self.UseAbility then table.wipe(self.UseAbility) end
-	if self.State.ST then table.wipe(self.State.ST) end
-	if self.State.AE then table.wipe(self.State.AE) end
-	self:RefreshUI()
-	self:RefreshBindings()
-	self:SanityCheck()
-	self:ApplyNameFilters()
+	self:RefreshConfig()
+	
+	if self.Active then self:ProcessPriorityList( 'ST' ) end
+	if self.Active then self:ProcessPriorityList( 'AE' ) end
 end
 
 
@@ -84,12 +90,48 @@ function Hekili:PLAYER_REGEN_ENABLED(...)
 	Hekili.CombatStart		= 0
 end
 
-function Hekili:COMBAT_LOG_EVENT_UNFILTERED(...)
+function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, time, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _, spellID, spellName, _, _, interrupt)
 
-	if self.Active and self.Active.CLEU then
-		self.Active:CLEU(self, ...)
+	if sourceGUID == UnitGUID('player') and (subtype == 'SPELL_AURA_APPLIED' or subtype == 'SPELL_AURA_REFRESH' or subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL') then
+		for i = 1, 5 do
+			if self.DB.profile['Tracker '..i..' Aura'] == spellName and UnitGUID(self.DB.profile['Tracker '..i..' Unit']) == destGUID then
+				self:UpdateTrackerCooldowns()
+			end
+		end
 	end
 
+	-- Hekili: New Tracking System
+	if subtype == 'SPELL_SUMMON' and sourceGUID == UnitGUID('player') then
+		self:UpdateMinion( destGUID, GetTime() )
+	end
+	
+	if subtype == 'UNIT_DIED' or subtype == 'UNIT_DESTROYED' then
+		self:Eliminate( destGUID )
+	end
+
+	-- Player/Minion Event
+	if sourceGUID == UnitGUID('player') or self:IsMinion( sourceGUID ) then
+		
+		-- Aura Tracking
+		if self:IsAuraWatched( spellName ) then
+			if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' or subtype == 'SPELL_DAMAGE' then
+				self:UpdateAura( spellName, destGUID, GetTime() )
+				self:UpdateTarget( destGUID, GetTime() )
+			elseif subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL' then
+				self:UpdateAura( spellName, destGUID, nil )
+			end
+		end
+
+		-- If you don't care about multiple targets, I don't!
+		if self.DB.profile['Multi-Target Enabled'] == false and self.DB.profile['Multi-Target Integration'] == 0 then
+			return true
+		elseif subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
+			self:UpdateTarget( destGUID, GetTime() )
+		end
+
+	end
+					
+	
 end
 
 function Hekili:UPDATE_BINDINGS()
@@ -103,15 +145,13 @@ function Hekili:UNIT_SPELLCAST_SUCCEEDED( _, UID, spell )
 	if UID == 'player' then
 		self.lastCast.spell = spell
 		self.lastCast.time = GetTime()
+		if self.UI.Engine.Delay > 0.05 then self.UI.Engine.Delay = 0 end
 	end
-	
-	--[[ if UID == 'player' then
-		if self.UI.Engine.Delay > 0.05 then self.UI.Engine.Delay = 0.05 end
-		if self.UI.Engine.TextDelay > 0.05 then self.UI.Engine.TextDelay = 0.05 end
-	end ]]
 	
 end
 
 
 -- EVENT HANDLING --
 --------------------
+
+

@@ -7,17 +7,21 @@ function Hekili:NewModule( name, class, spec, st, ae, cd )
 	mod['class']	= class
 	mod['spec']		= spec
 
-	--[[
-	mod.state		= {}
-	mod.state.ST	= {}
-	mod.state.AE	= {}
-	mod.state.CD	= {}
-	]]
-	
 	mod.enabled		= {}
 	mod.enabled.ST	= st
 	mod.enabled.AE	= ae
 	mod.enabled.CD	= cd
+	
+	
+	-- For comparisons against the GCD.  An instant-cast self-buff works well.
+	function mod:SetGCD( spell )
+		mod.GCDspell = spell
+	end
+	
+	function mod:GetGCD()
+		return mod.GCDspell
+	end
+	
 	
 	-- Spells table (with flags for spell level filtering/etc.)
 	mod.spells		= {}
@@ -74,9 +78,55 @@ function Hekili:NewModule( name, class, spec, st, ae, cd )
 			['check']		= check
 		}
 	end
+
+
+	-- Trackers (for recommended aura icons)
+	mod.trackers = {}
 	
+
+	function mod:AddTracker( name, type, caption, show, timer, override, ... )
+		self.trackers[name]				= {}
+		self.trackers[name].type		= type
+		self.trackers[name].caption		= caption
+		self.trackers[name].show		= show
+		self.trackers[name].timer		= timer
+		self.trackers[name].override	= override
+		
+		if type == 'Aura' then
+			local aura, unit = ...
+			
+			self.trackers[name].aura	= aura
+			self.trackers[name].unit	= unit
+		elseif type == 'Cooldown' then
+			local ability = ...
+			
+			self.trackers[name].ability	= ability
+		elseif type == 'Totem' then
+			local element, ttmName = ...
+			
+			self.trackers[name].element	= element
+			self.trackers[name].ttmName	= ttmName
+			self.trackers[name].ttmCap	= caption
+		end
+		
+	end
+
+
+	-- Target Counts
 	mod.trackHits		= {}
 	mod.trackDebuffs	= {}
+	
+	function mod:WatchAura( aura  )
+		self.trackDebuffs[aura] = true
+	end
+	
+	function mod:Watchlist()
+		return mod.trackDebuffs
+	end
+	
+	function mod:Watched( aura )
+		return (self.trackDebuffs[aura] ~= nil)
+	end
 	
 	self.Modules[name] = mod
 	self:Print("Added module |cFFFF9900" .. name .. "|r to Hekili.")
@@ -86,4 +136,4 @@ end
 
 
 -- Add a blank module.
-Hekili:NewModule( "(none)", nil, nil, false, false, false )
+Hekili:NewModule( "None", nil, nil, false, false, false )

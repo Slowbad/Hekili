@@ -104,7 +104,7 @@ function ttWeaponSpeed( slot )
 	return nil
 end
 
-
+-- Math!
 function round( val, decimal )
 	if ( decimal ) then
 		return math.floor( ( val * 10^decimal ) + 0.5 ) / ( 10^decimal )

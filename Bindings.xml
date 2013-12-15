@@ -2,4 +2,6 @@
     <Binding name="HEKILI_TOGGLE" header="HEKILI_HEADER">Hekili:ToggleEnable();</Binding>
     <Binding name="HEKILI_TOGGLE_COOLDOWNS">Hekili:ToggleCooldowns();</Binding>
     <Binding name="HEKILI_TOGGLE_HARDCASTS">Hekili:ToggleHardcasts();</Binding>    
+    <Binding name="HEKILI_TOGGLE_SINGLE">Hekili:ToggleSingle();</Binding>
+    <Binding name="HEKILI_TOGGLE_MULTI">Hekili:ToggleMulti();</Binding>
 </Bindings>

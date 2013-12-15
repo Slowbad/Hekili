@@ -76,6 +76,33 @@ local totem_water	= 3
 local totem_air		= 4
 
 
+-- Tell the addon what spell to use to determine the GCD.
+mod:SetGCD(lightning_shield)
+
+
+-- Tell the addon to keep track of how many targets are afflicted by one of your debuffs.
+mod:WatchAura(flame_shock)
+
+-- AddTracker:	Name
+--				Type		Caption		Show			Timer		Override
+--	     Aura:	Name		Unit
+--   Cooldown:	Ability
+--      Totem:	Element		Totem Name
+-- /AddTracker
+
+mod:AddTracker(	'Flame Shock on Target (show target count)',
+				'Aura',		'Targets',	'Show Always',	true,		true,
+				flame_shock,		'target' )
+				
+mod:AddTracker(	'Maelstrom Weapon on Player (show aura stacks)',
+				'Aura',		'Stacks',	'Show Always',	false,		true,
+				maelstrom_weapon,	'player')
+
+mod:AddTracker( 'Fire Totems',
+				'Totem',	'None',		'Present',		true,		false,
+				'fire',		'' )
+
+
 mod:AddAbility( ancestral_swiftness, 16188, 'offGCD', 'talent' )
 	mod:AddHandler( ancestral_swiftness, function ( state )
 		cast = 0
@@ -206,6 +233,7 @@ mod:AddAbility( earth_shock, 8042 )
 mod:AddAbility( elemental_blast, 117014, 'talent' )
 	mod:AddHandler( elemental_blast, function ( state )
 		cast = 2.5 / state.sHaste
+		state.cooldowns[elemental_blast] = 12.0
 	
 		if state.pBuffs[ancestral_swiftness].up and state.pBuffs[maelstrom_weapon].count < 5 then
 			state.pBuffs[ancestral_swiftness].up		= false
@@ -214,7 +242,7 @@ mod:AddAbility( elemental_blast, 117014, 'talent' )
 	
 			cast = 0
 		elseif state.pBuffs[maelstrom_weapon].up then
-			cast = cast * (1 - (0.2 * state.pBuffs[maelstrom_weapon].count))
+			cast = cast * ( 1 - (0.2 * state.pBuffs[maelstrom_weapon].count) )
 	
 			state.pBuffs[maelstrom_weapon].up		= false
 			state.pBuffs[maelstrom_weapon].count	= 0
@@ -973,7 +1001,7 @@ mod:AddToActionList('aoe',
 					'',
 					'actions.aoe+=/earth_elemental_totem,if=!active&cooldown.fire_elemental_totem.remains>=50',
 					function( state )
-						if (not state.talents[primal_elementalist] or not state.totems[totem_fire].name == fire_elemental_totem) and (state.totems[totem_earth].name ~= earth_elemental_totem and state.cooldowns[fire_elemental_totem] >= 50) then
+						if not (state.talents[primal_elementalist] and state.totems[totem_fire].name == fire_elemental_totem) and (state.totems[totem_earth].name ~= earth_elemental_totem and state.cooldowns[fire_elemental_totem] >= 50) then
 							return earth_elemental_totem
 						end
 						return nil
@@ -1037,7 +1065,7 @@ mod:AddToActionList('single',
 					'',
 					'actions.single=searing_totem,if=!totem.fire.active',
 					function( state )
-						if not state.totems[totem_fire].up then
+						if (not state.totems[totem_fire].up) then
 							return searing_totem
 						end
 						return nil
@@ -1048,7 +1076,7 @@ mod:AddToActionList('single',
 					'UF|T16',
 					'actions.single+=/unleash_elements,if=(talent.unleashed_fury.enabled|set_bonus.tier16_2pc_melee=1)',
 					function( state )
-						if state.talents[unleashed_fury] or state.set_bonuses['t16'] >= 2 and state.pBuffs[windfury_weapon].up and state.pBuffs[flametongue_weapon].up then
+						if (state.talents[unleashed_fury] or state.set_bonuses['t16'] >= 2) and state.pBuffs[windfury_weapon].up and state.pBuffs[flametongue_weapon].up then
 							return unleash_elements
 						end
 						return nil
@@ -1074,7 +1102,6 @@ mod:AddToActionList('single',
 							if state.pBuffs[ancestral_swiftness].up or state.pBuffs[maelstrom_weapon].count == 5 then
 								return elemental_blast
 							else
-								-- Hardcasting.
 								return elemental_blast, nil, true
 							end
 						end
@@ -1086,8 +1113,19 @@ mod:AddToActionList('single',
 					'MW5',
 					'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react=5',
 					function( state )
-						if state.pBuffs[maelstrom_weapon].count == 5 then -- and not state.pBuffs[ancestral_swiftness].up then
+						if state.tCount < 3 and (state.pBuffs[maelstrom_weapon].count == 5) then
 							return lightning_bolt
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
+					chain_lightning,
+					'3+MW5',
+					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
+					function( state )
+						if state.tCount >= 3 and (state.pBuffs[maelstrom_weapon].count == 5) then
+							return chain_lightning
 						end
 						return nil
 					end )
@@ -1130,7 +1168,7 @@ mod:AddToActionList('single',
 					'UF&FS0',
 					'actions.single+=/flame_shock,if=buff.unleash_flame.up&!ticking',
 					function( state )
-						if state.pBuffs[unleash_flame].up and not state.tDebuffs[flame_shock].up then
+						if state.pBuffs[unleash_flame].up and (not state.tDebuffs[flame_shock].up) then
 							return flame_shock
 						end
 						return nil
@@ -1149,8 +1187,19 @@ mod:AddToActionList('single',
 					'T15',
 					'actions.single+=/lightning_bolt,if=set_bonus.tier15_2pc_melee=1&buff.maelstrom_weapon.react>=4&!buff.ascendance.up',
 					function( state )
-						if state.set_bonuses['t15'] >= 2 and not state.pBuffs[ancestral_swiftness].up and state.pBuffs[maelstrom_weapon].count >= 4 and not state.pBuffs[ascendance].up then
+						if state.tCount < 3 and (state.set_bonuses['t15'] >= 2 and (not state.pBuffs[ancestral_swiftness].up) and state.pBuffs[maelstrom_weapon].count >= 4 and (not state.pBuffs[ascendance].up)) then
 							return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
+					chain_lightning,
+					'3+T15',
+					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
+					function( state )
+						if state.tCount >= 3 and (state.set_bonuses['t15'] >= 2 and (not state.pBuffs[ancestral_swiftness].up) and state.pBuffs[maelstrom_weapon].count >= 4 and (not state.pBuffs[ascendance].up)) then
+							return chain_lightning, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 						end
 						return nil
 					end )
@@ -1160,7 +1209,7 @@ mod:AddToActionList('single',
 					'UF|FS0',
 					'actions.single+=/flame_shock,if=(buff.unleash_flame.up&(dot.flame_shock.remains<10|set_bonus.tier16_2pc_melee=0))|!ticking',
 					function( state )
-						if (state.pBuffs[unleash_flame].up and (state.tDebuffs[flame_shock].remains < 10 or state.set_bonuses['t16'] < 2)) or not state.tDebuffs[flame_shock].up then
+						if ( state.pBuffs[unleash_flame].up and ( (state.tDebuffs[flame_shock].remains < 10) or (state.set_bonuses['t16'] < 2) ) ) or ( not state.tDebuffs[flame_shock].up ) then
 							return flame_shock
 						end
 						return nil
@@ -1193,9 +1242,21 @@ mod:AddToActionList('single',
 					'MW3+',
 					'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>=3&!buff.ascendance.up',
 					function( state )
-						if state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up then
+						if state.tCount < 3 and (state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
 							-- Hardcasting.
 							return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
+					chain_lightning,
+					'3+MW3+',
+					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
+					function( state )
+						if state.tCount >= 3 and (state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
+							-- Hardcasting.
+							return chain_lightning, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 						end
 						return nil
 					end )
@@ -1216,8 +1277,19 @@ mod:AddToActionList('single',
 					'AS',
 					'actions.single+=/lightning_bolt,if=buff.ancestral_swiftness.up',
 					function( state )
-						if state.pBuffs[ancestral_swiftness].up then
+						if state.tCount < 3 and state.pBuffs[ancestral_swiftness].up then
 							return lightning_bolt
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
+					chain_lightning,
+					'3+AS',
+					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
+					function( state )
+						if state.tCount >= 3 and state.pBuffs[ancestral_swiftness].up then
+							return chain_lightning
 						end
 						return nil
 					end )
@@ -1227,7 +1299,7 @@ mod:AddToActionList('single',
 					'',
 					'actions.single+=/earth_shock,if=(!glyph.frost_shock.enabled|set_bonus.tier14_4pc_melee=1)',
 					function( state )
-						if not state.glyphs[frost_shock] or state.set_bonuses['t14'] >= 4 then
+						if (not state.glyphs[frost_shock]) or state.set_bonuses['t14'] >= 4 then
 							return earth_shock
 						end
 						return nil
@@ -1246,7 +1318,7 @@ mod:AddToActionList('single',
 					'',
 					'actions.single+=/earth_elemental_totem,if=!active',
 					function( state )
-						if (not state.talents[primal_elementalist] or not state.totems[totem_fire].name == fire_elemental_totem) and (state.totems[totem_earth].name ~= earth_elemental_totem and state.cooldowns[fire_elemental_totem] >= 50) then
+						if not (state.talents[primal_elementalist] and state.totems[totem_fire].name == fire_elemental_totem) and (state.totems[totem_earth].name ~= earth_elemental_totem and state.cooldowns[fire_elemental_totem] >= 50) then
 							return earth_elemental_totem
 						end
 						return nil
@@ -1257,9 +1329,32 @@ mod:AddToActionList('single',
 					'MW2+',
 					'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>1&!buff.ascendance.up',
 					function( state )
-						if state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up then
+						if state.tCount < 3 and (state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
 							-- Hardcasting
 							return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
+					chain_lightning,
+					'3+MW2+',
+					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
+					function( state )
+						if state.tCount >= 3 and (state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
+							-- Hardcasting
+							return chain_lightning, 0, (state.pBuffs[maelstrom_weapon].count < 5)
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
+					fire_nova,
+					'2+',
+					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
+					function( state )
+						if state.fsCount >= 2 then
+							return fire_nova
 						end
 						return nil
 					end )
@@ -1269,7 +1364,7 @@ mod:AddToActionList('single',
 					'Refresh',
 					'N/A',
 					function( state )
-						if state.totems[totem_fire].up and state.totems[totem_fire].name == searing_totem and state.totems[totem_fire].remains < 15 then
+						if state.totems[totem_fire].name == searing_totem and (state.totems[totem_fire].remains < 15) and ( not Hekili.DB.profile['Show Cooldowns'] or ( state.cooldowns[fire_elemental_totem] > (state.totems[totem_fire].remains + 20) ) ) then
 							return searing_totem
 						end
 						return nil
@@ -1290,8 +1385,7 @@ local tSlots = {
 	'Legguards'
 }
 
-function tierCheck( setName, affix )
-
+local function tierCheck( setName, affix )
 	equipped = 0
 
 	for i=1, 5 do
@@ -1351,9 +1445,7 @@ end
 -----------
 
 
-
-
-function mod.RefreshState( state )
+function mod:RefreshState( state )
 
 	state.time			= GetTime()
 
@@ -1366,9 +1458,8 @@ function mod.RefreshState( state )
 	state.moving		= (GetUnitSpeed("player") > 0)
 	
 	state.timeToDie		= Hekili.GetTTD()
-	state.tCount,
-	state.mtCount,
-	state.fsCount		= mod.activeTargets()
+	state.tCount		= Hekili:TargetCount()
+	state.fsCount		= Hekili:AuraCount(flame_shock)
 
 	if Hekili.lastCast and (state.time - Hekili.lastCast.time < 0.5) then
 		state.lastCast = Hekili.lastCast.spell
@@ -1507,7 +1598,7 @@ function mod.RefreshState( state )
 	local gSlot = GetInventorySlotInfo("HandsSlot")
 	local gloves = GetInventoryItemID("player", gSlot)
 
-	state.cooldowns[synapse_springs]	= 0
+	state.cooldowns[synapse_springs]	= 999
 	if ttGloveTinker(gSlot) then
 		state.items[synapse_springs]	= true
 
@@ -1527,7 +1618,6 @@ function mod.RefreshState( state )
 	-- Virmen's Bite
 	local vbCount = GetItemCount(virmens_bite, false)
 	state.cooldowns[virmens_bite]			= 999
-
 	if vbCount > 0 then
 		state.items[virmens_bite]			= true
 
@@ -1629,6 +1719,25 @@ function mod.RefreshState( state )
 	-----------------
 
 
+	state.pCast			= 0
+	state.pCasting		= ''
+
+	local spellcast, _, _, _, _, endCast, _, _, notInterruptible = UnitCastingInfo('player')
+
+	if endCast ~= nil then
+		state.pCast	= (endCast / 1000) - GetTime() 
+		state.pCasting = spellcast
+	end
+
+	spellcast, _, _, _, _, endCast, _, notInterruptible = UnitChannelInfo('player')
+
+	if endCast ~= nil then
+		state.pCast = (endCast / 1000) - GetTime() 
+		state.pCasting = spellcast
+	end
+	
+	
+
 	-------------------
 	-- TARGET HEALTH --
 
@@ -1718,7 +1827,7 @@ function mod.RefreshState( state )
 end
 
 
-function mod.AdvanceState( state, elapsed )
+function mod:AdvanceState( state, elapsed )
 
 	state.time			= state.time + elapsed
 	state.combatTime	= state.combatTime + elapsed
@@ -1867,131 +1976,5 @@ function mod.AdvanceState( state, elapsed )
 	if ohSwing then
 		ohPPH = mhSwing * 10 / 60
 	end
-
-end
-
-
-mod.trackHits.source	= 0
-mod.trackHits.pulse		= 0
-mod.trackHits.count		= 0
-mod.trackHits.timeOut	= 5.0
-
-mod.trackDebuffs[flame_shock] = {}
-
-
-function mod.countHits( verb )
-
-	if verb then
-		for k,v in pairs(mod.trackHits) do
-			print(k .. ' = ' .. v .. '.')
-		end
-	end
-
-	return mod.trackHits.count and mod.trackHits.count or 0
-
-end
-
-
-function mod.countDebuffs( spell, verb )
-	local num = 0
-
-	if verb then Hekili:Print('Counting ' .. spell .. '.') end
-
-	if mod.trackDebuffs[ spell ] then
-		if verb then Hekili:Print(spell .. ' has spell table.') end
-
-		for k,_ in pairs(mod.trackDebuffs[spell]) do
-			num = num + 1
-		end
-	end
-
-	if verb then Hekili:Print(spell .. ' had ' .. num .. '.') end
-	return num
-end
-
-
-function mod.activeTargets( verb )
-
-	local debuffs = 0
-
-	for k,v in pairs(mod.trackDebuffs) do
-		local tmpDebuffs = mod.countDebuffs( k, verb )
-
-		if tmpDebuffs > debuffs then debuffs = tmpDebuffs end
-	end
-
-	local hits = mod.countHits( verb )
-
-	if hits > debuffs then
-		return hits, hits, debuffs
-	else
-		return debuffs, hits, debuffs
-	end
-end
-
-
-
-function mod.auditTrackers( )
-	for spell, spellTable in pairs(mod.trackDebuffs) do
-		for unit, lastTick in pairs(spellTable) do
-			if GetTime() - lastTick > 5.0 then spellTable[unit] = nil end
-		end
-	end
-
-	if GetTime() - mod.trackHits.pulse > mod.trackHits.timeOut then
-		mod.trackHits.pulse		= 0
-		mod.trackHits.count		= 0
-	end
-end
-
-
-function mod:CLEU(AddOn, event, time, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _, spellID, spellName, _, _, interrupt)
-
-	-- If you don't care about multiple targets, I don't!
-	if AddOn.DB.char['Multi-Target Enabled'] == false and AddOn.DB.char['Multi-Target Integration'] == 0 then
-		return true
-	end
-
-	-- Detect our own Magma Totem; should later expand to detect AOE from our Fire Elemental if its output is consistent.
-	if subtype == 'SPELL_SUMMON' and sourceGUID == UnitGUID('player') and destName == 'Magma Totem' then
-		self.trackHits.source	= destGUID
-		self.trackHits.pulse	= GetTime()
-		self.trackHits.count	= 0
-	end
-
-
-	if subtype == 'SPELL_DAMAGE' and self.trackHits and sourceGUID == self.trackHits.source and spellName == 'Magma Totem' then
-		if self.trackHits.pulse == 0 or (GetTime() - self.trackHits.pulse > 0.5) then
-			self.trackHits.pulse	= GetTime()
-			self.trackHits.count	= 0
-		end
-		self.trackHits.count	= self.trackHits.count + 1
-	end
-
-	if subtype == 'SPELL_AURA_APPLIED' or subtype == 'SPELL_AURA_REFRESH' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' or subtype == 'SPELL_DAMAGE' then
-		if spellName == 'Flame Shock' and sourceGUID == UnitGUID('player') then
-			if not self.trackDebuffs[spellName] then self.trackDebuffs[spellName] = {} end
-			self.trackDebuffs[spellName][destGUID]	= GetTime()
-		end
-	end
-
-	if subtype == 'UNIT_DIED' or subtype == 'UNIT_DESTROYED' then
-		if self.trackDebuffs[spellName] and self.trackDebuffs[spellName][destGUID] then
-			self.trackDebuffs[spellName][destGUID] = nil
-		end
-
-		if self.trackHits and self.trackHits.source and self.trackHits.source == destGUID then
-			self.trackHits.source	= 0
-			self.trackHits.pulse	= 0
-			self.trackHits.count	= 0
-		end
-	end
-
-	-- Check to reduce Flame Shock targets.
-    if subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL' then
-		if spellName == 'Flame Shock' and sourceGUID == UnitGUID('player') then
-			self.trackDebuffs[spellName][destGUID] = nil
-		end
-    end
 
 end
