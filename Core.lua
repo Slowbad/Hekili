@@ -256,7 +256,7 @@ function Hekili:DisplayActionButtons( id )
 					duration = GCD
 				end
 
-				if i == 1 or (i > 1 and duration and duration ~= GCD) then
+				if i == 1 or (i > 1 and duration and duration ~= GCD) and (not module.spells[ self.Actions[id][i].name ].offGCD) then
 					self.UI.AButtons[id][i].Cooldown:SetCooldown(start, duration)
 				else
 					self.UI.AButtons[id][i].Cooldown:SetCooldown(0, 0)
@@ -292,6 +292,7 @@ function Hekili:DisplayActionButtons( id )
 						local caption = track.caption
 
 						local text = ''
+						
 						if caption == 'Stacks' then
 							if track.unit then
 								if not UnitCanAttack('player', track.unit) then
@@ -301,7 +302,7 @@ function Hekili:DisplayActionButtons( id )
 									text = select(4, UnitAura(track.unit, track.aura, nil, "HARMFUL|PLAYER"))
 
 								end
-								if text == 0 then text = '' end
+								if not text then text = '' end
 								
 							end
 
@@ -323,6 +324,9 @@ function Hekili:DisplayActionButtons( id )
 						if text ~= '' then
 							self.UI.AButtons[id][i].btmText:SetText(text)
 							self.UI.AButtons[id][i].btmText:SetJustifyH("RIGHT")
+						else
+							self.UI.AButtons[id][i].btmText:SetText(self.Actions[id][i].caption)
+							self.UI.AButtons[id][i].btmText:SetJustifyH("CENTER")
 						end
 					end					
 					

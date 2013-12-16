@@ -4,6 +4,10 @@
 ## X-Curse-Project-Name: LibSharedMedia-3.0
 ## X-Curse-Project-ID: libsharedmedia-3-0
 ## X-Curse-Repository-ID: wow/libsharedmedia-3-0/mainline
+## X-Curse-Packaged-Version: r32
+## X-Curse-Project-Name: Hekili
+## X-Curse-Project-ID: hekili
+## X-Curse-Repository-ID: wow/hekili/mainline
 
 ## Title: Lib: SharedMedia-3.0
 ## Notes: Shared handling of media data (fonts, sounds, textures, ...) between addons.
