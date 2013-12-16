@@ -230,6 +230,18 @@ end
 
 function Hekili:DisplayActionButtons( id )
 
+	if 	( self.DB.profile['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
+		( self.DB.profile['Visibility'] == 'Show in Combat' and ( not UnitAffectingCombat('player') and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) ) or
+		( self.DB.profile['PvP Visibility'] == false and pvpZones[zoneType] ) or
+		( self.DB.profile['Single-Target Enabled'] == false and id == 'ST' ) or
+		( self.DB.profile['Multi-Target Enabled'] == false and id == 'AE' ) or
+		( UnitHasVehicleUI('player') ) then
+		for i = 1, 5 do
+			self.UI.AButtons[id][i]:Hide()
+		end
+		return
+	end
+
 	local module = self.Active
 	local startGCD, GCD = GetSpellCooldown( module:GetGCD() )
 
@@ -431,6 +443,15 @@ function Hekili:UpdateVisuals()
 
 	self:DisplayActionButtons( 'ST' )
 	self:DisplayActionButtons( 'AE' )
+	
+	if 	( self.DB.profile['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
+		( self.DB.profile['Visibility'] == 'Show in Combat' and ( not UnitAffectingCombat('player') and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) ) or
+		( self.DB.profile['PvP Visibility'] == false and pvpZones[zoneType] ) then
+		for i = 1, 5 do
+			self.UI.Trackers[i]:Hide()
+		end
+		return
+	end
 
 	-- Light up multi-target.
 	if self.DB.profile['Multi-Target Enabled'] then
