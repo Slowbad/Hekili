@@ -24,6 +24,7 @@ BINDING_NAME_HEKILI_TOGGLE_COOLDOWNS = "Toggle Display of Cooldowns"
 BINDING_NAME_HEKILI_TOGGLE_HARDCASTS = "Toggle Display of Hardcasts"
 BINDING_NAME_HEKILI_TOGGLE_SINGLE = "Toggle Single Target Display"
 BINDING_NAME_HEKILI_TOGGLE_MULTI = "Toggle Multi-Target Display"
+BINDING_NAME_HEKILI_TOGGLE_INTEGRATE = "Toggle Multi-Target Integration"
 
 Hekili.Modules = {}
 

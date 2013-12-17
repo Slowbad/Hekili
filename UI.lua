@@ -318,6 +318,7 @@ function Hekili:RefreshBindings()
 	self.DB.profile['AE Hotkey']		= GetBindingKey("HEKILI_TOGGLE_MULTI") or ''
 	self.DB.profile['Cooldown Hotkey']	= GetBindingKey("HEKILI_TOGGLE_COOLDOWNS") or ''
 	self.DB.profile['Hardcast Hotkey']	= GetBindingKey("HEKILI_TOGGLE_HARDCASTS") or ''
+	self.DB.profile['Integrate Hotkey']	= GetBindingKey("HEKILI_TOGGLE_INTEGRATE") or ''
 end	
 
 

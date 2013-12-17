@@ -150,7 +150,7 @@ function Hekili:ProcessPriorityList( id )
 			end
 		end
 
-		if useCooldown > 0 and ( id == 'AE' or ( self.DB.profile[ 'Multi-Target Integration' ] ~= 0 and state.tCount >= self.DB.profile[ 'Multi-Target Integration' ] ) ) then
+		if useCooldown > 0 and ( id == 'AE' or ( self.DB.profile[ 'Integration Enabled' ] and state.tCount >= self.DB.profile[ 'Multi-Target Integration' ] ) ) then
 			for line, action in ipairs(module.actionList.aoe) do
 
 				local ckAction, ckWait, ckHardcast, ckCooldown
@@ -177,7 +177,7 @@ function Hekili:ProcessPriorityList( id )
 			end
 		end
 
-		if useCooldown > 0 and ( id == 'ST' ) then
+		if useCooldown > 0 and ( id == 'ST' and ( not self.DB.profile[ 'Integration Enabled' ] or state.tCount < self.DB.profile[ 'Multi-Target Integration' ] ) ) then
 			for line, action in ipairs(module.actionList.single) do
 
 				local ckAction, ckWait, ckHardcast, ckCooldown

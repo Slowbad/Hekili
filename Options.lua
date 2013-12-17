@@ -355,13 +355,18 @@ function Hekili:GetOptions()
 											end
 											return output			
 										end,
-								cmdHidden = true,
 								set = 'SetOption',
 								get = 'GetOption',
 								order = 0,
-								width = 'full'
 							},
-
+							['Integration Enabled'] = {
+								type = 'toggle',
+								name = 'Enable Integration',
+								desc = 'Display the multi-target priority in the Single Target display when the "Multi Integration" threshold is reached.',
+								set = 'SetOption',
+								get = 'GetOption',
+								order = 1,
+							},
 							['Single Target Icons Displayed'] = {
 								type	= 'range',
 								name	= 'Icons Displayed',
@@ -371,18 +376,18 @@ function Hekili:GetOptions()
 								min		= 1,
 								max		= 5,
 								step	= 1,
-								order	= 1,
+								order	= 2,
 							},
 							['Multi-Target Integration'] = {
 								type	= 'range',
 								name	= 'Multi Integration',
-								desc	= 'Use the multi-target priority in the Single Target display if this number of targets (or more) are detected (0 to disable).',
-								min		= 0,
+								desc	= 'Use the multi-target priority in the Single Target display when this number of targets are detected (if enabled).',
+								min		= 2,
 								max		= 10,
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 2
+								order	= 3
 							},
 							['Single Target Queue Direction'] = {
 								type	= "select",
@@ -392,7 +397,7 @@ function Hekili:GetOptions()
 								set		= 'SetOption',
 								style	= 'dropdown',
 								width	= 'full',
-								order	= 3,
+								order	= 4,
 								values	= {
 									RIGHT	= 'Right (L to R)',
 									LEFT	= 'Left (R to L)',
@@ -407,7 +412,7 @@ function Hekili:GetOptions()
 								get				= 'GetOption',
 								set				= 'SetOption',
 								width			= 'full',
-								order			= 4
+								order			= 5
 							},
 							['Single Target Tracker'] = {
 								type	= 'select',
@@ -430,7 +435,7 @@ function Hekili:GetOptions()
 											end,
 								set		= 'SetOption',
 								get		= 'GetOption',
-								order	= 5,
+								order	= 6,
 								width	= 'full'
 							},
 							['Single Target Primary Icon Size'] = {
@@ -442,7 +447,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 6
+								order	= 7
 							},
 							['Single Target Primary Font Size'] = {
 								type	= 'range',
@@ -453,7 +458,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 7
+								order	= 8
 							},
 							['Single Target Queued Icon Size'] = {
 								type	= 'range',
@@ -464,7 +469,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 8
+								order	= 9
 							},
 							['Single Target Queued Font Size'] = {
 								type	= 'range',
@@ -475,7 +480,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 9
+								order	= 10
 							},
 							['Single Target Icon Spacing'] = {
 								type	= 'range',
@@ -486,7 +491,7 @@ function Hekili:GetOptions()
 								step	= 1,
 								get		= 'GetOption',
 								set		= 'SetOption',
-								order	= 10
+								order	= 11
 							},
 						},
 					},
@@ -2335,6 +2340,14 @@ function Hekili:GetOptions()
 								get		= 'GetOption',
 								order	= 2
 							},
+							['Integrate Hotkey'] = {
+								type	= 'keybinding',
+								name	= 'Toggle Integration',
+								desc	= 'Bind or unbind a hotkey to allow the multi-target priority to be shown in the single-target display on/off.',
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 3
+							},
 						}
 					},
 					['Filter Hotkeys'] = {
@@ -2401,7 +2414,8 @@ function Hekili:GetDefaults()
 
 			['Single Target Enabled']			= true,
 			['Single Target Icons Displayed']	= 5,
-			['Multi-Target Integration']		= 0,
+			['Integration Enabled']				= false,
+			['Multi-Target Integration']		= 4,
 			['Single Target Queue Direction']	= 'RIGHT',
 			['Single Target Font']				= 'Arial Narrow',
 			['Single Target Tracker']			= 'None',
@@ -2650,6 +2664,12 @@ function Hekili:ToggleMulti()
 	toggle[1] = 'Multi-Target Enabled'
 	self:SetOption(toggle, not self.DB.profile['Multi-Target Enabled'])
 end
+
+function Hekili:ToggleIntegration()
+	toggle[1] = 'Integration Enabled'
+	self:SetOption(toggle, not self.DB.profile['Integration Enabled'])
+end
+
 -- End Toggles
 
 
@@ -2702,6 +2722,11 @@ function Hekili:SetOption(info, input)
 			self:ProcessPriorityList( 'ST' )
 		end
 		
+	elseif opt == 'Integration Enabled' then
+		if self.DB.profile['Multi-Target Integration'] < 2 then
+			self.DB.profile['Multi-Target Integration'] = 2
+		end
+		
 	elseif opt == 'Multi-Target Enabled' then
 		for i = 1, 5 do
 			if input == false then
@@ -2737,6 +2762,8 @@ function Hekili:SetOption(info, input)
 			self.DB.profile[opt] = input
 		end
 
+		SaveBindings(GetCurrentBindingSet())
+
 	elseif opt == 'ST Hotkey' then
 		-- Clear the old binding.
 		if self.DB.profile[opt] ~= '' then
@@ -2752,6 +2779,8 @@ function Hekili:SetOption(info, input)
 			self.DB.profile[opt] = input
 		end
 
+		SaveBindings(GetCurrentBindingSet())
+
 	elseif opt == 'AE Hotkey' then
 		-- Clear the old binding.
 		if self.DB.profile[opt] ~= '' then
@@ -2766,6 +2795,8 @@ function Hekili:SetOption(info, input)
 			SetBinding(input, "HEKILI_TOGGLE_MULTI")
 			self.DB.profile[opt] = input
 		end
+
+		SaveBindings(GetCurrentBindingSet())
 		
 	elseif opt == 'Cooldown Hotkey' then
 		-- Clear the old binding.
@@ -2782,6 +2813,8 @@ function Hekili:SetOption(info, input)
 			self.DB.profile[opt] = input
 		end
 
+		SaveBindings(GetCurrentBindingSet())
+
 	elseif opt == 'Hardcast Hotkey' then
 		-- Clear the old binding.
 		if self.DB.profile[opt] ~= '' then
@@ -2796,6 +2829,26 @@ function Hekili:SetOption(info, input)
 			SetBinding(input, "HEKILI_TOGGLE_HARDCASTS")
 			self.DB.profile[opt] = input
 		end
+
+		SaveBindings(GetCurrentBindingSet())
+		
+	elseif opt == 'Integrate Hotkey' then
+		-- Clear the old binding.
+		if self.DB.profile[opt] ~= '' then
+			self.DB.profile[opt] = ''
+		end
+		
+		if GetBindingKey("HEKILI_TOGGLE_INTEGRATE") then
+			SetBinding(GetBindingKey("HEKILI_TOGGLE_INTEGRATE"))
+		end
+		
+		if input ~= '' then
+			SetBinding(input, "HEKILI_TOGGLE_INTEGRATE")
+			self.DB.profile[opt] = input
+		end
+
+		SaveBindings(GetCurrentBindingSet())
+		
 		
 	elseif opt == 'Name Filter' then
 		self.DB.profile[opt] = self:ApplyNameFilters( input )

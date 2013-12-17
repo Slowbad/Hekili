@@ -978,10 +978,9 @@ mod:AddToActionList('aoe',
 
 mod:AddToActionList('aoe',
 					earth_shock,
-					'',
+					'3-',
 					'actions.aoe+=/earth_shock,if=active_enemies<4',
 					function( state )
-						-- Need to bring in FS counter for this.
 						if state.tCount < 4 then
 							return earth_shock
 						end
@@ -1020,7 +1019,7 @@ mod:AddToActionList('aoe',
 
 mod:AddToActionList('aoe',
 					fire_nova,
-					'',
+					'2+',
 					'actions.aoe+=/fire_nova,if=active_flame_shock>=1',
 					function( state )
 						if state.fsCount >= 1 then

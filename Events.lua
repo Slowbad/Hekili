@@ -123,7 +123,7 @@ function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, time, subtype, _, sourceGUID,
 		end
 
 		-- If you don't care about multiple targets, I don't!
-		if self.DB.profile['Multi-Target Enabled'] == false and self.DB.profile['Multi-Target Integration'] == 0 then
+		if self.DB.profile['Multi-Target Enabled'] == false and self.DB.profile['Integration Enabled'] == false then
 			return true
 		elseif subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
 			self:UpdateTarget( destGUID, GetTime() )

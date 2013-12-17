@@ -4,4 +4,5 @@
     <Binding name="HEKILI_TOGGLE_HARDCASTS">Hekili:ToggleHardcasts();</Binding>    
     <Binding name="HEKILI_TOGGLE_SINGLE">Hekili:ToggleSingle();</Binding>
     <Binding name="HEKILI_TOGGLE_MULTI">Hekili:ToggleMulti();</Binding>
+    <Binding name="HEKILI_TOGGLE_INTEGRATE">Hekili:ToggleIntegration();</Binding>
 </Bindings>
