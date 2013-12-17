@@ -2298,7 +2298,7 @@ function Hekili:GetOptions()
 												local output =	'In some cases, AOE abilities may be included in the single-target rotation when multiple targets are detected.\n\n' ..
 																'|cFFFFD100Elemental Shaman:|r  When two targets are detected, an Elemental Shaman will get a DPS increase by casting Chain Lightning rather than Lightning Bolt.\n\n' ..
 																'|cFFFFD100Enhancement Shaman:|r  When two targets are affected by Flame Shock, adding Fire Nova to the rotation will be a DPS increase.\n\n'
-												if Hekili.DB.profile['Show Blended ST'] then
+												if Hekili.DB.profile['Show AOE in ST'] then
 													output = output .. 'Uncheck this box to exclude AOE abilities from the Single Target priority list.'
 												else
 													output = output .. 'Check this box to include some AOE abilities in the Single Target priority list.'
