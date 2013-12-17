@@ -2290,6 +2290,25 @@ function Hekili:GetOptions()
 								get		= 'GetOption',
 								order	= 4,
 							},
+							
+							['Show AOE in ST'] = {
+								type	= 'toggle',
+								name	= 'Show AOE in ST',
+								desc	= function()
+												local output =	'In some cases, AOE abilities may be included in the single-target rotation when multiple targets are detected.\n\n' ..
+																'|cFFFFD100Elemental Shaman:|r  When two targets are detected, an Elemental Shaman will get a DPS increase by casting Chain Lightning rather than Lightning Bolt.\n\n' ..
+																'|cFFFFD100Enhancement Shaman:|r  When two targets are affected by Flame Shock, adding Fire Nova to the rotation will be a DPS increase.\n\n'
+												if Hekili.DB.profile['Show Blended ST'] then
+													output = output .. 'Uncheck this box to exclude AOE abilities from the Single Target priority list.'
+												else
+													output = output .. 'Check this box to include some AOE abilities in the Single Target priority list.'
+												end
+												return output
+											end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 5,
+							},
 
 							['Name Filter'] = {
 								type	= 'input',
@@ -2298,7 +2317,7 @@ function Hekili:GetOptions()
 								set		= 'SetOption',
 								multiline = 5,
 								desc	= 'Enter the ability names you wish to filter, separated by commas/spaces/returns.',
-								order	= 5,
+								order	= 6,
 								width	= 'full'
 							},
 						}
@@ -2615,7 +2634,8 @@ function Hekili:GetDefaults()
 			['Show Hardcasts']					= true,
 			['Show Interrupts']					= true,
 			['Show Precombat']					= true,
-			['Show Talents']					= true,			
+			['Show Talents']					= true,	
+			['Show AOE in ST']					= false,
 			['Name Filter']						= '',
 
 			-- Key Bindings

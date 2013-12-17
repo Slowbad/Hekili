@@ -1112,7 +1112,7 @@ mod:AddToActionList('single',
 					'MW5',
 					'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react=5',
 					function( state )
-						if state.tCount < 3 and (state.pBuffs[maelstrom_weapon].count == 5) then
+						if (not Hekili.DB.profile['Show AOE in ST'] or state.tCount < 3) and (state.pBuffs[maelstrom_weapon].count == 5) then
 							return lightning_bolt
 						end
 						return nil
@@ -1123,7 +1123,7 @@ mod:AddToActionList('single',
 					'3+MW5',
 					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
 					function( state )
-						if state.tCount >= 3 and (state.pBuffs[maelstrom_weapon].count == 5) then
+						if (Hekili.DB.profile['Show AOE in ST'] and state.tCount >= 3) and (state.pBuffs[maelstrom_weapon].count == 5) then
 							return chain_lightning
 						end
 						return nil
@@ -1186,7 +1186,7 @@ mod:AddToActionList('single',
 					'T15',
 					'actions.single+=/lightning_bolt,if=set_bonus.tier15_2pc_melee=1&buff.maelstrom_weapon.react>=4&!buff.ascendance.up',
 					function( state )
-						if state.tCount < 3 and (state.set_bonuses['t15'] >= 2 and (not state.pBuffs[ancestral_swiftness].up) and state.pBuffs[maelstrom_weapon].count >= 4 and (not state.pBuffs[ascendance].up)) then
+						if (not Hekili.DB.profile['Show AOE in ST'] or state.tCount < 3) and (state.set_bonuses['t15'] >= 2 and (not state.pBuffs[ancestral_swiftness].up) and state.pBuffs[maelstrom_weapon].count >= 4 and (not state.pBuffs[ascendance].up)) then
 							return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 						end
 						return nil
@@ -1197,7 +1197,7 @@ mod:AddToActionList('single',
 					'3+T15',
 					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
 					function( state )
-						if state.tCount >= 3 and (state.set_bonuses['t15'] >= 2 and (not state.pBuffs[ancestral_swiftness].up) and state.pBuffs[maelstrom_weapon].count >= 4 and (not state.pBuffs[ascendance].up)) then
+						if (Hekili.DB.profile['Show AOE in ST'] and state.tCount >= 3) and (state.set_bonuses['t15'] >= 2 and (not state.pBuffs[ancestral_swiftness].up) and state.pBuffs[maelstrom_weapon].count >= 4 and (not state.pBuffs[ascendance].up)) then
 							return chain_lightning, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 						end
 						return nil
@@ -1241,7 +1241,7 @@ mod:AddToActionList('single',
 					'MW3+',
 					'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>=3&!buff.ascendance.up',
 					function( state )
-						if state.tCount < 3 and (state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
+						if (not Hekili.DB.profile['Show AOE in ST'] or state.tCount < 3) and (state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
 							-- Hardcasting.
 							return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 						end
@@ -1253,7 +1253,7 @@ mod:AddToActionList('single',
 					'3+MW3+',
 					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
 					function( state )
-						if state.tCount >= 3 and (state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
+						if (Hekili.DB.profile['Show AOE in ST'] and state.tCount >= 3) and (state.pBuffs[maelstrom_weapon].count >= 3 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
 							-- Hardcasting.
 							return chain_lightning, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 						end
@@ -1276,7 +1276,7 @@ mod:AddToActionList('single',
 					'AS',
 					'actions.single+=/lightning_bolt,if=buff.ancestral_swiftness.up',
 					function( state )
-						if state.tCount < 3 and state.pBuffs[ancestral_swiftness].up then
+						if (not Hekili.DB.profile['Show AOE in ST'] or state.tCount < 3) and state.pBuffs[ancestral_swiftness].up then
 							return lightning_bolt
 						end
 						return nil
@@ -1287,7 +1287,7 @@ mod:AddToActionList('single',
 					'3+AS',
 					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
 					function( state )
-						if state.tCount >= 3 and state.pBuffs[ancestral_swiftness].up then
+						if (Hekili.DB.profile['Show AOE in ST'] and state.tCount >= 3) and state.pBuffs[ancestral_swiftness].up then
 							return chain_lightning
 						end
 						return nil
@@ -1328,7 +1328,7 @@ mod:AddToActionList('single',
 					'MW2+',
 					'actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.react>1&!buff.ascendance.up',
 					function( state )
-						if state.tCount < 3 and (state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
+						if (not Hekili.DB.profile['Show AOE in ST'] or state.tCount < 3) and (state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
 							-- Hardcasting
 							return lightning_bolt, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 						end
@@ -1340,7 +1340,7 @@ mod:AddToActionList('single',
 					'3+MW2+',
 					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
 					function( state )
-						if state.tCount >= 3 and (state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
+						if (Hekili.DB.profile['Show AOE in ST'] and state.tCount >= 3) and (state.pBuffs[maelstrom_weapon].count > 1 and not state.pBuffs[ancestral_swiftness].up and not state.pBuffs[ascendance].up) then
 							-- Hardcasting
 							return chain_lightning, 0, (state.pBuffs[maelstrom_weapon].count < 5)
 						end
@@ -1352,7 +1352,7 @@ mod:AddToActionList('single',
 					'2+',
 					'http://www.icy-veins.com/enhancement-shaman-wow-pve-dps-rotation-cooldowns-abilities',
 					function( state )
-						if state.fsCount >= 2 then
+						if (Hekili.DB.profile['Show AOE in ST'] and state.fsCount >= 2) then
 							return fire_nova
 						end
 						return nil

@@ -902,7 +902,7 @@ mod:AddToActionList('single',
 					'2+',
 					'2 - 5 targets: Single target rotation + cast Flame Shock on 1 additional target.',
 					function( state )
-						if (state.tCount >= 2 and state.tCount <= 5) and not state.tDebuffs[flame_shock].up then
+						if Hekili.DB.profile['Show AOE in ST'] and (state.tCount >= 2 and state.tCount <= 5) and not state.tDebuffs[flame_shock].up then
 							return flame_shock
 						end
 						return nil
@@ -913,7 +913,7 @@ mod:AddToActionList('single',
 					'Cycle',
 					'2 - 5 targets: Single target rotation + cast Flame Shock on 1 additional target.',
 					function( state )
-						if (state.tCount >= 2 and state.tCount <= 5) and state.fsCount < 2 and state.tDebuffs[flame_shock].up then
+						if Hekili.DB.profile['Show AOE in ST'] and (state.tCount >= 2 and state.tCount <= 5) and state.fsCount < 2 and state.tDebuffs[flame_shock].up then
 							return flame_shock
 						end
 						return nil
@@ -975,23 +975,23 @@ mod:AddToActionList('single',
 					end )
 
 mod:AddToActionList('single',
-					chain_lightning,
-					'2+',
-					'Substitute Chain Lightning in place of Lightning Bolt any time two targets can be hit.',
-					function( state )
-						if state.tCount >= 2 then
-							return chain_lightning, nil, (not state.pBuffs[ancestral_swiftness].up)
-						end
-						return nil
-					end )
-
-mod:AddToActionList('single',
 					earth_elemental_totem,
 					'',
 					'Hekili: If Fire Elemental Totem cooldown is greater than 60 seconds, we can pop Earth Elemental Totem.',
 					function( state )
 						if (not state.talents[primal_elementalist] or not state.totems[totem_fire].name == fire_elemental_totem) and (state.cooldowns[fire_elemental_totem] >= 60) then
 							return earth_elemental_totem
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
+					chain_lightning,
+					'2+',
+					'Substitute Chain Lightning in place of Lightning Bolt any time two targets can be hit.',
+					function( state )
+						if Hekili.DB.profile['Show AOE in ST'] and state.tCount >= 2 then
+							return chain_lightning, nil, (not state.pBuffs[ancestral_swiftness].up)
 						end
 						return nil
 					end )
