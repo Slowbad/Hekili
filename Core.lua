@@ -374,8 +374,9 @@ function Hekili:MaintainActionLists()
 	local now = GetTime()
 
 	local id = 'ST'
-
+	local module = Hekili.Active
 	local abStart, abCD
+	
 	
 	if self.Active.spells[ self.Actions[id][1].name ].item then
 		abStart, abCD = GetItemCooldown( module.spells[ self.Actions[id][1].name ].id )
