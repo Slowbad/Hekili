@@ -108,7 +108,7 @@ function Hekili:ProcessPriorityList( id )
 
 				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
-					
+										
 					-- May want to add some smoothing to this.
 					if ckCooldown < ( useCooldown + ckWait ) then
 						useAction		= ckAction
@@ -268,7 +268,7 @@ function Hekili:DisplayActionButtons( id )
 					duration = GCD
 				end
 
-				if i == 1 or (i > 1 and duration and duration ~= GCD) and (not module.spells[ self.Actions[id][i].name ].offGCD) then
+				if (i == 1 or (i > 1 and duration and duration ~= GCD)) and (not module.spells[ self.Actions[id][i].name ].offGCD) then
 					self.UI.AButtons[id][i].Cooldown:SetCooldown(start, duration)
 				else
 					self.UI.AButtons[id][i].Cooldown:SetCooldown(0, 0)
@@ -691,7 +691,7 @@ function Hekili:SanityCheck()
 	
 	local specialization = 'none'
 	if GetSpecialization() then
-		specialization = select(2, GetSpecializationInfo(GetSpecialization()))
+		specialization = GetSpecializationInfo(GetSpecialization())
 	end
 
 	local mod = self.DB.profile['Module']
@@ -699,12 +699,8 @@ function Hekili:SanityCheck()
 	if mod == 'None' then
 		-- do nothing
 	elseif self.Modules[ mod ] then
-		if self.Modules[mod].class ~= class then
-			self:Print("Module |cFFFF9900" .. mod .. "|r is not appropriate for your class; unloading.")
-			self.DB.profile['Module'] = 'None'
-			mod = 'None'
-		elseif self.Modules[mod].spec ~= specialization then
-			self:Print("Module |cFFFF9900" .. mod .. "|r is not appropriate for your specialization; unloading.")
+		if self.Modules[mod].spec ~= specialization then
+			self:Print("Module |cFFFF9900" .. mod .. "|r is not appropriate for your class or specialization; unloading.")
 			self.DB.profile['Module'] = 'None'
 			mod = 'None'
 		end

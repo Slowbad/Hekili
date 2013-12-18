@@ -190,7 +190,7 @@ function Hekili:GetOptions()
 								values = function()
 											local ptable = {}
 											for k,v in pairs(Hekili.Modules) do
-												if v.class == UnitClass("player") and v.spec == select(2, GetSpecializationInfo(GetSpecialization())) then
+												if v.spec == GetSpecializationInfo(GetSpecialization()) then
 													ptable[k] = k
 												end
 											end

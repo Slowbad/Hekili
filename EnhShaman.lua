@@ -3,7 +3,8 @@
 -- Hekili of <Turbo Cyborg Ninjas> - Ner'zhul [A]
 -- October 2013
 
-local mod = Hekili:NewModule("Enhancement Shaman SimC 5.4.1", "Shaman", "Enhancement", true, true, true)
+-- Shaman, Enhancement = 263
+local mod = Hekili:NewModule("Enhancement Shaman SimC 5.4.1", 263, true, true, true)
 
 -- Spells, just to give readable aliases and to help with future localization.
 local ancestral_swiftness 	= GetSpellInfo(16188)
@@ -718,7 +719,7 @@ mod:AddToActionList('cooldown',
 					'Potion', -- removed combat time check.
 					'actions+=/virmens_bite_potion,if=time>60&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active|target.time_to_die<=60)',
 					function ( state )
-						if ( state.totems[totem_fire].name == fire_elemental_totem or state.timeToDie <= 60 ) then
+						if ( state.totems[totem_fire].name == fire_elemental_totem and state.totems[totem_fire].remains >= 25) or state.timeToDie <= 60 then
 							return virmens_bite
 						end
 						return nil
@@ -1577,7 +1578,7 @@ function mod:RefreshState( state )
 
 	-- Special Cases
 	if state.pBuffs[ascendance].up then
-		state.cooldowns[ascendance] = ttCooldown(114049)
+		state.cooldowns[ascendance] = ttCooldown(114049) - (15 - state.pBuffs[ascendance].remains)
 	end
 
 

@@ -1,11 +1,10 @@
 -- Modules.lua
 
-function Hekili:NewModule( name, class, spec, st, ae, cd )
+function Hekili:NewModule( name, specID, st, ae, cd )
 	local mod		= {}
 
 	mod['name']		= name
-	mod['class']	= class
-	mod['spec']		= spec
+	mod['spec']		= specID
 
 	mod.enabled		= {}
 	mod.enabled.ST	= st

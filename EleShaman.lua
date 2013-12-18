@@ -3,7 +3,8 @@
 -- Hekili of <Turbo Cyborg Ninjas> - Ner'zhul [A]
 -- November 2013
 
-local mod = Hekili:NewModule("Elemental Shaman - TotemSpot - 5.4.1", "Shaman", "Elemental", true, true, true)
+-- Shaman, Elemental = 262
+local mod = Hekili:NewModule("Elemental Shaman - TotemSpot - 5.4.1", 262, true, true, true)
 
 -- Spells, just to give readable aliases and to help with future localization.
 local ancestral_swiftness 	= GetSpellInfo(16188)
@@ -1208,7 +1209,7 @@ function mod:RefreshState( state )
 
 	-- Special Cases
 	if state.pBuffs[ascendance].up then
-		state.cooldowns[ascendance] = ttCooldown(114049)
+		state.cooldowns[ascendance] = ttCooldown(114049) - (15 - state.pBuffs[ascendance].remains)
 	end
 
 
