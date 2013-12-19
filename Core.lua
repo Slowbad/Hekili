@@ -465,7 +465,7 @@ function Hekili:UpdateVisuals()
 
 	-- Hekili: FLAG FOR CLEANUP; this is cumbersome.
 	for i = 1, 5 do
-		if self.DB.profile['Tracker '..i..' Type'] ~= 'None' or not self.DB.profile.locked then
+		if self.DB.profile['Tracker '..i..' Type'] ~= 'None' then
 			local tType = self.DB.profile['Tracker '..i..' Type']
 			local tShow = self.DB.profile['Tracker '..i..' Show']
 			local tAura = self.DB.profile['Tracker '..i..' Aura']
@@ -506,7 +506,7 @@ function Hekili:UpdateVisuals()
 				
 			if not self.UI.Trackers[i].Texture:GetTexture() then self.UI.Trackers[i].Texture:SetTexture('Interface\\ICONS\\Spell_Nature_BloodLust') end
 
-			if tShow == 'Show Always' or (tShow == 'Present' and present) or (tShow == 'Absent' and not present) or not self.DB.profile.locked then
+			if tShow == 'Show Always' or (tShow == 'Present' and present) or (tShow == 'Absent' and not present) then
 				self.UI.Trackers[i]:Show()
 
 				local tCaption

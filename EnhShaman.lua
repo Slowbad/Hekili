@@ -38,7 +38,7 @@ local stormlash_totem		= GetSpellInfo(120668)
 local stormstrike			= GetSpellInfo(51876)
 local synapse_springs		= GetSpellInfo(126731)
 local unleash_elements 		= GetSpellInfo(73680)
-local virmens_bite			= "Virmen's Bite"
+local virmens_bite			= GetItemInfo(76089) or "Virmen's Bite"
 local wind_shear			= GetSpellInfo(57994)
 local windfury_weapon 		= GetSpellInfo(8232)
 
