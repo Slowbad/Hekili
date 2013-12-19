@@ -46,3 +46,4 @@ totems = {
 	water	= 3,
 	air		= 4
 }
+
