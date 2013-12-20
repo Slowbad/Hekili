@@ -134,6 +134,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckHardcast then ckHardcast = false end
 
 				if ckAction and not self:IsFiltered(ckAction, true) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
+					
 					ckCooldown = state.cooldowns[ ckAction ]
 					
 					-- May want to add some smoothing to this.
@@ -268,7 +269,7 @@ function Hekili:DisplayActionButtons( id )
 					duration = GCD
 				end
 
-				if (i == 1 or (i > 1 and duration and duration ~= GCD)) and (not module.spells[ self.Actions[id][i].name ].offGCD) then
+				if (i == 1 or (i > 1 and duration and duration ~= GCD)) then
 					self.UI.AButtons[id][i].Cooldown:SetCooldown(start, duration)
 				else
 					self.UI.AButtons[id][i].Cooldown:SetCooldown(0, 0)
@@ -286,8 +287,6 @@ function Hekili:DisplayActionButtons( id )
 						self.UI.AButtons[id][i].Texture:SetVertexColor(1, 1, 1)
 					end
 				end
-
-				-- self.UI.AButtons[id][i]:Show()
 
 				-- And now, update the text.
 				if i == 1 then

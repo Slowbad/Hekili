@@ -752,7 +752,7 @@ mod:AddToActionList('cooldown',
 					'PE+GFET',
 					'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&(talent.primal_elementalist.enabled&glyph.fire_elemental_totem.enabled&(cooldown.fire_elemental_totem.remains=0|cooldown.fire_elemental_totem.remains>=80))',
 					function( state )
-						if state.talents[elemental_mastery] and	(state.talents[primal_elementalist] and state.glyphs[fire_elemental_totem] and (state.cooldowns[fire_elemental_totem] == 0 or state.cooldowns[fire_elemental_totem] >= 80)) then
+						if state.talents[elemental_mastery] and	(state.talents[primal_elementalist] and state.glyphs[fire_elemental_totem] and (state.cooldowns[fire_elemental_totem] <= state.cooldowns[lightning_shield] or state.cooldowns[fire_elemental_totem] >= 80)) then
 							return elemental_mastery
 						end
 						return nil
@@ -763,7 +763,7 @@ mod:AddToActionList('cooldown',
 					'PE-GFET',
 					'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&(talent.primal_elementalist.enabled&!glyph.fire_elemental_totem.enabled&(cooldown.fire_elemental_totem.remains=0|cooldown.fire_elemental_totem.remains>=50))',
 					function( state )
-						if state.talents[elemental_mastery] and	(state.talents[primal_elementalist] and not state.glyphs[fire_elemental_totem] and (state.cooldowns[fire_elemental_totem] == 0 or state.cooldowns[fire_elemental_totem] >= 50)) then
+						if state.talents[elemental_mastery] and	(state.talents[primal_elementalist] and not state.glyphs[fire_elemental_totem] and (state.cooldowns[fire_elemental_totem] == state.cooldowns[lightning_shield] or state.cooldowns[fire_elemental_totem] >= 50)) then
 							return elemental_mastery
 						end
 						return nil
@@ -1574,6 +1574,7 @@ function mod:RefreshState( state )
 		else
 			state.cooldowns[k] = 0
 		end
+
 	end
 
 	-- Special Cases
