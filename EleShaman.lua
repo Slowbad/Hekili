@@ -925,7 +925,7 @@ mod:AddToActionList('single',
 					'UF',
 					'2. IF you have the L90 talent Unleashed Fury, cast Unleash Elements.',
 					function( state )
-						if state.talents[unleashed_fury] and state.pBuffs[flametongue_weapon].up then
+						if not state.pBuffs[ascendance].up and state.talents[unleashed_fury] and state.pBuffs[flametongue_weapon].up then
 							return unleash_elements
 						end
 						return nil
