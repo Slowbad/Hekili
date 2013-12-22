@@ -269,7 +269,9 @@ function Hekili:DisplayActionButtons( id )
 					duration = GCD
 				end
 
-				if (i == 1 or (i > 1 and duration and duration ~= GCD)) then
+				-- fix GCD display when action is offGCD
+				if	(i == 1 and (duration ~= GCD or not module.spells[ action.name ].offGCD)) or
+					(duration ~= GCD) then
 					self.UI.AButtons[id][i].Cooldown:SetCooldown(start, duration)
 				else
 					self.UI.AButtons[id][i].Cooldown:SetCooldown(0, 0)

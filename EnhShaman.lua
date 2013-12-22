@@ -993,7 +993,10 @@ mod:AddToActionList('aoe',
 					'',
 					'actions.aoe+=/feral_spirit',
 					function( state )
-						return feral_spirit
+						if Hekili.BossCombat or Hekili.DB.profile['Cooldown Enabled'] then
+							return feral_spirit
+						end
+						return nil
 					end )
 
 mod:AddToActionList('aoe',
@@ -1135,7 +1138,7 @@ mod:AddToActionList('single',
 					'T15',
 					'actions.single+=/feral_spirit,if=set_bonus.tier15_4pc_melee=1',
 					function( state )
-						if state.set_bonuses['t15'] >= 4 then
+						if (Hekili.BossCombat or Hekili.DB.profile['Cooldown Enabled']) and state.set_bonuses['t15'] >= 4 then
 							return feral_spirit
 						end
 						return nil
@@ -1310,7 +1313,10 @@ mod:AddToActionList('single',
 					'',
 					'actions.single+=/feral_spirit',
 					function( state )
-						return feral_spirit
+						if Hekili.BossCombat or Hekili.DB.profile['Cooldown Enabled'] then
+							return feral_spirit
+						end
+						return nil
 					end )
 
 mod:AddToActionList('single',
