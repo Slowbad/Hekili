@@ -70,8 +70,13 @@ function Hekili:ACTIVE_TALENT_GROUP_CHANGED()
 end
 
 
-function Hekili:INSTANCE_ENCOUNTER_ENGAGE_UNIT()
+function Hekili:ENCOUNTER_START(...)
 	Hekili.BossCombat		= true
+end
+
+
+function Hekili:ENCOUNTER_END(...)
+	Hekili.BossCombat		= false
 end
 
 
@@ -86,9 +91,9 @@ end
 
 
 function Hekili:PLAYER_REGEN_ENABLED(...)
-	Hekili.BossCombat		= false
 	Hekili.CombatStart		= 0
 end
+
 
 function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, time, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _, spellID, spellName, _, _, interrupt)
 

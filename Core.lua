@@ -290,6 +290,13 @@ function Hekili:DisplayActionButtons( id )
 					end
 				end
 
+				if (id == 'ST' and not self.DB.profile['Single Target Captions']) or
+					(id == 'AE' and not self.DB.profile['Multi-Target Captions']) then
+					self.UI.AButtons[id][i].btmText:Hide()
+				else
+					self.UI.AButtons[id][i].btmText:Show()
+				end
+					
 				-- And now, update the text.
 				if i == 1 then
 					if not self.Active.spells[ self.Actions[id][1].name ].offGCD and self.Actions[id][1].offset ~= 0 then
@@ -337,9 +344,11 @@ function Hekili:DisplayActionButtons( id )
 						if text ~= '' then
 							self.UI.AButtons[id][i].btmText:SetText(text)
 							self.UI.AButtons[id][i].btmText:SetJustifyH("RIGHT")
+							self.UI.AButtons[id][i].btmText:Show()							
 						else
 							self.UI.AButtons[id][i].btmText:SetText(self.Actions[id][i].caption)
 							self.UI.AButtons[id][i].btmText:SetJustifyH("CENTER")
+							
 						end
 					end					
 					
@@ -349,6 +358,13 @@ function Hekili:DisplayActionButtons( id )
 					else
 						self.UI.AButtons[id][i].topText:SetText( string.format("%3.1f", self.Actions[id][i].offset) )
 					end
+				end
+				
+				if (id == 'ST' and self.DB.profile['Single Target Greentext']) or
+					(id == 'AE' and self.DB.profile['Multi-Target Greentext']) then
+					self.UI.AButtons[id][i].topText:Show()
+				else
+					self.UI.AButtons[id][i].topText:Hide()
 				end
 				
 			else
@@ -735,7 +751,8 @@ function Hekili:OnEnable()
 		self:RegisterEvent("PLAYER_LOGOUT")
 
 		-- Combat time / boss fight status.
-		self:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
+		self:RegisterEvent("ENCOUNTER_START")
+		self:RegisterEvent("ENCOUNTER_END")
 		self:RegisterEvent("PLAYER_REGEN_DISABLED")
 		self:RegisterEvent("PLAYER_REGEN_ENABLED")
 

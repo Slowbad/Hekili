@@ -250,7 +250,7 @@ function Hekili:GetOptions()
 							['Grace Period'] = {
 								type	= 'range',
 								name	= 'Grace Period',
-								desc	= 'Set the number of seconds after an aura expires that the addon should wait before removing a target from the target counter.',
+								desc	= 'Set the length of time to wait before removing an injured target from your list of active targets.',
 								min		= 4,
 								max		= 10,
 								step	= 1,
@@ -343,155 +343,211 @@ function Hekili:GetOptions()
 						name = 'Single Target Group',
 						order = 1,
 						args = {
-							['Single Target Enabled'] = {
-								type = 'toggle',
-								name = 'Enable Single Target',
-								desc = function ()
-											local output
-											if Hekili.DB.profile['Single Target Enabled'] == true then
-												output = 'Disable Hekili for single-target rotation (presently enabled).'
-											else
-												output = 'Enable Hekili for single-target rotation (presently disabled).'
-											end
-											return output			
-										end,
-								set = 'SetOption',
-								get = 'GetOption',
+							['ST Priority'] = {
+								type = 'group',
+								name = 'Single Target Priority',
+								inline = true,
 								order = 0,
-							},
-							['Integration Enabled'] = {
-								type = 'toggle',
-								name = 'Enable Integration',
-								desc = 'Display the multi-target priority in the Single Target display when the "Multi Integration" threshold is reached.',
-								set = 'SetOption',
-								get = 'GetOption',
-								order = 1,
-							},
-							['Single Target Icons Displayed'] = {
-								type	= 'range',
-								name	= 'Icons Displayed',
-								desc	= 'Set the number of icons to be displayed.',
-								get		= 'GetOption',
-								set		= 'SetOption',
-								min		= 1,
-								max		= 5,
-								step	= 1,
-								order	= 2,
-							},
-							['Multi-Target Integration'] = {
-								type	= 'range',
-								name	= 'Multi Integration',
-								desc	= 'Use the multi-target priority in the Single Target display when this number of targets are detected (if enabled).',
-								min		= 2,
-								max		= 10,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 3
-							},
-							['Single Target Queue Direction'] = {
-								type	= "select",
-								name	= 'Queue Direction',
-								desc	= 'Set the direction in which single-target rotation buttons are displayed.',
-								get		= 'GetOption',
-								set		= 'SetOption',
-								style	= 'dropdown',
-								width	= 'full',
-								order	= 4,
-								values	= {
-									RIGHT	= 'Right (L to R)',
-									LEFT	= 'Left (R to L)',
+								args = {
+									['Single Target Enabled'] = {
+										type = 'toggle',
+										name = 'Enable Single Target',
+										desc = function ()
+													local output
+													if Hekili.DB.profile['Single Target Enabled'] == true then
+														output = 'Disable Hekili for single-target rotation (presently enabled).'
+													else
+														output = 'Enable Hekili for single-target rotation (presently disabled).'
+													end
+													return output			
+												end,
+										set = 'SetOption',
+										get = 'GetOption',
+										order = 0,
+									},
+									['Integration Enabled'] = {
+										type = 'toggle',
+										name = 'Enable Integration',
+										desc = 'Display the multi-target priority in the Single Target display when the "Multi Integration" threshold is reached.',
+										set = 'SetOption',
+										get = 'GetOption',
+										order = 2,
+									},
+									['Single Target Icons Displayed'] = {
+										type	= 'range',
+										name	= 'Icons Displayed',
+										desc	= 'Set the number of icons to be displayed.',
+										get		= 'GetOption',
+										set		= 'SetOption',
+										min		= 1,
+										max		= 5,
+										step	= 1,
+										order	= 1,
+									},
+									['Multi-Target Integration'] = {
+										type	= 'range',
+										name	= 'Multi Integration',
+										desc	= 'Use the multi-target priority in the Single Target display when this number of targets are detected (if enabled).',
+										min		= 2,
+										max		= 10,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 3
+									},
+									['Single Target Queue Direction'] = {
+										type	= "select",
+										name	= 'Queue Direction',
+										desc	= 'Set the direction in which single-target rotation buttons are displayed.',
+										get		= 'GetOption',
+										set		= 'SetOption',
+										style	= 'dropdown',
+										width	= 'full',
+										order	= 4,
+										values	= {
+											RIGHT	= 'Right (L to R)',
+											LEFT	= 'Left (R to L)',
+										},
+									},
 								},
 							},
-							['Single Target Font'] = {
-								type			= 'select',
-								dialogControl	= 'LSM30_Font', --Select your widget here
-								name			= 'Font',
-								desc			= 'Set the font used for the text on the single target icons.',
-								values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
-								get				= 'GetOption',
-								set				= 'SetOption',
-								width			= 'full',
-								order			= 5
-							},
-							['Single Target Tracker'] = {
-								type	= 'select',
-								name	= 'Caption Override',
-								desc	= 'Select an alternative caption for your primary single target icon.  These options are supplied by your active module.',
-								values	= function ()
-												local options = {}
-												
-												options['None'] = 'None'
-
-												if Hekili.Active then
-													for k,v in pairs(Hekili.Active.trackers) do
-														if v.override then
-															options[k] = k
-														end
+							['ST Caption'] = {
+								type = 'group',
+								name = 'Captions',
+								inline = true,
+								order = 1,
+								args = {
+									['Single Target Greentext'] = {
+										type	= 'toggle',
+										name	= 'Show Prediction Times',
+										desc	= function ()
+													local output
+													if Hekili.DB.profile['Single Target Greentext'] == true then
+														output = 'Hide the green text timers in your single-target rotation (presently shown).'
+													else
+														output = 'Show the green text timers in your single-target rotation (presently hidden).'
 													end
-												end
+													return output			
+												end,
+										set		= 'SetOption',
+										get		= 'GetOption',
+										order	= 0,
+									},
+									['Single Target Captions'] = {
+										type	= 'toggle',
+										name	= 'Show Action Captions',
+										desc	= function ()
+													local output
+													if Hekili.DB.profile['Single Target Captions'] == true then
+														output = 'Hide the action descriptions in your single-target rotation (presently shown).'
+													else
+														output = 'Show the action descriptions in your single-target rotation (presently hidden).'
+													end
+													return output			
+												end,
+										set		= 'SetOption',
+										get		= 'GetOption',
+										order	= 1,
+									},
+									['Single Target Tracker'] = {
+										type	= 'select',
+										name	= 'Primary Caption',
+										desc	= 'Select an alternative caption for your primary single target icon.  These options are supplied by your active module.',
+										values	= function ()
+														local options = {}
 
-												return options
-											end,
-								set		= 'SetOption',
-								get		= 'GetOption',
-								order	= 6,
-								width	= 'full'
+														options['None'] = 'Default (show action description)'
+
+														if Hekili.Active then
+															for k,v in pairs(Hekili.Active.trackers) do
+																if v.override then
+																	options[k] = k
+																end
+															end
+														end
+
+														return options
+													end,
+										set		= 'SetOption',
+										get		= 'GetOption',
+										order	= 2,
+										width	= 'full'
+									},
+								},
 							},
-							['Single Target Primary Icon Size'] = {
-								type 	= 'range',
-								name 	= 'Primary Icon Size',
-								desc 	= 'Set the height and width of the primary icon.',
-								min		= 25,
-								max		= 250,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 7
-							},
-							['Single Target Primary Font Size'] = {
-								type	= 'range',
-								name 	= 'Primary Font Size',
-								desc 	= 'Set the font size for the primary ability icon.',
-								min		= 6,
-								max		= 26,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 8
-							},
-							['Single Target Queued Icon Size'] = {
-								type	= 'range',
-								name 	= 'Queued Icon Size',
-								desc 	= 'Set the height and width of the queued ability icons.',
-								min		= 25,
-								max		= 250,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 9
-							},
-							['Single Target Queued Font Size'] = {
-								type	= 'range',
-								name 	= 'Queued Font Size',
-								desc 	= 'Set the font size for the queued ability icons.',
-								min		= 6,
-								max		= 26,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 10
-							},
-							['Single Target Icon Spacing'] = {
-								type	= 'range',
-								name	= 'Icon Spacing',
-								desc	= 'Set the spacing between icons (if anchored).',
-								min		= 0,
-								max		= 100,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 11
+							['ST Visual'] = {
+								type = 'group',
+								name = 'Visual Elements',
+								inline = true,
+								order = 2,
+								args = {
+									['Single Target Font'] = {
+										type			= 'select',
+										dialogControl	= 'LSM30_Font', --Select your widget here
+										name			= 'Font',
+										desc			= 'Set the font used for the text on the single target icons.',
+										values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
+										get				= 'GetOption',
+										set				= 'SetOption',
+										width			= 'full',
+										order			= 0
+									},
+									['Single Target Primary Icon Size'] = {
+										type 	= 'range',
+										name 	= 'Primary Icon Size',
+										desc 	= 'Set the height and width of the primary icon.',
+										min		= 25,
+										max		= 250,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 1
+									},
+									['Single Target Primary Font Size'] = {
+										type	= 'range',
+										name 	= 'Primary Font Size',
+										desc 	= 'Set the font size for the primary ability icon.',
+										min		= 6,
+										max		= 26,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 2
+									},
+									['Single Target Queued Icon Size'] = {
+										type	= 'range',
+										name 	= 'Queued Icon Size',
+										desc 	= 'Set the height and width of the queued ability icons.',
+										min		= 25,
+										max		= 250,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 3
+									},
+									['Single Target Queued Font Size'] = {
+										type	= 'range',
+										name 	= 'Queued Font Size',
+										desc 	= 'Set the font size for the queued ability icons.',
+										min		= 6,
+										max		= 26,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 4
+									},
+									['Single Target Icon Spacing'] = {
+										type	= 'range',
+										name	= 'Icon Spacing',
+										desc	= 'Set the spacing between icons (if anchored).',
+										min		= 0,
+										max		= 100,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 5
+									},
+								},
 							},
 						},
 					},
@@ -500,142 +556,195 @@ function Hekili:GetOptions()
 						name = 'Multi-Target Group',
 						order = 2,
 						args = {
-							['Multi-Target Enabled'] = {
-								type = 'toggle',
-								name = 'Enable Multi-Target',
-								desc = function ()
-											local output
-											if Hekili.DB.profile['Single Target Enabled'] == true then
-												output = 'Disable Hekili for single-target rotation (presently enabled).'
-											else
-												output = 'Enable Hekili for single-target rotation (presently disabled).'
-											end
-											return output			
-										end,
-								cmdHidden = true,
-								set = 'SetOption',
-								get = 'GetOption',
+							['MT Priority'] = {
+								type = 'group',
+								name = 'Multi-Target Priority',
+								inline = true,
 								order = 0,
-								width = 'full'
-							},
-							['Multi-Target Cooldowns'] = {
-								type	= 'toggle',
-								name	= 'Allow Cooldowns',
-								desc	= function ()
-											local output
-											if Hekili.DB.profile['Multi-Target Cooldowns'] == true then
-												output = 'Disallow cooldowns from showing in the multi-target rotation when cooldowns are enabled (presently allowed).'
-											else
-												output = 'Allow cooldowns to show in the multi-target rotation when cooldowns are enabled (presently disallowed).'
-											end
-											return output			
-										end,
-								width	= 'full',
-								set		= 'SetOption',
-								get		= 'GetOption',
-								order	= 1,
-							},
-							['Multi-Target Icons Displayed'] = {
-								type	= 'range',
-								name	= 'Icons Displayed',
-								desc	= 'Set the number of icons to be displayed.',
-								get		= 'GetOption',
-								set		= 'SetOption',
-								min		= 1,
-								max		= 5,
-								step	= 1,
-								order	= 2,
-							},
-							['Multi-Target Illumination'] = {
-								type	= 'range',
-								name	= 'Icon Illumination',
-								desc	= 'Set the number of targets required for the multi-target icon to light up (or 0 for never).',
-								min		= 0,
-								max		= 10,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 3
-							},
-							['Multi-Target Queue Direction'] = {
-								type	= "select",
-								name	= 'Queue Direction',
-								desc	= 'Set the direction in which multi-target rotation buttons are displayed.',
-								get		= 'GetOption',
-								set		= 'SetOption',
-								style	= 'dropdown',
-								width	= 'full',
-								order	= 4,
-								values	= {
-									RIGHT	= 'Right (L to R)',
-									LEFT	= 'Left (R to L)',
+								args = {
+									['Multi-Target Enabled'] = {
+										type = 'toggle',
+										name = 'Enable Multi-Target',
+										desc = function ()
+													local output
+													if Hekili.DB.profile['Single Target Enabled'] == true then
+														output = 'Disable Hekili for single-target rotation (presently enabled).'
+													else
+														output = 'Enable Hekili for single-target rotation (presently disabled).'
+													end
+													return output			
+												end,
+										set = 'SetOption',
+										get = 'GetOption',
+										order = 0,
+									},
+									['Multi-Target Icons Displayed'] = {
+										type	= 'range',
+										name	= 'Icons Displayed',
+										desc	= 'Set the number of icons to be displayed.',
+										get		= 'GetOption',
+										set		= 'SetOption',
+										min		= 1,
+										max		= 5,
+										step	= 1,
+										order	= 1,
+									},
+									['Multi-Target Cooldowns'] = {
+										type	= 'toggle',
+										name	= 'Allow Cooldowns',
+										desc	= function ()
+													local output
+													if Hekili.DB.profile['Multi-Target Cooldowns'] == true then
+														output = 'Disallow cooldowns from showing in the multi-target rotation when cooldowns are enabled (presently allowed).'
+													else
+														output = 'Allow cooldowns to show in the multi-target rotation when cooldowns are enabled (presently disallowed).'
+													end
+													return output			
+												end,
+										set		= 'SetOption',
+										get		= 'GetOption',
+										order	= 2,
+									},
+									['Multi-Target Illumination'] = {
+										type	= 'range',
+										name	= 'Icon Illumination',
+										desc	= 'Set the number of targets required for the multi-target icon to light up (or 0 for never).',
+										min		= 0,
+										max		= 10,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 3
+									},
+									['Multi-Target Queue Direction'] = {
+										type	= "select",
+										name	= 'Queue Direction',
+										desc	= 'Set the direction in which multi-target rotation buttons are displayed.',
+										get		= 'GetOption',
+										set		= 'SetOption',
+										style	= 'dropdown',
+										width	= 'full',
+										order	= 4,
+										values	= {
+											RIGHT	= 'Right (L to R)',
+											LEFT	= 'Left (R to L)',
+										},
+									},
 								},
 							},
-							['Multi-Target Font'] = {
-								type			= 'select',
-								dialogControl	= 'LSM30_Font', --Select your widget here
-								name			= 'Font',
-								desc			= 'Set the font used for the text on the single target icons.',
-								values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
-								get				= 'GetOption',
-								set				= 'SetOption',
-								width			= 'full',
-								order			= 5
+							['MT Caption'] = {
+								type = 'group',
+								name = 'Captions',
+								inline = true,
+								order = 1,
+								args = {
+									['Multi-Target Greentext'] = {
+										type	= 'toggle',
+										name	= 'Show Prediction Times',
+										desc	= function ()
+													local output
+													if Hekili.DB.profile['Multi-Target Greentext'] == true then
+														output = 'Hide the green text timers in your multi-target rotation (presently shown).'
+													else
+														output = 'Show the green text timers in your multi-target rotation (presently hidden).'
+													end
+													return output			
+												end,
+										set		= 'SetOption',
+										get		= 'GetOption',
+										order	= 0,
+									},
+									['Multi-Target Captions'] = {
+										type	= 'toggle',
+										name	= 'Show Action Captions',
+										desc	= function ()
+													local output
+													if Hekili.DB.profile['Multi-Target Captions'] == true then
+														output = 'Hide the action descriptions in your multi-target rotation (presently shown).'
+													else
+														output = 'Show the action descriptions in your multi-target rotation (presently hidden).'
+													end
+													return output			
+												end,
+										set		= 'SetOption',
+										get		= 'GetOption',
+										order	= 1,
+									},
+								},
 							},
-							['Multi-Target Primary Icon Size'] = {
-								type 	= 'range',
-								name 	= 'Primary Icon Size',
-								desc 	= 'Set the height and width of the primary icon.',
-								min		= 25,
-								max		= 250,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 6
-							},
-							['Multi-Target Primary Font Size'] = {
-								type	= 'range',
-								name 	= 'Primary Font Size',
-								desc 	= 'Set the font size for the primary ability icon.',
-								min		= 6,
-								max		= 26,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 7
-							},
-							['Multi-Target Queued Icon Size'] = {
-								type	= 'range',
-								name 	= 'Queued Icon Size',
-								desc 	= 'Set the height and width of the queued ability icons.',
-								min		= 25,
-								max		= 250,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 8
-							},
-							['Multi-Target Queued Font Size'] = {
-								type	= 'range',
-								name 	= 'Queued Font Size',
-								desc 	= 'Set the font size for the queued ability icons.',
-								min		= 6,
-								max		= 26,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 9
-							},
-							['Multi-Target Icon Spacing'] = {
-								type	= 'range',
-								name	= 'Icon Spacing',
-								desc	= 'Set the spacing between icons (if anchored).',
-								min		= 0,
-								max		= 100,
-								step	= 1,
-								get		= 'GetOption',
-								set		= 'SetOption',
-								order	= 10
+							['MT Visual'] = {
+								type = 'group',
+								name = 'Visual Elements',
+								inline = true,
+								order = 2,
+								args = {
+									['Multi-Target Font'] = {
+										type			= 'select',
+										dialogControl	= 'LSM30_Font', --Select your widget here
+										name			= 'Font',
+										desc			= 'Set the font used for the text on the single target icons.',
+										values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
+										get				= 'GetOption',
+										set				= 'SetOption',
+										width			= 'full',
+										order			= 5
+									},
+									['Multi-Target Primary Icon Size'] = {
+										type 	= 'range',
+										name 	= 'Primary Icon Size',
+										desc 	= 'Set the height and width of the primary icon.',
+										min		= 25,
+										max		= 250,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 6
+									},
+									['Multi-Target Primary Font Size'] = {
+										type	= 'range',
+										name 	= 'Primary Font Size',
+										desc 	= 'Set the font size for the primary ability icon.',
+										min		= 6,
+										max		= 26,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 7
+									},
+									['Multi-Target Queued Icon Size'] = {
+										type	= 'range',
+										name 	= 'Queued Icon Size',
+										desc 	= 'Set the height and width of the queued ability icons.',
+										min		= 25,
+										max		= 250,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 8
+									},
+									['Multi-Target Queued Font Size'] = {
+										type	= 'range',
+										name 	= 'Queued Font Size',
+										desc 	= 'Set the font size for the queued ability icons.',
+										min		= 6,
+										max		= 26,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 9
+									},
+									['Multi-Target Icon Spacing'] = {
+										type	= 'range',
+										name	= 'Icon Spacing',
+										desc	= 'Set the spacing between icons (if anchored).',
+										min		= 0,
+										max		= 100,
+										step	= 1,
+										get		= 'GetOption',
+										set		= 'SetOption',
+										order	= 10
+									},
+								},
 							},
 						},
 					},
@@ -2171,11 +2280,44 @@ function Hekili:GetOptions()
 				name = 'Filters',
 				order = 2,
 				args = {
+					['Special Action Lists'] = {
+						type = "group",
+						name = "Special Action Lists",
+						inline = true,
+						order = 0,
+						args = {
+							['Show Precombat'] = {
+								type	= 'toggle',
+								name	= 'Show Precombat',
+								desc	= function () return OutputFlags( 'Show Precombat', 'precombat' ) end,
+								set		= 'SetOption',
+								get		= 'GetOption',
+								order	= 0,
+							},
+
+							['Cooldown Enabled'] = {
+								type	= 'toggle',
+								name	= 'Show Cooldowns',
+								desc	= function ()
+											local output
+											if Hekili.DB.profile['Cooldown Enabled'] == true then
+												output = 'Hide cooldowns in both rotations (presently enabled)'
+											else
+												output = 'Show cooldowns in both rotations (presently disabled).'
+											end
+											return output			
+										end,
+								set 		= 'SetOption',
+								get 		= 'GetOption',
+								order	 = 1,
+							},
+						},
+					},
 					['Cooldowns'] = {
 						type = "group",
 						name = "Cooldown Filters",
 						inline = true,
-						order = 0,
+						order = 1,
 						args = {
 							['Show Bloodlust'] = {
 								type	= 'toggle',
@@ -2221,31 +2363,14 @@ function Hekili:GetOptions()
 								order	= 4,
 								width	= 'double'
 							},
-						}
+						},
 					},
 					['General Filters'] = {
 						type = "group",
 						name = "General Filters",
 						inline = true,
-						order = 1,
+						order = 2,
 						args = {
-							['Cooldown Enabled'] = {
-								type	= 'toggle',
-								name	= 'Show Cooldowns',
-								desc	= function ()
-											local output
-											if Hekili.DB.profile['Cooldown Enabled'] == true then
-												output = 'Hide cooldowns from both rotations (presently enabled)'
-											else
-												output = 'Show cooldowns from both rotations (presently disabled).'
-											end
-											return output			
-										end,
-								cmdHidden	= true,
-								set 		= 'SetOption',
-								get 		= 'GetOption',
-								order	 = 0,
-							},
 
 							['Show Hardcasts'] = {
 								type	= 'toggle',
@@ -2273,15 +2398,6 @@ function Hekili:GetOptions()
 								order	= 2,
 							},
 
-							['Show Precombat'] = {
-								type	= 'toggle',
-								name	= 'Show Precombat',
-								desc	= function () return OutputFlags( 'Show Precombat', 'precombat' ) end,
-								set		= 'SetOption',
-								get		= 'GetOption',
-								order	= 3,
-							},
-
 							['Show Talents'] = {
 								type	= 'toggle',
 								name	= 'Show Talents',
@@ -2293,9 +2409,9 @@ function Hekili:GetOptions()
 							
 							['Show AOE in ST'] = {
 								type	= 'toggle',
-								name	= 'Show AOE in ST',
+								name	= 'Show Blended ST',
 								desc	= function()
-												local output =	'In some cases, AOE abilities may be included in the single-target rotation when multiple targets are detected.\n\n' ..
+												local output =	'In some cases, AOE abilities may be included in the single target rotation when multiple targets are detected.\n\n' ..
 																'|cFFFFD100Elemental Shaman:|r  When two targets are detected, an Elemental Shaman will get a DPS increase by casting Chain Lightning rather than Lightning Bolt.\n\n' ..
 																'|cFFFFD100Enhancement Shaman:|r  When two targets are affected by Flame Shock, adding Fire Nova to the rotation will be a DPS increase.\n\n'
 												if Hekili.DB.profile['Show AOE in ST'] then
@@ -2436,8 +2552,12 @@ function Hekili:GetDefaults()
 			['Integration Enabled']				= false,
 			['Multi-Target Integration']		= 4,
 			['Single Target Queue Direction']	= 'RIGHT',
-			['Single Target Font']				= 'Arial Narrow',
+
+			['Single Target Greentext']			= true,
+			['Single Target Captions']			= true,
 			['Single Target Tracker']			= 'None',
+
+			['Single Target Font']				= 'Arial Narrow',
 			['Single Target Primary Icon Size'] = 50,
 			['Single Target Primary Font Size']	= 12,
 			['Single Target Primary Icon Size'] = 50,
@@ -2458,6 +2578,10 @@ function Hekili:GetDefaults()
 			['Multi-Target Icons Displayed']	= 5,
 			['Multi-Target Illumination']		= 2,
 			['Multi-Target Queue Direction']	= 'RIGHT',
+
+			['Multi-Target Greentext']			= true,
+			['Multi-Target Captions']			= true,
+
 			['Multi-Target Font']				= 'Arial Narrow',
 			['Multi-Target Primary Icon Size'] 	= 50,
 			['Multi-Target Primary Font Size']	= 12,

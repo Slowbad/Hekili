@@ -49,6 +49,11 @@ function Hekili:CreatePriorityButton( set, number )
 	
 	button.Cooldown = CreateFrame("Cooldown", name.."_Cooldown" , button, "CooldownFrameTemplate")
 	button.Cooldown:SetAllPoints(button)
+
+	button.Indicator = button:CreateTexture(nil, "MEDIUM")
+	button.Indicator:SetSize(button:GetWidth() / 2, button:GetHeight() / 2)
+	button.Indicator:SetPoint("TOPLEFT", button, "TOPLEFT")
+	button.Indicator:SetAlpha(1)
 	
 	button.btmText = button:CreateFontString(name.."BtmText", "OVERLAY" )
 	button.btmText:SetSize(button:GetWidth(), button:GetHeight() / 2)
