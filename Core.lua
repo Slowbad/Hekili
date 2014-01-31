@@ -43,7 +43,7 @@ function Hekili:ProcessPriorityList( id )
 	
 	local _, zoneType = IsInInstance()
 	
-	if ( not module or not module.enabled[id] ) or
+	if	( not module or not module.enabled[id] ) or
 		( self.DB.profile['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
 		( self.DB.profile['Visibility'] == 'Show in Combat' and ( not UnitAffectingCombat('player') and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) ) or
 		( self.DB.profile['PvP Visibility'] == false and pvpZones[zoneType] ) or
@@ -57,7 +57,6 @@ function Hekili:ProcessPriorityList( id )
 	end
 
 	local state = self.State
-	-- table.wipe(state)
 
 	module:RefreshState( state )
 
@@ -231,7 +230,10 @@ end
 
 function Hekili:DisplayActionButtons( id )
 
-	if 	( self.DB.profile['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
+
+	local _, zoneType = IsInInstance()
+	
+	if  ( self.DB.profile['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
 		( self.DB.profile['Visibility'] == 'Show in Combat' and ( not UnitAffectingCombat('player') and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) ) or
 		( self.DB.profile['PvP Visibility'] == false and pvpZones[zoneType] ) or
 		( self.DB.profile['Single-Target Enabled'] == false and id == 'ST' ) or
@@ -249,7 +251,7 @@ function Hekili:DisplayActionButtons( id )
 	for i = 1, 5 do
 		local action = self.Actions[id][i]
 
-		if action.name then		
+		if action.name then	
 			if ( action.cooldown <= 30 or i == 1 ) and
 				(	( self.DB.profile['Single Target Enabled'] and	id == 'ST' and	i <= self.DB.profile['Single Target Icons Displayed'] ) or
 					( self.DB.profile['Multi-Target Enabled'] and	id == 'AE' and	i <= self.DB.profile['Multi-Target Icons Displayed'] )	) then
@@ -257,7 +259,7 @@ function Hekili:DisplayActionButtons( id )
 				self.UI.AButtons[id][i]:Show()
 
 				local start, duration
-				
+							
 				if module.spells[ action.name ].item then
 					start, duration = GetItemCooldown( module.spells[ action.name ].id )
 				else

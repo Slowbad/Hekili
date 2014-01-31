@@ -2852,6 +2852,8 @@ function Hekili:SetOption(info, input)
 		self:ClearAuras()
 		self:LoadAuras()
 
+		if self.Active then self:ProcessPriorityList( 'ST' ) end
+		if self.Active then self:ProcessPriorityList( 'AE' ) end
 		
 	elseif opt == 'Single Target Enabled' then
 		for i = 1, 5 do
