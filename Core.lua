@@ -52,18 +52,6 @@ function Hekili:ProcessPriorityList( id )
 		end
 	end
 	
-	--[[	Deprecated, since visibility is handled separately.
-			We always want the action list(s) created, so they can be toggled visually as needed.
-	if	( not module or not module.enabled[id] ) or
-		( self.DB.profile['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
-		( self.DB.profile['Visibility'] == 'Show in Combat' and ( not UnitAffectingCombat('player') and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) ) or
-		( self.DB.profile['PvP Visibility'] == false and pvpZones[zoneType] ) or
-		( self.DB.profile['Single-Target Enabled'] == false and id == 'ST' ) or
-		( self.DB.profile['Multi-Target Enabled'] == false and id == 'AE' ) or
-		( UnitHasVehicleUI('player') ) then
-		return
-	end ]]
-
 	local state = self.State
 
 	module:RefreshState( state )
