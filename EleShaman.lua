@@ -773,7 +773,7 @@ mod:AddToActionList('cooldown',
 ---------
 -- AOE --
 
-mod:AddToActionList('aoe',
+--[[ mod:AddToActionList('aoe',
 					magma_totem,
 					'7+',
 					'6+:  Cast Magma Totem before AoE phase or if there are 7+ targets.',
@@ -782,15 +782,26 @@ mod:AddToActionList('aoe',
 							return magma_totem
 						end
 						return nil
-					end )
+					end ) ]]--
 
-mod:AddToActionList('aoe',
+--[[ mod:AddToActionList('aoe',
 					earthquake,
 					'6+',
 					'6+:  Cast Earthquake targets.',
 					function( state )
 						if state.tCount >= 6 then
 							return earthquake, nil, (not  state.pBuffs[ancestral_swiftness].up)
+						end
+						return nil
+					end ) ]]--
+
+mod:AddToActionList('aoe',
+					spiritwalkers_grace,
+					'',
+					'actions.aoe+=/spiritwalkers_grace,moving=1,if=buff.ascendance.up', -- not truly a SimC recommendation.
+					function( state )
+						if state.pBuffs[ascendance].up and state.moving then
+							return spiritwalkers_grace
 						end
 						return nil
 					end )
@@ -927,6 +938,17 @@ mod:AddToActionList('single',
 					function( state )
 						if not state.pBuffs[ascendance].up and state.talents[unleashed_fury] and state.pBuffs[flametongue_weapon].up then
 							return unleash_elements
+						end
+						return nil
+					end )
+
+mod:AddToActionList('single',
+					spiritwalkers_grace,
+					'',
+					'',
+					function( state )
+						if state.pBuffs[ascendance].up and state.moving then
+							return spiritwalkers_grace
 						end
 						return nil
 					end )

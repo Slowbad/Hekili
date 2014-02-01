@@ -42,7 +42,18 @@ function Hekili:ProcessPriorityList( id )
 	local module = Hekili.Active
 	
 	local _, zoneType = IsInInstance()
+
+	-- Reset Actions
+	for i = 1, 5 do
+		if self.Actions[id][i] then
+			for k,v in pairs( self.Actions[id][i] ) do
+				self.Actions[id][i][k] = nil
+			end
+		end
+	end
 	
+	--[[	Deprecated, since visibility is handled separately.
+			We always want the action list(s) created, so they can be toggled visually as needed.
 	if	( not module or not module.enabled[id] ) or
 		( self.DB.profile['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
 		( self.DB.profile['Visibility'] == 'Show in Combat' and ( not UnitAffectingCombat('player') and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) ) or
@@ -50,11 +61,8 @@ function Hekili:ProcessPriorityList( id )
 		( self.DB.profile['Single-Target Enabled'] == false and id == 'ST' ) or
 		( self.DB.profile['Multi-Target Enabled'] == false and id == 'AE' ) or
 		( UnitHasVehicleUI('player') ) then
-		for i = 1, 5 do
-			Hekili.UI.AButtons[id][i]:Hide()
-		end
 		return
-	end
+	end ]]
 
 	local state = self.State
 
@@ -77,17 +85,6 @@ function Hekili:ProcessPriorityList( id )
 			gloveUpdate = state.time
 		end
 	end
-
-
-	-- Reset Actions
-	for i = 1, 5 do
-		if self.Actions[id][i] then
-			for k,v in pairs( self.Actions[id][i] ) do
-				self.Actions[id][i][k] = nil
-			end
-		end
-	end
-	
 	
 	-- BUILD ACTIONS TABLE.
 	for i = 1, 5 do
