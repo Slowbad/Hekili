@@ -3,9 +3,10 @@
 -- Hekili of <Turbo Cyborg Ninjas> - Ner'zhul [A]
 -- November 2013
 
+local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
+
 -- Shaman, Elemental = 262
 local mod = Hekili:NewModule("Elemental Shaman - TotemSpot - 5.4.1", 262, true, true, true)
-local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
 
 -- Spells, just to give readable aliases and to help with future localization.
 local ancestral_swiftness 	= GetSpellInfo(16188)

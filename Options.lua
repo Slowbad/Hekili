@@ -667,7 +667,7 @@ function Hekili:GetOptions()
 									-- None
 									['Tracker 1 None'] = {
 										type	= 'description',
-										name	= L["Tracker None Description"]
+										name	= L["Tracker None Description"],
 										order	= 2,
 										width	= 'full',
 										hidden	= function()
@@ -841,7 +841,7 @@ function Hekili:GetOptions()
 										desc	= L["Caption Description"],
 										values	= {
 											['None']	= L["None"],
-											['Targets']	= L["Targets"]'
+											['Targets']	= L["Targets"],
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -965,7 +965,7 @@ function Hekili:GetOptions()
 									-- None
 									['Tracker 2 None'] = {
 										type	= 'description',
-										name	= L["Tracker None Description"]
+										name	= L["Tracker None Description"],
 										order	= 2,
 										width	= 'full',
 										hidden	= function()
@@ -1139,7 +1139,7 @@ function Hekili:GetOptions()
 										desc	= L["Caption Description"],
 										values	= {
 											['None']	= L["None"],
-											['Targets']	= L["Targets"]'
+											['Targets']	= L["Targets"],
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1263,7 +1263,7 @@ function Hekili:GetOptions()
 									-- None
 									['Tracker 3 None'] = {
 										type	= 'description',
-										name	= L["Tracker None Description"]
+										name	= L["Tracker None Description"],
 										order	= 2,
 										width	= 'full',
 										hidden	= function()
@@ -1437,7 +1437,7 @@ function Hekili:GetOptions()
 										desc	= L["Caption Description"],
 										values	= {
 											['None']	= L["None"],
-											['Targets']	= L["Targets"]'
+											['Targets']	= L["Targets"],
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1561,7 +1561,7 @@ function Hekili:GetOptions()
 									-- None
 									['Tracker 4 None'] = {
 										type	= 'description',
-										name	= L["Tracker None Description"]
+										name	= L["Tracker None Description"],
 										order	= 2,
 										width	= 'full',
 										hidden	= function()
@@ -1735,7 +1735,7 @@ function Hekili:GetOptions()
 										desc	= L["Caption Description"],
 										values	= {
 											['None']	= L["None"],
-											['Targets']	= L["Targets"]'
+											['Targets']	= L["Targets"],
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1859,7 +1859,7 @@ function Hekili:GetOptions()
 									-- None
 									['Tracker 5 None'] = {
 										type	= 'description',
-										name	= L["Tracker None Description"]
+										name	= L["Tracker None Description"],
 										order	= 2,
 										width	= 'full',
 										hidden	= function()
@@ -2033,7 +2033,7 @@ function Hekili:GetOptions()
 										desc	= L["Caption Description"],
 										values	= {
 											['None']	= L["None"],
-											['Targets']	= L["Targets"]'
+											['Targets']	= L["Targets"],
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -2244,7 +2244,7 @@ function Hekili:GetOptions()
 							['Show AOE in ST'] = {
 								type	= 'toggle',
 								name	= L['Show Blended ST'],
-								desc	= L["Show Blended ST Description"]
+								desc	= L["Show Blended ST Description"],
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 5,
@@ -2284,7 +2284,7 @@ function Hekili:GetOptions()
 							},
 							['ST Hotkey'] = {
 								type	= 'keybinding',
-								name	= L["Toggle Single Target Display"]
+								name	= L["Toggle Single Target Display"],
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 1

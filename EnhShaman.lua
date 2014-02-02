@@ -3,6 +3,8 @@
 -- Hekili of <Turbo Cyborg Ninjas> - Ner'zhul [A]
 -- October 2013
 
+local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
+
 -- Shaman, Enhancement = 263
 local mod = Hekili:NewModule("Enhancement Shaman SimC 5.4.1", 263, true, true, true)
 
