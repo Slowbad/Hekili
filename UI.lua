@@ -2,6 +2,8 @@
 --	Insert clever description here.
 --	Hekili @ Ner'zhul, 10/23/13
 
+local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
+
 Hekili.invDirection = {
 	['BOTTOM']	= 'TOP',
 	['TOP']		= 'BOTTOM',

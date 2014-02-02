@@ -4,6 +4,7 @@
 
 
 local SpellRange = LibStub("SpellRange-1.0")
+local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
 
 -- Caching to hopefully improve performance.
 Hekili.textureCache = setmetatable( {}, { __index =	function(t,v)

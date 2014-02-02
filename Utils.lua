@@ -1,6 +1,7 @@
 -- Utils.lua
 -- Hekili of <Turbo Cyborg Ninjas> - Ner'zhul (A)
 
+local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
 
 -- Tooltip Parser Functions
 Hekili.Tooltip = CreateFrame("GameTooltip", "HekiliTooltip", UIParent, "GameTooltipTemplate")

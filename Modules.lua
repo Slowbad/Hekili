@@ -1,5 +1,7 @@
 -- Modules.lua
 
+local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
+
 function Hekili:NewModule( name, specID, st, ae, cd )
 	local mod		= {}
 
