@@ -1,4 +1,4 @@
--- esMX Localization
+-- esMX Localization 
 
 local L = LibStub("AceLocale-3.0"):NewLocale("Hekili", "esMX")
 

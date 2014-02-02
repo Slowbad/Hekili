@@ -1,4 +1,4 @@
--- ruRU Localization
+-- ruRU Localization 
 
 local L = LibStub("AceLocale-3.0"):NewLocale("Hekili", "ruRU")
 
