@@ -11,24 +11,24 @@ function ttCooldown( sID )
 	Hekili.Tooltip:ClearLines()
 	Hekili.Tooltip:SetSpellByID( sID )
 
-	local time, sTime, unit, lines
+	local time, timestr, unit, lines
 	lines = Hekili.Tooltip:NumLines()
 
 	for i = 2, lines do
 		line = _G["HekiliTooltipTextRight"..i]:GetText()
 
 		if line then
-			sTime = string.match(line, L["Cooldown Parser (Minutes)"])
+			timestr = string.match(line, L["Cooldown Parser (Minutes)"])
 
-			if sTime then
-				time = tonumber(sTime)
+			if timestr then
+				time = tonumber(timestr)
 				time = time * 60
 				return time
-			else
-				sTime = string.match(line, L["Cooldown Parser (Seconds)"])
 			end
+			
+			time = string.match(line, L["Cooldown Parser (Seconds)"])
 
-			if sTime then return tonumber(sTime) end
+			if timestr then return tonumber(timestr) end
 		end
 	end
 	return 0
