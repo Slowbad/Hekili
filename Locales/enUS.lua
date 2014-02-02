@@ -1,4 +1,4 @@
--- English (Default) Localization 
+-- English (Default) Localization
 
 local L = LibStub("AceLocale-3.0"):NewLocale("Hekili", "enUS", true)
 
