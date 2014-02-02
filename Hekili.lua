@@ -1,4 +1,4 @@
--- Hekili.lua
+-- Hekili.lua 
 -- The really, REALLY basic setup stuff before we get into the meat of the addon.
 -- Hekili @ Ner'zhul [A]
 -- October 2013
