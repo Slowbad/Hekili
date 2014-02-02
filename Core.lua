@@ -55,6 +55,8 @@ function Hekili:ProcessPriorityList( id )
 	
 	local state = self.State
 
+	if module.name == 'None' then return end
+
 	module:RefreshState( state )
 
 	local startTime = state.time
