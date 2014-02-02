@@ -1385,31 +1385,49 @@ mod:AddToActionList('single',
 -------------------
 -- TIER CHECKING --
 
--- NOTE - LOCALIZATION UNFRIENDLY, NEED TO SWAP TO ITEMIDs.
-
-local tSlots = {
-	'Helmet',
-	'Spaulders',
-	'Cuirass',
-	'Grips',
-	'Legguards'
+local TierGear = {
+	['t16'] = {
+		99347,
+		99340,
+		99341,
+		99342,
+		99343
+	},
+	['t15'] = {
+		96689,
+		96690,
+		96691,
+		96692,
+		96693
+	},
+	['t14'] = {
+		87138,
+		87137,
+		87136,
+		87135,
+		87134
+	},
 }
 
-local function tierCheck( setName, affix )
-	equipped = 0
+local tierCache = {}
 
-	for i=1, 5 do
-		if affix then
-			if IsEquippedItem(setName .. ' ' .. tSlots[i]) then
-				equipped = equipped + 1
-			end
-		else
-			if IsEquippedItem(tSlots[i] .. ' of ' .. setName) then
+local function tierCheck( set )
+	local equipped = 0
+
+ 	-- Only have to update if our gear has changed.
+	if not tierCache[set] or GetTime() > Hekili.eqChanged then
+		for i = 1, 5 do
+			-- Gather the item's name so we don't have to worry about Raid Finder vs. Flex vs. Normal vs. Heroic.
+			local itemname = GetItemInfo( TierGear[set][i] )
+
+			if IsEquippedItem(itemname) then
 				equipped = equipped + 1
 			end
 		end
+		tierCache[set] = equipped
 	end
-	return equipped
+	
+	return tierCache[set]
 end
 
 -- TIER CHECKING --
@@ -1726,9 +1744,9 @@ function mod:RefreshState( state )
 	if not state.set_bonuses then
 		state.set_bonuses = {}
 	end
-	state.set_bonuses['t14'] = tierCheck( "Firebird's", true )
-	state.set_bonuses['t15'] = tierCheck( "the Witch Doctor" )
-	state.set_bonuses['t16'] = tierCheck( "Celestial Harmony" )
+	state.set_bonuses['t14'] = tierCheck( 't14' )
+	state.set_bonuses['t15'] = tierCheck( 't15' )
+	state.set_bonuses['t16'] = tierCheck( 't16' )
 
 	-- SET BONUSES --
 	-----------------

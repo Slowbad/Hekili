@@ -1037,30 +1037,49 @@ mod:AddToActionList('single',
 -------------------
 -- TIER CHECKING --
 
-local tSlots = {
-	'Headpiece',
-	'Shoulderwraps',
-	'Hauberk',
-	'Gloves',
-	'Kilt'
+local TierGear = {
+	['t16'] = {
+		99345,
+		99332,
+		99333,
+		99334,
+		99344
+	},
+	['t15'] = {
+		96694,
+		96695,
+		96696,
+		96697,
+		96698
+	},
+	['t14'] = {
+		87143,
+		87142,
+		87141,
+		87140,
+		87139
+	},
 }
 
-function tierCheck( setName, affix )
+local tierCache = {}
 
-	equipped = 0
+local function tierCheck( set )
+	local equipped = 0
 
-	for i=1, 5 do
-		if affix then
-			if IsEquippedItem(setName .. ' ' .. tSlots[i]) then
-				equipped = equipped + 1
-			end
-		else
-			if IsEquippedItem(tSlots[i] .. ' of ' .. setName) then
+ 	-- Only have to update if our gear has changed.
+	 if not tierCache[set] or GetTime() > Hekili.eqChanged then
+		for i=1, 5 do
+			-- Gather the item's name so we don't have to worry about Raid Finder vs. Flex vs. Normal vs. Heroic.
+			local itemname = GetItemInfo( TierGear[set][i] )
+
+			if IsEquippedItem(itemname) then
 				equipped = equipped + 1
 			end
 		end
+		tierCache[set] = equipped
 	end
-	return equipped
+	
+	return tierCache[set]
 end
 
 -- TIER CHECKING --
