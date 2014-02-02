@@ -17,15 +17,15 @@ function ttCooldown( sID )
 		line = _G["HekiliTooltipTextRight"..i]:GetText()
 
 		if line then
-			sTime = string.match(line, "^(.+) min cooldown")
+			sTime = string.match(line, L["Cooldown Parser (Minutes)"])
 
 			if sTime then
 				time = tonumber(sTime)
 				time = time * 60
 				return time
+			else
+				sTime = string.match(line, L["Cooldown Parser (Seconds)"])
 			end
-			
-			sTime = string.match(line, "^(.+) sec cooldown")
 
 			if sTime then return tonumber(sTime) end
 		end
@@ -57,8 +57,9 @@ function ttWeaponEnchant( slot )
 			end
 		end
 	end
-	return "Unknown Enchant"
+	return L["Unknown Enchant"]
 end
+
 
 -- Check for glove tinker.
 function ttGloveTinker( slot )
@@ -73,7 +74,7 @@ function ttGloveTinker( slot )
 		line = _G["HekiliTooltipTextLeft"..i]:GetText()
 
 		if line then
-			name = string.match(line, "Use: Increases your Intellect, Agility, or Strength")
+			name = string.match(line, L["Synapse Springs Tooltip"])
 
 			if name then
 				return true
@@ -96,7 +97,7 @@ function ttWeaponSpeed( slot )
 		line = _G["HekiliTooltipTextRight"..i]:GetText()
 
 		if line then
-			swing = string.match(line, "Speed (.+)$")
+			swing = string.match(line, L["Speed"] .. " (.+)$")
 
 			if sTime then return tonumber(swing) end
 		end

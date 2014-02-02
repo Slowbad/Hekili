@@ -26,7 +26,8 @@ function Hekili:NewModule( name, specID, st, ae, cd )
 	mod.spells		= {}
 	function mod:AddAbility( name, ID, ... )
 		if self.spells[name] then
-			Hekili:Print("Attempted to add existing ability '" .. name .. "' to spells table.")
+			local err = string.format(L["AddAbility Spell Exists"], name)
+			Hekili:Print(err)
 			return
 		end
 
@@ -49,7 +50,8 @@ function Hekili:NewModule( name, specID, st, ae, cd )
 		
 	function mod:AddHandler( name, func )
 		if not self.spells[name] then
-			Hekili:Print("Attempted to add a handler for spell '" .. name .. ". that is not in spells table.")
+			local err = string.format(L["AddHandler Spell Does Not Exist"], name)
+			Hekili:Print(err)
 			return
 		end
 		
@@ -66,7 +68,8 @@ function Hekili:NewModule( name, specID, st, ae, cd )
 	
 	function mod:AddToActionList( category, ability, caption, simC, check )
 		if not self.spells[ability] then
-			Hekili:Print("Attempted to add a non-existant ability to the action list.")
+			local err = string.format(L["AddToActionList Ability Does Not Exist"], ability, category)
+			Hekili:Print(err)
 			return
 		end
 		
@@ -128,7 +131,9 @@ function Hekili:NewModule( name, specID, st, ae, cd )
 	end
 	
 	self.Modules[name] = mod
-	self:Print("Added module |cFFFF9900" .. name .. "|r to Hekili.")
+
+	local success = string.format(L["AddModule Success"], name)
+	self:Print(success)
 
 	return self.Modules[name]
 end

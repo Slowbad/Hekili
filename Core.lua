@@ -704,12 +704,14 @@ function Hekili:SanityCheck()
 		-- do nothing
 	elseif self.Modules[ mod ] then
 		if self.Modules[mod].spec ~= specialization then
-			self:Print("Module |cFFFF9900" .. mod .. "|r is not appropriate for your class or specialization; unloading.")
+			local err = string.format(L["SanityCheck Module Not Appropriate"], mod)
+			self:Print(err)
 			self.DB.profile['Module'] = 'None'
 			mod = 'None'
 		end
 	else -- mod is not real
-		self:Print("Module |cFFFF9900" .. mod .. "|r was not loaded or its name may have changed; unloading.")
+		local err = string.format(L["SanityCheck Module Missing"], mod)
+		self:Print(err)
 		self.DB.profile['Module'] = 'None'
 		mod = 'None'
 	end

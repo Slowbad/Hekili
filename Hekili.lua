@@ -17,14 +17,16 @@ end
 
 Hekili.LSM = LibStub:GetLibrary("LibSharedMedia-3.0")
 
+local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
+
 BINDING_HEADER_HEKILI_HEADER = "Hekili"
 
-BINDING_NAME_HEKILI_TOGGLE = "Enable/Disable Hekili"
-BINDING_NAME_HEKILI_TOGGLE_COOLDOWNS = "Toggle Display of Cooldowns"
-BINDING_NAME_HEKILI_TOGGLE_HARDCASTS = "Toggle Display of Hardcasts"
-BINDING_NAME_HEKILI_TOGGLE_SINGLE = "Toggle Single Target Display"
-BINDING_NAME_HEKILI_TOGGLE_MULTI = "Toggle Multi-Target Display"
-BINDING_NAME_HEKILI_TOGGLE_INTEGRATE = "Toggle Multi-Target Integration"
+BINDING_NAME_HEKILI_TOGGLE				= L["Toggle Addon"]
+BINDING_NAME_HEKILI_TOGGLE_COOLDOWNS	= L["Toggle Cooldowns"]
+BINDING_NAME_HEKILI_TOGGLE_HARDCASTS	= L["Toggle Hardcasts"]
+BINDING_NAME_HEKILI_TOGGLE_SINGLE		= L["Toggle Single Target Display"]
+BINDING_NAME_HEKILI_TOGGLE_MULTI		= L["Toggle Multi-Target Display"]
+BINDING_NAME_HEKILI_TOGGLE_INTEGRATE	= L["Toggle Multi Integration"]
 
 Hekili.Modules = {}
 

@@ -175,7 +175,7 @@ function Hekili:CreateTracker( num )
 		if ( self:IsMovable() ) then
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 			GameTooltip:SetText(self.desc)
-			GameTooltip:AddLine("Left-click and hold to move.\nRight-click to lock ALL and close.", 1, 1, 1)
+			GameTooltip:AddLine(L["Movable Tooltip"], 1, 1, 1)
 			GameTooltip:Show()
 			self:SetMovable(true)
 			self:EnableMouse(true)

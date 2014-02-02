@@ -1,0 +1,5 @@
+-- esMX Localization
+
+local L = LibStub("AceLocale-3.0"):NewLocale("Hekili"), "esMX")
+
+--@localization(locale="esMX", format="lua_additive_table", same-key-is-true=true, handle-subnamespaces="concat")@

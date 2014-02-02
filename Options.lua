@@ -2,6 +2,7 @@
 --	Insert clever description here.
 --	Hekili @ Ner'zhul, 10/23/13
 
+local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
 
 function OutputFlags( option, category )
 	local output
@@ -19,13 +20,13 @@ function OutputFlags( option, category )
 	end
 
 	if Hekili.DB.profile[option] == true then
-		output = 'Hide ' .. category .. ' abilities from the priority display (presently shown).'
+		output = string.format(L["Hide %s abilities from the priority display (presently shown)."], category)
 	else
-		output = 'Show ' .. category .. ' abilities from the priority display (presently hidden).'
+		output = string.format(L["Show %s abilities from the priority display (presently hidden)."], category)
 	end
 
 	if abilities ~= '' then
-		output = output .. '\n|cFFFFD100Affects:|r ' .. abilities
+		output = output .. '\n|cFFFFD100' .. L["Affects"] .. ':|r ' .. abilities
 	end
 
 	return output			
@@ -88,73 +89,45 @@ function Hekili:GetOptions()
 		args = {
 			['Basic'] = {
 				type = "group",
-				name = "Basic Settings",
+				name = L["Basic Settings"],
 				childGroups = 'tree',
 				order = 0,
 				args = {
 					enabled = {
 						type = 'toggle',
-						name = 'Enabled',
-						desc = function ()
-									local output
-									if Hekili.DB.profile.enabled == true then
-										output = 'Disable this AddOn (presently enabled).'
-									else
-										output = 'Enable this AddOn (presently disabled).'
-									end
-									return output			
-								end,
+						name = L["Enabled"],
 						set = 'SetOption',
 						get = 'GetOption',
 						order = 0,
 					},
 					locked = {
 						type = 'toggle',
-						name = 'Locked',
-						desc = function ()
-									local output
-									if Hekili.DB.profile.locked == true then
-										output = 'Unlock the priority action buttons (presently locked).'
-									else
-										output = 'Lock this AddOn (presently unlocked).'
-									end
-									return output			
-								end,
+						name = L["Locked"],
 						set = 'SetOption',
 						get = 'GetOption',
 						order = 1,
 					},
 					verbose = {
 						type = 'toggle',
-						name = 'Verbose',
-						desc = function ()
-									local output
-									if Hekili.DB.profile.verbose == true then
-										output = 'Hide detailed status information for this AddOn (presently shown).'
-									else
-										output = 'Show detailed status information for this AddOn (presently hidden).'
-									end
-									return output			
-								end,
+						name = L["Verbose"],
 						set = 'SetOption',
 						get = 'GetOption',
 						order = 2,
 					},
 					['Visibility Settings'] = {
 						type = 'group',
-						name = 'Visibility Settings',
+						name = L["Visibility Settings"],
 						inline = true,
 						order = 3,
 						args = {
 							['Visibility'] = {
 								type = 'select',
-								name = 'Visibility',
+								name = L["Visibility"],
 								values = {
-									['Always Show']			= 'Always Show',
-									['Show in Combat']		= 'Show in Combat',
-									['Show with Target']	= 'Show with Target',
+									['Always Show']			= L["Always Show"],
+									['Show in Combat']		= L["Show in Combat"],
+									['Show with Target']	= L["Show with Target"],
 								},
-								desc = 'Choose when the priority display(s) should be visible.',
 								set = 'SetOption',
 								get = 'GetOption',
 								order = 0,
@@ -162,16 +135,7 @@ function Hekili:GetOptions()
 							},
 							['PvP Visibility'] = {
 								type = 'toggle',
-								name = 'Include BG/Arena',
-								desc = function ()
-											local output
-											if Hekili.DB.profile['PvP Visibility'] then
-												output = 'Hide the priority displays in arenas and battlegrounds (presently shown).'
-											else
-												output = 'Show the priority displays in arenas and battlegrounds (presently hidden).'
-											end
-											return output			
-										end,
+								name = L["Include BG and Arenas"],
 								set = 'SetOption',
 								get = 'GetOption',
 								order = 1
@@ -180,13 +144,13 @@ function Hekili:GetOptions()
 					},
 					['Modules'] = {
 						type = "group",
-						name = "Module Settings",
+						name = L["Module Settings"],
 						inline = true,
 						order = 5,
 						args = {
 							['Module'] = {
 								type = 'select',
-								name = 'Module',
+								name = L["Module"],
 								values = function()
 											local ptable = {}
 											for k,v in pairs(Hekili.Modules) do
@@ -194,11 +158,9 @@ function Hekili:GetOptions()
 													ptable[k] = k
 												end
 											end
-											ptable["None"] = "None"
+											ptable["None"] = L["None"]
 											return ptable
 										end,
-								desc = 'Select the priority module for your current specialization profile.',
-								cmdHidden = true,
 								set = 'SetOption',
 								get = 'GetOption',
 								order = 0,
@@ -206,8 +168,8 @@ function Hekili:GetOptions()
 							},
 							['Load Trackers'] = {
 									type = 'execute',
-									name = 'Load Module Trackers',
-									desc = 'Load trackers built into your current module, if any.  All custom tracker settings will be overwritten.',
+									name = L["Load Module Trackers"],
+									desc = L["Load Module Trackers Description"],
 									func = function()
 												local num = 1
 												for k,v in pairs(Hekili.Active.trackers) do
@@ -238,19 +200,18 @@ function Hekili:GetOptions()
 					},
 					['Counter'] = {
 						type = "group",
-						name = "Target Count",
+						name = L["Target Count"],
 						inline = true,
 						order = 5,
 						args = {
 							['Delay Description'] = {
 								type	= 'description',
-								name	= "This addon includes a mechanism for counting targets with whom you are actively engaged.  Any target that you damage, or is damaged by your pets/totems/guardians, is included in this target count.  Targets are removed when they are killed or if you do not damage them within the following 'Grace Period'.",
+								name	= L["Target Count Delay Description"],
 								order	= 0
 							},
 							['Grace Period'] = {
 								type	= 'range',
-								name	= 'Grace Period',
-								desc	= 'Set the length of time to wait before removing an injured target from your list of active targets.',
+								name	= L["Grace Period"],
 								min		= 4,
 								max		= 10,
 								step	= 1,
@@ -263,19 +224,18 @@ function Hekili:GetOptions()
 					},
 					['Engine'] = {
 						type = "group",
-						name = "Engine Settings",
+						name = L["Engine Settings"],
 						inline = true,
 						order = 6,
 						args = {
 							['Engine Description'] = {
 								type	= 'description',
-								name	= 'Set the frequency with which you want the addon to update your priority displays.  More frequent updates require more processor time (and can impact your frame rate); less frequent updates use less CPU, but may cause the display to be sluggish or to respond slowly to game events.  The default setting is 10 updates per second.',
+								name	= L["Engine Description"],
 								order	= 0
 							},
 							['Updates Per Second'] = {
 								type	= 'range',
-								name	= 'Updates Per Second',
-								desc	= 'Set the number of times the addon should refresh its priority display each second.',
+								name	= L["Updates Per Second"],
 								min		= 4,
 								max		= 10,
 								step	= 1,
@@ -290,24 +250,23 @@ function Hekili:GetOptions()
 			},
 			['UI'] = {
 				type = 'group',
-				name = 'UI Settings',
+				name = L["UI Settings"],
 				order = 1,
 				args = {
 					['Global'] = {
 						type = 'group',
-						name = 'Globals',
+						name = L["Globals"],
 						order = 0,
 						args = {
 							['Global Warning'] = { -- that's kinda funny
 								type = 'description',
-								name = 'Setting any option in this tab will override the similar setting for all groups/trackers.',
+								name = L["Global Warning"],
 								order = 0
 							},
 							['Global Font'] = {
 								type			= 'select',
 								dialogControl	= 'LSM30_Font', --Select your widget here
-								name			= 'Font',
-								desc			= 'Set the font used for the text on the single target icons.',
+								name			= L["Font"],
 								values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
 								get				= 'GetOption',
 								set				= 'SetOption',
@@ -316,8 +275,7 @@ function Hekili:GetOptions()
 							},
 							['Global Icon Size'] = {
 								type 	= 'range',
-								name 	= 'Icon Size',
-								desc 	= 'Set the height and width of all priority and tracker icons.',
+								name 	= L["Icon Size"],
 								min		= 25,
 								max		= 250,
 								step	= 1,
@@ -327,8 +285,7 @@ function Hekili:GetOptions()
 							},
 							['Global Font Size'] = {
 								type	= 'range',
-								name 	= 'Font Size',
-								desc 	= 'Set the font size for all priority and tracker icons.',
+								name 	= L["Font Size"],
 								min		= 6,
 								max		= 26,
 								step	= 1,
@@ -340,43 +297,33 @@ function Hekili:GetOptions()
 					},
 					['Single Target Group'] = {
 						type = 'group',
-						name = 'Single Target Group',
+						name = L["Single Target Group"],
 						order = 1,
 						args = {
 							['ST Priority'] = {
 								type = 'group',
-								name = 'Single Target Priority',
+								name = L["Single Target Priority"],
 								inline = true,
 								order = 0,
 								args = {
 									['Single Target Enabled'] = {
 										type = 'toggle',
-										name = 'Enable Single Target',
-										desc = function ()
-													local output
-													if Hekili.DB.profile['Single Target Enabled'] == true then
-														output = 'Disable Hekili for single-target rotation (presently enabled).'
-													else
-														output = 'Enable Hekili for single-target rotation (presently disabled).'
-													end
-													return output			
-												end,
+										name = L["Enable Single Target"],
 										set = 'SetOption',
 										get = 'GetOption',
 										order = 0,
 									},
 									['Integration Enabled'] = {
 										type = 'toggle',
-										name = 'Enable Integration',
-										desc = 'Display the multi-target priority in the Single Target display when the "Multi Integration" threshold is reached.',
+										name = L["Enable Integration"],
+										desc = L["Integration Description"],
 										set = 'SetOption',
 										get = 'GetOption',
 										order = 2,
 									},
 									['Single Target Icons Displayed'] = {
 										type	= 'range',
-										name	= 'Icons Displayed',
-										desc	= 'Set the number of icons to be displayed.',
+										name	= L["Icons Displayed"],
 										get		= 'GetOption',
 										set		= 'SetOption',
 										min		= 1,
@@ -386,8 +333,8 @@ function Hekili:GetOptions()
 									},
 									['Multi-Target Integration'] = {
 										type	= 'range',
-										name	= 'Multi Integration',
-										desc	= 'Use the multi-target priority in the Single Target display when this number of targets are detected (if enabled).',
+										name	= L["Multi Integration"],
+										desc	= L["Multi Integration Description"],
 										min		= 2,
 										max		= 10,
 										step	= 1,
@@ -397,66 +344,47 @@ function Hekili:GetOptions()
 									},
 									['Single Target Queue Direction'] = {
 										type	= "select",
-										name	= 'Queue Direction',
-										desc	= 'Set the direction in which single-target rotation buttons are displayed.',
+										name	= L["Queue Direction"],
 										get		= 'GetOption',
 										set		= 'SetOption',
 										style	= 'dropdown',
 										width	= 'full',
 										order	= 4,
 										values	= {
-											RIGHT	= 'Right (L to R)',
-											LEFT	= 'Left (R to L)',
+											RIGHT	= L["Left to Right"],
+											LEFT	= L["Right to Left"],
 										},
 									},
 								},
 							},
 							['ST Caption'] = {
 								type = 'group',
-								name = 'Captions',
+								name = L["Captions"],
 								inline = true,
 								order = 1,
 								args = {
 									['Single Target Greentext'] = {
 										type	= 'toggle',
-										name	= 'Show Prediction Times',
-										desc	= function ()
-													local output
-													if Hekili.DB.profile['Single Target Greentext'] == true then
-														output = 'Hide the green text timers in your single-target rotation (presently shown).'
-													else
-														output = 'Show the green text timers in your single-target rotation (presently hidden).'
-													end
-													return output			
-												end,
+										name	= L["Show Prediction Times"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										order	= 0,
 									},
 									['Single Target Captions'] = {
 										type	= 'toggle',
-										name	= 'Show Action Captions',
-										desc	= function ()
-													local output
-													if Hekili.DB.profile['Single Target Captions'] == true then
-														output = 'Hide the action descriptions in your single-target rotation (presently shown).'
-													else
-														output = 'Show the action descriptions in your single-target rotation (presently hidden).'
-													end
-													return output			
-												end,
+										name	= L["Show Action Captions"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										order	= 1,
 									},
 									['Single Target Tracker'] = {
 										type	= 'select',
-										name	= 'Primary Caption',
-										desc	= 'Select an alternative caption for your primary single target icon.  These options are supplied by your active module.',
+										name	= L["Primary Caption"],
+										desc	= L["Primary Caption Description"],
 										values	= function ()
 														local options = {}
 
-														options['None'] = 'Default (show action description)'
+														options['None'] = L["Primary Caption Default"]
 
 														if Hekili.Active then
 															for k,v in pairs(Hekili.Active.trackers) do
@@ -477,15 +405,14 @@ function Hekili:GetOptions()
 							},
 							['ST Visual'] = {
 								type = 'group',
-								name = 'Visual Elements',
+								name = L["Visual Elements"],
 								inline = true,
 								order = 2,
 								args = {
 									['Single Target Font'] = {
 										type			= 'select',
 										dialogControl	= 'LSM30_Font', --Select your widget here
-										name			= 'Font',
-										desc			= 'Set the font used for the text on the single target icons.',
+										name			= L["Font"],
 										values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
 										get				= 'GetOption',
 										set				= 'SetOption',
@@ -494,8 +421,7 @@ function Hekili:GetOptions()
 									},
 									['Single Target Primary Icon Size'] = {
 										type 	= 'range',
-										name 	= 'Primary Icon Size',
-										desc 	= 'Set the height and width of the primary icon.',
+										name 	= L["Primary Icon Size"],
 										min		= 25,
 										max		= 250,
 										step	= 1,
@@ -505,8 +431,7 @@ function Hekili:GetOptions()
 									},
 									['Single Target Primary Font Size'] = {
 										type	= 'range',
-										name 	= 'Primary Font Size',
-										desc 	= 'Set the font size for the primary ability icon.',
+										name 	= L["Primary Font Size"],
 										min		= 6,
 										max		= 26,
 										step	= 1,
@@ -516,8 +441,7 @@ function Hekili:GetOptions()
 									},
 									['Single Target Queued Icon Size'] = {
 										type	= 'range',
-										name 	= 'Queued Icon Size',
-										desc 	= 'Set the height and width of the queued ability icons.',
+										name 	= L["Queued Icon Size"],
 										min		= 25,
 										max		= 250,
 										step	= 1,
@@ -527,8 +451,7 @@ function Hekili:GetOptions()
 									},
 									['Single Target Queued Font Size'] = {
 										type	= 'range',
-										name 	= 'Queued Font Size',
-										desc 	= 'Set the font size for the queued ability icons.',
+										name 	= L["Queued Font Size"],
 										min		= 6,
 										max		= 26,
 										step	= 1,
@@ -538,8 +461,7 @@ function Hekili:GetOptions()
 									},
 									['Single Target Icon Spacing'] = {
 										type	= 'range',
-										name	= 'Icon Spacing',
-										desc	= 'Set the spacing between icons (if anchored).',
+										name	= L["Icon Spacing"],
 										min		= 0,
 										max		= 100,
 										step	= 1,
@@ -553,35 +475,25 @@ function Hekili:GetOptions()
 					},
 					['Multi-Target'] = {
 						type = 'group',
-						name = 'Multi-Target Group',
+						name = L["Multi-Target Group"],
 						order = 2,
 						args = {
 							['MT Priority'] = {
 								type = 'group',
-								name = 'Multi-Target Priority',
+								name = L["Multi-Target Priority"],
 								inline = true,
 								order = 0,
 								args = {
 									['Multi-Target Enabled'] = {
 										type = 'toggle',
-										name = 'Enable Multi-Target',
-										desc = function ()
-													local output
-													if Hekili.DB.profile['Single Target Enabled'] == true then
-														output = 'Disable Hekili for single-target rotation (presently enabled).'
-													else
-														output = 'Enable Hekili for single-target rotation (presently disabled).'
-													end
-													return output			
-												end,
+										name = L["Enable Multi-Target"],
 										set = 'SetOption',
 										get = 'GetOption',
 										order = 0,
 									},
 									['Multi-Target Icons Displayed'] = {
 										type	= 'range',
-										name	= 'Icons Displayed',
-										desc	= 'Set the number of icons to be displayed.',
+										name	= L["Icons Displayed"],
 										get		= 'GetOption',
 										set		= 'SetOption',
 										min		= 1,
@@ -591,24 +503,15 @@ function Hekili:GetOptions()
 									},
 									['Multi-Target Cooldowns'] = {
 										type	= 'toggle',
-										name	= 'Allow Cooldowns',
-										desc	= function ()
-													local output
-													if Hekili.DB.profile['Multi-Target Cooldowns'] == true then
-														output = 'Disallow cooldowns from showing in the multi-target rotation when cooldowns are enabled (presently allowed).'
-													else
-														output = 'Allow cooldowns to show in the multi-target rotation when cooldowns are enabled (presently disallowed).'
-													end
-													return output			
-												end,
+										name	= L["Allow Cooldowns"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										order	= 2,
 									},
 									['Multi-Target Illumination'] = {
 										type	= 'range',
-										name	= 'Icon Illumination',
-										desc	= 'Set the number of targets required for the multi-target icon to light up (or 0 for never).',
+										name	= L["Icon Illumination"],
+										desc	= L["Icon Illumination Description"],
 										min		= 0,
 										max		= 10,
 										step	= 1,
@@ -618,54 +521,35 @@ function Hekili:GetOptions()
 									},
 									['Multi-Target Queue Direction'] = {
 										type	= "select",
-										name	= 'Queue Direction',
-										desc	= 'Set the direction in which multi-target rotation buttons are displayed.',
+										name	= L["Queue Direction"],
 										get		= 'GetOption',
 										set		= 'SetOption',
 										style	= 'dropdown',
 										width	= 'full',
 										order	= 4,
 										values	= {
-											RIGHT	= 'Right (L to R)',
-											LEFT	= 'Left (R to L)',
+											RIGHT	= L["Left to Right"],
+											LEFT	= L["Right to Left"],
 										},
 									},
 								},
 							},
 							['MT Caption'] = {
 								type = 'group',
-								name = 'Captions',
+								name = L["Captions"],
 								inline = true,
 								order = 1,
 								args = {
 									['Multi-Target Greentext'] = {
 										type	= 'toggle',
-										name	= 'Show Prediction Times',
-										desc	= function ()
-													local output
-													if Hekili.DB.profile['Multi-Target Greentext'] == true then
-														output = 'Hide the green text timers in your multi-target rotation (presently shown).'
-													else
-														output = 'Show the green text timers in your multi-target rotation (presently hidden).'
-													end
-													return output			
-												end,
+										name	= L["Show Prediction Times"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										order	= 0,
 									},
 									['Multi-Target Captions'] = {
 										type	= 'toggle',
-										name	= 'Show Action Captions',
-										desc	= function ()
-													local output
-													if Hekili.DB.profile['Multi-Target Captions'] == true then
-														output = 'Hide the action descriptions in your multi-target rotation (presently shown).'
-													else
-														output = 'Show the action descriptions in your multi-target rotation (presently hidden).'
-													end
-													return output			
-												end,
+										name	= L["Show Action Captions"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										order	= 1,
@@ -674,15 +558,14 @@ function Hekili:GetOptions()
 							},
 							['MT Visual'] = {
 								type = 'group',
-								name = 'Visual Elements',
+								name = L["Visual Elements"],
 								inline = true,
 								order = 2,
 								args = {
 									['Multi-Target Font'] = {
 										type			= 'select',
 										dialogControl	= 'LSM30_Font', --Select your widget here
-										name			= 'Font',
-										desc			= 'Set the font used for the text on the single target icons.',
+										name			= L["Font"],
 										values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
 										get				= 'GetOption',
 										set				= 'SetOption',
@@ -691,8 +574,7 @@ function Hekili:GetOptions()
 									},
 									['Multi-Target Primary Icon Size'] = {
 										type 	= 'range',
-										name 	= 'Primary Icon Size',
-										desc 	= 'Set the height and width of the primary icon.',
+										name 	= L["Primary Icon Size"],
 										min		= 25,
 										max		= 250,
 										step	= 1,
@@ -702,8 +584,7 @@ function Hekili:GetOptions()
 									},
 									['Multi-Target Primary Font Size'] = {
 										type	= 'range',
-										name 	= 'Primary Font Size',
-										desc 	= 'Set the font size for the primary ability icon.',
+										name 	= L["Primary Font Size"],
 										min		= 6,
 										max		= 26,
 										step	= 1,
@@ -713,8 +594,7 @@ function Hekili:GetOptions()
 									},
 									['Multi-Target Queued Icon Size'] = {
 										type	= 'range',
-										name 	= 'Queued Icon Size',
-										desc 	= 'Set the height and width of the queued ability icons.',
+										name 	= L["Queued Icon Size"],
 										min		= 25,
 										max		= 250,
 										step	= 1,
@@ -724,8 +604,7 @@ function Hekili:GetOptions()
 									},
 									['Multi-Target Queued Font Size'] = {
 										type	= 'range',
-										name 	= 'Queued Font Size',
-										desc 	= 'Set the font size for the queued ability icons.',
+										name 	= L["Queued Font Size"],
 										min		= 6,
 										max		= 26,
 										step	= 1,
@@ -735,8 +614,7 @@ function Hekili:GetOptions()
 									},
 									['Multi-Target Icon Spacing'] = {
 										type	= 'range',
-										name	= 'Icon Spacing',
-										desc	= 'Set the spacing between icons (if anchored).',
+										name	= L["Icon Spacing"],
 										min		= 0,
 										max		= 100,
 										step	= 1,
@@ -750,24 +628,23 @@ function Hekili:GetOptions()
 					},
 					['Tracker Icon #1'] = {
 						type = 'group',
-						name = 'Tracker Icon #1',
+						name = L["Tracker Icon #1"],
 						order = 3,
 						args = {
 							['T1 Config'] = {
 								type = 'group',
-								name = 'Tracker',
+								name = L["Tracker"],
 								inline = true,
 								order = 0,
 								args = {
 									['Tracker 1 Type'] = {
 										type	= 'select',
-										name	= 'Type',
-										desc	= 'Select the type of tracker to use, or None to disable.',
+										name	= L["Type"],
 										values	= {
-											['None']	= 'None',
-											['Cooldown'] = 'Cooldown',
-											['Aura']	= 'Buff/Debuff',
-											['Totem']	= 'Totem'
+											['None']		= L["None"],
+											['Cooldown']	= L["Cooldown"],
+											['Aura']		= L["Aura"],
+											['Totem']		= L["Totem"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -779,9 +656,9 @@ function Hekili:GetOptions()
 										type	= 'header',
 										name	= function()
 														if self.DB.profile['Tracker 1 Type'] == 'None' then
-															return 'Tracker Disabled'
+															return L["Tracker Disabled"]
 														end
-														return self.DB.profile['Tracker 1 Type'] .. ' Settings'
+														return self.DB.profile['Tracker 1 Type'] .. ' ' .. L["Settings"]
 													end,	
 										order	= 1
 									},
@@ -790,7 +667,7 @@ function Hekili:GetOptions()
 									-- None
 									['Tracker 1 None'] = {
 										type	= 'description',
-										name	= 'Select a tracker type above to enable this tracker and display type-specific options.',
+										name	= L["Tracker None Description"]
 										order	= 2,
 										width	= 'full',
 										hidden	= function()
@@ -805,16 +682,16 @@ function Hekili:GetOptions()
 									-- Aura
 									['Tracker 1 Aura'] = {
 										type	= 'input',
-										name	= 'Aura',
-										desc	= 'Enter the spell to be tracked using this tracker icon.',
+										name	= L["Aura"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										validate = function(info, val)
 														if val == '' then return true
 														elseif GetSpellInfo(val) then return true
 														else
-															Hekili:Print('|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an actual buff/debuff.')
-															return '|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an actual buff/debuff.'
+															local err = string.format(L["Tracker Aura Error"], L["ERROR"], val)
+															Hekili:Print(err)
+															return err
 														end
 														return true
 													end,
@@ -829,12 +706,11 @@ function Hekili:GetOptions()
 									},
 									['Tracker 1 Unit'] = {
 										type	= 'select',
-										name	= 'Unit',
-										desc	= 'Select the unit to monitor for the tracked aura.',
+										name	= L["Unit"],
 										values	= {
-											['focus']	= 'Focus',
-											['player']	= 'Player',
-											['target']	= 'Target'
+											['focus']	= L["Focus"],
+											['player']	= L["Player"],
+											['target']	= L["Target"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -851,8 +727,8 @@ function Hekili:GetOptions()
 									-- Totem
 									['Tracker 1 Totem Name'] = {
 										type	= 'input',
-										name	= 'Totem Name',
-										desc	= 'Enter the totem to watch for or leave blank to watch any totem.',
+										name	= L["Totem"],
+										desc	= L["Totem Description"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										hidden	= function()
@@ -866,8 +742,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 1 Element'] = {
 										type	= 'select',
-										name	= 'Element',
-										desc	= 'Select which elemental totem to track.  Options are earth, fire, water, air.',
+										name	= L["Element"],
 										values	= {
 											['fire']	= 'Fire',
 											['earth']	= 'Earth',
@@ -889,16 +764,16 @@ function Hekili:GetOptions()
 									-- Cooldown
 									['Tracker 1 Ability'] = {
 										type	= 'input',
-										name	= 'Ability',
-										desc	= 'Enter the ability cooldown to be tracked by this icon.',
+										name	= L["Ability"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										validate = function(info, val)
 														if val == '' then return true
 														elseif IsUsableSpell(val) then return true
 														else
-															self:Print('|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an available ability.')
-															return '|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an available ability.'
+															local err = string.format(L["Tracker Ability Error"], L["ERROR"], val)
+															self:Print(err)
+															return err
 														end
 													end,
 										order	= 2,
@@ -922,19 +797,19 @@ function Hekili:GetOptions()
 									-- Caption Options
 									['Tracker 1 Caption'] = {
 										type	= 'select',
-										name	= 'Caption',
+										name	= L["Caption"],
 										desc	= function()
-														local output = 'Select the text to display on the bottom of the icon.'
+														local output = L["Caption Description"]
 														
 														if self.DB.profile['Tracker 1 Type'] == 'Aura' then
-															output = output .. '  If the tracked spell is watched by your priority module, selecting \'Targets\' will display both the number of targets affected by the spell as well as the total number of active enemy targets.'
+															output = output .. '  ' .. L["Caption Description Aura"]
 
 															if self.Active then
 																local numWatched = 0
 
 																for k,_ in pairs(self.Active:Watchlist()) do
 																	if numWatched == 0 then
-																		output = output .. '\n|cFFFFD100Watched Spells:|r ' .. k
+																		output = output .. '\n|cFFFFD100' .. L["Watched Spells"] .. ':|r ' .. k
 																		numWatched = numWatched + 1
 																	else
 																		output = output .. ', ' .. k
@@ -946,9 +821,9 @@ function Hekili:GetOptions()
 														return output
 													end,
 										values	= {
-											['None']	= 'None',
-											['Stacks']	= 'Stacks',
-											['Targets']	= 'Targets'
+											['None']	= L["None"],
+											['Stacks']	= L["Stacks"],
+											['Targets']	= L["Targets"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -962,11 +837,11 @@ function Hekili:GetOptions()
 									},
 									['Tracker 1 Totem Caption'] = {
 										type	= 'select',
-										name	= 'Caption',
-										desc	= 'Select the text to display on the bottom of the icon.',
+										name	= L['Caption'],
+										desc	= L["Caption Description"],
 										values	= {
-											['None']	= 'None',
-											['Targets']	= 'Targets'
+											['None']	= L["None"],
+											['Targets']	= L["Targets"]'
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -982,17 +857,16 @@ function Hekili:GetOptions()
 									
 									['Tracker 1 Show'] = {
 										type	= 'select',
-										name	= 'Show',
-										desc	= 'Select when the tracker icon should be visible.',
+										name	= L['Show'],
 										values	= function ()
 														if self.DB.profile['Tracker 1 Type'] == 'Cooldown' then
-															return {	['Absent'] = 'Unusable',
-																		['Present'] = 'Usable',
-																		['Show Always'] = 'Always' }
+															return {	['Absent']		= L['Unusable'],
+																		['Present']		= L['Usable'],
+																		['Show Always']	= L['Always'] }
 														else
-															return {	['Absent'] = 'If Absent',
-																		['Present'] = 'If Present',			
-																		['Show Always'] = 'Always' }
+															return {	['Absent']		= L['Absent'],
+																		['Present']		= L['Present'],
+																		['Show Always'] = L['Always'] }
 														end
 													end,
 										set		= 'SetOption',
@@ -1002,8 +876,8 @@ function Hekili:GetOptions()
 									
 									['Tracker 1 Timer'] = {
 										type	= 'toggle',
-										name	= 'Show Timer',
-										desc	= 'Show or hide the timer (or cooldown ring) on the ability.  If using OmniCC, this will also determine if the remaining time text is shown.',
+										name	= L['Show Timer'],
+										desc	= L["Show Timer Description"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										order	= 7
@@ -1012,15 +886,14 @@ function Hekili:GetOptions()
 							},
 							['T1 Visual'] = {
 								type = 'group',
-								name = 'Visual Elements',
+								name = L["Visual Elements"],
 								inline = true,
 								order = 1,
 								args = {
 									['Tracker 1 Font'] = {
 										type			= 'select',
 										dialogControl	= 'LSM30_Font', --Select your widget here
-										name			= 'Font',
-										desc			= 'Set the font used for the text on the single target icons.',
+										name			= L["Font"],
 										values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
 										get				= 'GetOption',
 										set				= 'SetOption',
@@ -1029,8 +902,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 1 Size'] = {
 										type	= 'range',
-										name 	= 'Icon Size',
-										desc 	= 'Set the height and width of the tracker icon.',
+										name 	= L["Icon Size"],
 										min		= 20,
 										max		= 250,
 										step	= 1,
@@ -1040,8 +912,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 1 Font Size'] = {
 										type	= 'range',
-										name 	= 'Font Size',
-										desc 	= 'Set the font size for the tracker icon.',
+										name 	= L["Font Size"],
 										min		= 6,
 										max		= 26,
 										step	= 1,
@@ -1055,24 +926,23 @@ function Hekili:GetOptions()
 					},
 					['Tracker Icon #2'] = {
 						type = 'group',
-						name = 'Tracker Icon #2',
-						order = 3,
+						name = L["Tracker Icon #2"],
+						order = 4,
 						args = {
 							['T2 Config'] = {
 								type = 'group',
-								name = 'Tracker',
+								name = L["Tracker"],
 								inline = true,
 								order = 0,
 								args = {
 									['Tracker 2 Type'] = {
 										type	= 'select',
-										name	= 'Type',
-										desc	= 'Select the type of tracker to use, or None to disable.',
+										name	= L["Type"],
 										values	= {
-											['None']	= 'None',
-											['Cooldown'] = 'Cooldown',
-											['Aura']	= 'Buff/Debuff',
-											['Totem']	= 'Totem'
+											['None']		= L["None"],
+											['Cooldown']	= L["Cooldown"],
+											['Aura']		= L["Aura"],
+											['Totem']		= L["Totem"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1084,9 +954,9 @@ function Hekili:GetOptions()
 										type	= 'header',
 										name	= function()
 														if self.DB.profile['Tracker 2 Type'] == 'None' then
-															return 'Tracker Disabled'
+															return L["Tracker Disabled"]
 														end
-														return self.DB.profile['Tracker 2 Type'] .. ' Settings'
+														return self.DB.profile['Tracker 2 Type'] .. ' ' .. L["Settings"]
 													end,	
 										order	= 1
 									},
@@ -1095,7 +965,7 @@ function Hekili:GetOptions()
 									-- None
 									['Tracker 2 None'] = {
 										type	= 'description',
-										name	= 'Select a tracker type above to enable this tracker and display type-specific options.',
+										name	= L["Tracker None Description"]
 										order	= 2,
 										width	= 'full',
 										hidden	= function()
@@ -1110,16 +980,16 @@ function Hekili:GetOptions()
 									-- Aura
 									['Tracker 2 Aura'] = {
 										type	= 'input',
-										name	= 'Aura',
-										desc	= 'Enter the spell to be tracked using this tracker icon.',
+										name	= L["Aura"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										validate = function(info, val)
 														if val == '' then return true
 														elseif GetSpellInfo(val) then return true
 														else
-															Hekili:Print('|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an actual buff/debuff.')
-															return '|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an actual buff/debuff.'
+															local err = string.format(L["Tracker Aura Error"], L["ERROR"], val)
+															Hekili:Print(err)
+															return err
 														end
 														return true
 													end,
@@ -1134,12 +1004,11 @@ function Hekili:GetOptions()
 									},
 									['Tracker 2 Unit'] = {
 										type	= 'select',
-										name	= 'Unit',
-										desc	= 'Select the unit to monitor for the tracked aura.',
+										name	= L["Unit"],
 										values	= {
-											['focus']	= 'Focus',
-											['player']	= 'Player',
-											['target']	= 'Target'
+											['focus']	= L["Focus"],
+											['player']	= L["Player"],
+											['target']	= L["Target"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1156,8 +1025,8 @@ function Hekili:GetOptions()
 									-- Totem
 									['Tracker 2 Totem Name'] = {
 										type	= 'input',
-										name	= 'Totem Name',
-										desc	= 'Enter the totem to watch for or leave blank to watch any totem.',
+										name	= L["Totem"],
+										desc	= L["Totem Description"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										hidden	= function()
@@ -1171,8 +1040,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 2 Element'] = {
 										type	= 'select',
-										name	= 'Element',
-										desc	= 'Select which elemental totem to track.  Options are earth, fire, water, air.',
+										name	= L["Element"],
 										values	= {
 											['fire']	= 'Fire',
 											['earth']	= 'Earth',
@@ -1194,16 +1062,16 @@ function Hekili:GetOptions()
 									-- Cooldown
 									['Tracker 2 Ability'] = {
 										type	= 'input',
-										name	= 'Ability',
-										desc	= 'Enter the ability cooldown to be tracked by this icon.',
+										name	= L["Ability"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										validate = function(info, val)
 														if val == '' then return true
 														elseif IsUsableSpell(val) then return true
 														else
-															self:Print('|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an available ability.')
-															return '|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an available ability.'
+															local err = string.format(L["Tracker Ability Error"], L["ERROR"], val)
+															self:Print(err)
+															return err
 														end
 													end,
 										order	= 2,
@@ -1227,19 +1095,19 @@ function Hekili:GetOptions()
 									-- Caption Options
 									['Tracker 2 Caption'] = {
 										type	= 'select',
-										name	= 'Caption',
+										name	= L["Caption"],
 										desc	= function()
-														local output = 'Select the text to display on the bottom of the icon.'
+														local output = L["Caption Description"]
 														
 														if self.DB.profile['Tracker 2 Type'] == 'Aura' then
-															output = output .. '  If the tracked spell is watched by your priority module, selecting \'Targets\' will display both the number of targets affected by the spell as well as the total number of active enemy targets.'
+															output = output .. '  ' .. L["Caption Description Aura"]
 
 															if self.Active then
 																local numWatched = 0
 
 																for k,_ in pairs(self.Active:Watchlist()) do
 																	if numWatched == 0 then
-																		output = output .. '\n|cFFFFD100Watched Spells:|r ' .. k
+																		output = output .. '\n|cFFFFD100' .. L["Watched Spells"] .. ':|r ' .. k
 																		numWatched = numWatched + 1
 																	else
 																		output = output .. ', ' .. k
@@ -1251,9 +1119,9 @@ function Hekili:GetOptions()
 														return output
 													end,
 										values	= {
-											['None']	= 'None',
-											['Stacks']	= 'Stacks',
-											['Targets']	= 'Targets'
+											['None']	= L["None"],
+											['Stacks']	= L["Stacks"],
+											['Targets']	= L["Targets"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1267,11 +1135,11 @@ function Hekili:GetOptions()
 									},
 									['Tracker 2 Totem Caption'] = {
 										type	= 'select',
-										name	= 'Caption',
-										desc	= 'Select the text to display on the bottom of the icon.',
+										name	= L['Caption'],
+										desc	= L["Caption Description"],
 										values	= {
-											['None']	= 'None',
-											['Targets']	= 'Targets'
+											['None']	= L["None"],
+											['Targets']	= L["Targets"]'
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1287,17 +1155,16 @@ function Hekili:GetOptions()
 									
 									['Tracker 2 Show'] = {
 										type	= 'select',
-										name	= 'Show',
-										desc	= 'Select when the tracker icon should be visible.',
+										name	= L['Show'],
 										values	= function ()
 														if self.DB.profile['Tracker 2 Type'] == 'Cooldown' then
-															return {	['Absent'] = 'Unusable',
-																		['Present'] = 'Usable',
-																		['Show Always'] = 'Always' }
+															return {	['Absent']		= L['Unusable'],
+																		['Present']		= L['Usable'],
+																		['Show Always']	= L['Always'] }
 														else
-															return {	['Absent'] = 'If Absent',
-																		['Present'] = 'If Present',			
-																		['Show Always'] = 'Always' }
+															return {	['Absent']		= L['Absent'],
+																		['Present']		= L['Present'],
+																		['Show Always'] = L['Always'] }
 														end
 													end,
 										set		= 'SetOption',
@@ -1307,8 +1174,8 @@ function Hekili:GetOptions()
 									
 									['Tracker 2 Timer'] = {
 										type	= 'toggle',
-										name	= 'Show Timer',
-										desc	= 'Show or hide the timer (or cooldown ring) on the ability.  If using OmniCC, this will also determine if the remaining time text is shown.',
+										name	= L['Show Timer'],
+										desc	= L["Show Timer Description"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										order	= 7
@@ -1317,15 +1184,14 @@ function Hekili:GetOptions()
 							},
 							['T2 Visual'] = {
 								type = 'group',
-								name = 'Visual Elements',
+								name = L["Visual Elements"],
 								inline = true,
 								order = 1,
 								args = {
 									['Tracker 2 Font'] = {
 										type			= 'select',
 										dialogControl	= 'LSM30_Font', --Select your widget here
-										name			= 'Font',
-										desc			= 'Set the font used for the text on the single target icons.',
+										name			= L["Font"],
 										values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
 										get				= 'GetOption',
 										set				= 'SetOption',
@@ -1334,8 +1200,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 2 Size'] = {
 										type	= 'range',
-										name 	= 'Icon Size',
-										desc 	= 'Set the height and width of the tracker icon.',
+										name 	= L["Icon Size"],
 										min		= 20,
 										max		= 250,
 										step	= 1,
@@ -1345,8 +1210,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 2 Font Size'] = {
 										type	= 'range',
-										name 	= 'Font Size',
-										desc 	= 'Set the font size for the tracker icon.',
+										name 	= L["Font Size"],
 										min		= 6,
 										max		= 26,
 										step	= 1,
@@ -1360,24 +1224,23 @@ function Hekili:GetOptions()
 					},
 					['Tracker Icon #3'] = {
 						type = 'group',
-						name = 'Tracker Icon #3',
-						order = 3,
+						name = L["Tracker Icon #3"],
+						order = 5,
 						args = {
 							['T3 Config'] = {
 								type = 'group',
-								name = 'Tracker',
+								name = L["Tracker"],
 								inline = true,
 								order = 0,
 								args = {
 									['Tracker 3 Type'] = {
 										type	= 'select',
-										name	= 'Type',
-										desc	= 'Select the type of tracker to use, or None to disable.',
+										name	= L["Type"],
 										values	= {
-											['None']	= 'None',
-											['Cooldown'] = 'Cooldown',
-											['Aura']	= 'Buff/Debuff',
-											['Totem']	= 'Totem'
+											['None']		= L["None"],
+											['Cooldown']	= L["Cooldown"],
+											['Aura']		= L["Aura"],
+											['Totem']		= L["Totem"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1389,9 +1252,9 @@ function Hekili:GetOptions()
 										type	= 'header',
 										name	= function()
 														if self.DB.profile['Tracker 3 Type'] == 'None' then
-															return 'Tracker Disabled'
+															return L["Tracker Disabled"]
 														end
-														return self.DB.profile['Tracker 3 Type'] .. ' Settings'
+														return self.DB.profile['Tracker 3 Type'] .. ' ' .. L["Settings"]
 													end,	
 										order	= 1
 									},
@@ -1400,7 +1263,7 @@ function Hekili:GetOptions()
 									-- None
 									['Tracker 3 None'] = {
 										type	= 'description',
-										name	= 'Select a tracker type above to enable this tracker and display type-specific options.',
+										name	= L["Tracker None Description"]
 										order	= 2,
 										width	= 'full',
 										hidden	= function()
@@ -1415,16 +1278,16 @@ function Hekili:GetOptions()
 									-- Aura
 									['Tracker 3 Aura'] = {
 										type	= 'input',
-										name	= 'Aura',
-										desc	= 'Enter the spell to be tracked using this tracker icon.',
+										name	= L["Aura"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										validate = function(info, val)
 														if val == '' then return true
 														elseif GetSpellInfo(val) then return true
 														else
-															Hekili:Print('|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an actual buff/debuff.')
-															return '|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an actual buff/debuff.'
+															local err = string.format(L["Tracker Aura Error"], L["ERROR"], val)
+															Hekili:Print(err)
+															return err
 														end
 														return true
 													end,
@@ -1439,12 +1302,11 @@ function Hekili:GetOptions()
 									},
 									['Tracker 3 Unit'] = {
 										type	= 'select',
-										name	= 'Unit',
-										desc	= 'Select the unit to monitor for the tracked aura.',
+										name	= L["Unit"],
 										values	= {
-											['focus']	= 'Focus',
-											['player']	= 'Player',
-											['target']	= 'Target'
+											['focus']	= L["Focus"],
+											['player']	= L["Player"],
+											['target']	= L["Target"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1461,8 +1323,8 @@ function Hekili:GetOptions()
 									-- Totem
 									['Tracker 3 Totem Name'] = {
 										type	= 'input',
-										name	= 'Totem Name',
-										desc	= 'Enter the totem to watch for or leave blank to watch any totem.',
+										name	= L["Totem"],
+										desc	= L["Totem Description"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										hidden	= function()
@@ -1476,8 +1338,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 3 Element'] = {
 										type	= 'select',
-										name	= 'Element',
-										desc	= 'Select which elemental totem to track.  Options are earth, fire, water, air.',
+										name	= L["Element"],
 										values	= {
 											['fire']	= 'Fire',
 											['earth']	= 'Earth',
@@ -1499,16 +1360,16 @@ function Hekili:GetOptions()
 									-- Cooldown
 									['Tracker 3 Ability'] = {
 										type	= 'input',
-										name	= 'Ability',
-										desc	= 'Enter the ability cooldown to be tracked by this icon.',
+										name	= L["Ability"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										validate = function(info, val)
 														if val == '' then return true
 														elseif IsUsableSpell(val) then return true
 														else
-															self:Print('|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an available ability.')
-															return '|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an available ability.'
+															local err = string.format(L["Tracker Ability Error"], L["ERROR"], val)
+															self:Print(err)
+															return err
 														end
 													end,
 										order	= 2,
@@ -1532,19 +1393,19 @@ function Hekili:GetOptions()
 									-- Caption Options
 									['Tracker 3 Caption'] = {
 										type	= 'select',
-										name	= 'Caption',
+										name	= L["Caption"],
 										desc	= function()
-														local output = 'Select the text to display on the bottom of the icon.'
+														local output = L["Caption Description"]
 														
 														if self.DB.profile['Tracker 3 Type'] == 'Aura' then
-															output = output .. '  If the tracked spell is watched by your priority module, selecting \'Targets\' will display both the number of targets affected by the spell as well as the total number of active enemy targets.'
+															output = output .. '  ' .. L["Caption Description Aura"]
 
 															if self.Active then
 																local numWatched = 0
 
 																for k,_ in pairs(self.Active:Watchlist()) do
 																	if numWatched == 0 then
-																		output = output .. '\n|cFFFFD100Watched Spells:|r ' .. k
+																		output = output .. '\n|cFFFFD100' .. L["Watched Spells"] .. ':|r ' .. k
 																		numWatched = numWatched + 1
 																	else
 																		output = output .. ', ' .. k
@@ -1556,9 +1417,9 @@ function Hekili:GetOptions()
 														return output
 													end,
 										values	= {
-											['None']	= 'None',
-											['Stacks']	= 'Stacks',
-											['Targets']	= 'Targets'
+											['None']	= L["None"],
+											['Stacks']	= L["Stacks"],
+											['Targets']	= L["Targets"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1572,11 +1433,11 @@ function Hekili:GetOptions()
 									},
 									['Tracker 3 Totem Caption'] = {
 										type	= 'select',
-										name	= 'Caption',
-										desc	= 'Select the text to display on the bottom of the icon.',
+										name	= L['Caption'],
+										desc	= L["Caption Description"],
 										values	= {
-											['None']	= 'None',
-											['Targets']	= 'Targets'
+											['None']	= L["None"],
+											['Targets']	= L["Targets"]'
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1592,17 +1453,16 @@ function Hekili:GetOptions()
 									
 									['Tracker 3 Show'] = {
 										type	= 'select',
-										name	= 'Show',
-										desc	= 'Select when the tracker icon should be visible.',
+										name	= L['Show'],
 										values	= function ()
 														if self.DB.profile['Tracker 3 Type'] == 'Cooldown' then
-															return {	['Absent'] = 'Unusable',
-																		['Present'] = 'Usable',
-																		['Show Always'] = 'Always' }
+															return {	['Absent']		= L['Unusable'],
+																		['Present']		= L['Usable'],
+																		['Show Always']	= L['Always'] }
 														else
-															return {	['Absent'] = 'If Absent',
-																		['Present'] = 'If Present',			
-																		['Show Always'] = 'Always' }
+															return {	['Absent']		= L['Absent'],
+																		['Present']		= L['Present'],
+																		['Show Always'] = L['Always'] }
 														end
 													end,
 										set		= 'SetOption',
@@ -1612,8 +1472,8 @@ function Hekili:GetOptions()
 									
 									['Tracker 3 Timer'] = {
 										type	= 'toggle',
-										name	= 'Show Timer',
-										desc	= 'Show or hide the timer (or cooldown ring) on the ability.  If using OmniCC, this will also determine if the remaining time text is shown.',
+										name	= L['Show Timer'],
+										desc	= L["Show Timer Description"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										order	= 7
@@ -1622,15 +1482,14 @@ function Hekili:GetOptions()
 							},
 							['T3 Visual'] = {
 								type = 'group',
-								name = 'Visual Elements',
+								name = L["Visual Elements"],
 								inline = true,
 								order = 1,
 								args = {
 									['Tracker 3 Font'] = {
 										type			= 'select',
 										dialogControl	= 'LSM30_Font', --Select your widget here
-										name			= 'Font',
-										desc			= 'Set the font used for the text on the single target icons.',
+										name			= L["Font"],
 										values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
 										get				= 'GetOption',
 										set				= 'SetOption',
@@ -1639,8 +1498,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 3 Size'] = {
 										type	= 'range',
-										name 	= 'Icon Size',
-										desc 	= 'Set the height and width of the tracker icon.',
+										name 	= L["Icon Size"],
 										min		= 20,
 										max		= 250,
 										step	= 1,
@@ -1650,8 +1508,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 3 Font Size'] = {
 										type	= 'range',
-										name 	= 'Font Size',
-										desc 	= 'Set the font size for the tracker icon.',
+										name 	= L["Font Size"],
 										min		= 6,
 										max		= 26,
 										step	= 1,
@@ -1665,24 +1522,23 @@ function Hekili:GetOptions()
 					},
 					['Tracker Icon #4'] = {
 						type = 'group',
-						name = 'Tracker Icon #4',
-						order = 3,
+						name = L["Tracker Icon #4"],
+						order = 6,
 						args = {
 							['T4 Config'] = {
 								type = 'group',
-								name = 'Tracker',
+								name = L["Tracker"],
 								inline = true,
 								order = 0,
 								args = {
 									['Tracker 4 Type'] = {
 										type	= 'select',
-										name	= 'Type',
-										desc	= 'Select the type of tracker to use, or None to disable.',
+										name	= L["Type"],
 										values	= {
-											['None']	= 'None',
-											['Cooldown'] = 'Cooldown',
-											['Aura']	= 'Buff/Debuff',
-											['Totem']	= 'Totem'
+											['None']		= L["None"],
+											['Cooldown']	= L["Cooldown"],
+											['Aura']		= L["Aura"],
+											['Totem']		= L["Totem"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1694,9 +1550,9 @@ function Hekili:GetOptions()
 										type	= 'header',
 										name	= function()
 														if self.DB.profile['Tracker 4 Type'] == 'None' then
-															return 'Tracker Disabled'
+															return L["Tracker Disabled"]
 														end
-														return self.DB.profile['Tracker 4 Type'] .. ' Settings'
+														return self.DB.profile['Tracker 4 Type'] .. ' ' .. L["Settings"]
 													end,	
 										order	= 1
 									},
@@ -1705,7 +1561,7 @@ function Hekili:GetOptions()
 									-- None
 									['Tracker 4 None'] = {
 										type	= 'description',
-										name	= 'Select a tracker type above to enable this tracker and display type-specific options.',
+										name	= L["Tracker None Description"]
 										order	= 2,
 										width	= 'full',
 										hidden	= function()
@@ -1720,16 +1576,16 @@ function Hekili:GetOptions()
 									-- Aura
 									['Tracker 4 Aura'] = {
 										type	= 'input',
-										name	= 'Aura',
-										desc	= 'Enter the spell to be tracked using this tracker icon.',
+										name	= L["Aura"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										validate = function(info, val)
 														if val == '' then return true
 														elseif GetSpellInfo(val) then return true
 														else
-															Hekili:Print('|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an actual buff/debuff.')
-															return '|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an actual buff/debuff.'
+															local err = string.format(L["Tracker Aura Error"], L["ERROR"], val)
+															Hekili:Print(err)
+															return err
 														end
 														return true
 													end,
@@ -1744,12 +1600,11 @@ function Hekili:GetOptions()
 									},
 									['Tracker 4 Unit'] = {
 										type	= 'select',
-										name	= 'Unit',
-										desc	= 'Select the unit to monitor for the tracked aura.',
+										name	= L["Unit"],
 										values	= {
-											['focus']	= 'Focus',
-											['player']	= 'Player',
-											['target']	= 'Target'
+											['focus']	= L["Focus"],
+											['player']	= L["Player"],
+											['target']	= L["Target"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1766,8 +1621,8 @@ function Hekili:GetOptions()
 									-- Totem
 									['Tracker 4 Totem Name'] = {
 										type	= 'input',
-										name	= 'Totem Name',
-										desc	= 'Enter the totem to watch for or leave blank to watch any totem.',
+										name	= L["Totem"],
+										desc	= L["Totem Description"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										hidden	= function()
@@ -1781,8 +1636,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 4 Element'] = {
 										type	= 'select',
-										name	= 'Element',
-										desc	= 'Select which elemental totem to track.  Options are earth, fire, water, air.',
+										name	= L["Element"],
 										values	= {
 											['fire']	= 'Fire',
 											['earth']	= 'Earth',
@@ -1804,16 +1658,16 @@ function Hekili:GetOptions()
 									-- Cooldown
 									['Tracker 4 Ability'] = {
 										type	= 'input',
-										name	= 'Ability',
-										desc	= 'Enter the ability cooldown to be tracked by this icon.',
+										name	= L["Ability"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										validate = function(info, val)
 														if val == '' then return true
 														elseif IsUsableSpell(val) then return true
 														else
-															self:Print('|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an available ability.')
-															return '|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an available ability.'
+															local err = string.format(L["Tracker Ability Error"], L["ERROR"], val)
+															self:Print(err)
+															return err
 														end
 													end,
 										order	= 2,
@@ -1837,19 +1691,19 @@ function Hekili:GetOptions()
 									-- Caption Options
 									['Tracker 4 Caption'] = {
 										type	= 'select',
-										name	= 'Caption',
+										name	= L["Caption"],
 										desc	= function()
-														local output = 'Select the text to display on the bottom of the icon.'
+														local output = L["Caption Description"]
 														
 														if self.DB.profile['Tracker 4 Type'] == 'Aura' then
-															output = output .. '  If the tracked spell is watched by your priority module, selecting \'Targets\' will display both the number of targets affected by the spell as well as the total number of active enemy targets.'
+															output = output .. '  ' .. L["Caption Description Aura"]
 
 															if self.Active then
 																local numWatched = 0
 
 																for k,_ in pairs(self.Active:Watchlist()) do
 																	if numWatched == 0 then
-																		output = output .. '\n|cFFFFD100Watched Spells:|r ' .. k
+																		output = output .. '\n|cFFFFD100' .. L["Watched Spells"] .. ':|r ' .. k
 																		numWatched = numWatched + 1
 																	else
 																		output = output .. ', ' .. k
@@ -1861,9 +1715,9 @@ function Hekili:GetOptions()
 														return output
 													end,
 										values	= {
-											['None']	= 'None',
-											['Stacks']	= 'Stacks',
-											['Targets']	= 'Targets'
+											['None']	= L["None"],
+											['Stacks']	= L["Stacks"],
+											['Targets']	= L["Targets"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1877,11 +1731,11 @@ function Hekili:GetOptions()
 									},
 									['Tracker 4 Totem Caption'] = {
 										type	= 'select',
-										name	= 'Caption',
-										desc	= 'Select the text to display on the bottom of the icon.',
+										name	= L['Caption'],
+										desc	= L["Caption Description"],
 										values	= {
-											['None']	= 'None',
-											['Targets']	= 'Targets'
+											['None']	= L["None"],
+											['Targets']	= L["Targets"]'
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1897,17 +1751,16 @@ function Hekili:GetOptions()
 									
 									['Tracker 4 Show'] = {
 										type	= 'select',
-										name	= 'Show',
-										desc	= 'Select when the tracker icon should be visible.',
+										name	= L['Show'],
 										values	= function ()
 														if self.DB.profile['Tracker 4 Type'] == 'Cooldown' then
-															return {	['Absent'] = 'Unusable',
-																		['Present'] = 'Usable',
-																		['Show Always'] = 'Always' }
+															return {	['Absent']		= L['Unusable'],
+																		['Present']		= L['Usable'],
+																		['Show Always']	= L['Always'] }
 														else
-															return {	['Absent'] = 'If Absent',
-																		['Present'] = 'If Present',			
-																		['Show Always'] = 'Always' }
+															return {	['Absent']		= L['Absent'],
+																		['Present']		= L['Present'],
+																		['Show Always'] = L['Always'] }
 														end
 													end,
 										set		= 'SetOption',
@@ -1917,8 +1770,8 @@ function Hekili:GetOptions()
 									
 									['Tracker 4 Timer'] = {
 										type	= 'toggle',
-										name	= 'Show Timer',
-										desc	= 'Show or hide the timer (or cooldown ring) on the ability.  If using OmniCC, this will also determine if the remaining time text is shown.',
+										name	= L['Show Timer'],
+										desc	= L["Show Timer Description"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										order	= 7
@@ -1927,15 +1780,14 @@ function Hekili:GetOptions()
 							},
 							['T4 Visual'] = {
 								type = 'group',
-								name = 'Visual Elements',
+								name = L["Visual Elements"],
 								inline = true,
 								order = 1,
 								args = {
 									['Tracker 4 Font'] = {
 										type			= 'select',
 										dialogControl	= 'LSM30_Font', --Select your widget here
-										name			= 'Font',
-										desc			= 'Set the font used for the text on the single target icons.',
+										name			= L["Font"],
 										values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
 										get				= 'GetOption',
 										set				= 'SetOption',
@@ -1944,8 +1796,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 4 Size'] = {
 										type	= 'range',
-										name 	= 'Icon Size',
-										desc 	= 'Set the height and width of the tracker icon.',
+										name 	= L["Icon Size"],
 										min		= 20,
 										max		= 250,
 										step	= 1,
@@ -1955,8 +1806,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 4 Font Size'] = {
 										type	= 'range',
-										name 	= 'Font Size',
-										desc 	= 'Set the font size for the tracker icon.',
+										name 	= L["Font Size"],
 										min		= 6,
 										max		= 26,
 										step	= 1,
@@ -1970,24 +1820,23 @@ function Hekili:GetOptions()
 					},
 					['Tracker Icon #5'] = {
 						type = 'group',
-						name = 'Tracker Icon #5',
-						order = 3,
+						name = L["Tracker Icon #5"],
+						order = 7,
 						args = {
 							['T5 Config'] = {
 								type = 'group',
-								name = 'Tracker',
+								name = L["Tracker"],
 								inline = true,
 								order = 0,
 								args = {
 									['Tracker 5 Type'] = {
 										type	= 'select',
-										name	= 'Type',
-										desc	= 'Select the type of tracker to use, or None to disable.',
+										name	= L["Type"],
 										values	= {
-											['None']	= 'None',
-											['Cooldown'] = 'Cooldown',
-											['Aura']	= 'Buff/Debuff',
-											['Totem']	= 'Totem'
+											['None']		= L["None"],
+											['Cooldown']	= L["Cooldown"],
+											['Aura']		= L["Aura"],
+											['Totem']		= L["Totem"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -1999,9 +1848,9 @@ function Hekili:GetOptions()
 										type	= 'header',
 										name	= function()
 														if self.DB.profile['Tracker 5 Type'] == 'None' then
-															return 'Tracker Disabled'
+															return L["Tracker Disabled"]
 														end
-														return self.DB.profile['Tracker 5 Type'] .. ' Settings'
+														return self.DB.profile['Tracker 5 Type'] .. ' ' .. L["Settings"]
 													end,	
 										order	= 1
 									},
@@ -2010,7 +1859,7 @@ function Hekili:GetOptions()
 									-- None
 									['Tracker 5 None'] = {
 										type	= 'description',
-										name	= 'Select a tracker type above to enable this tracker and display type-specific options.',
+										name	= L["Tracker None Description"]
 										order	= 2,
 										width	= 'full',
 										hidden	= function()
@@ -2025,16 +1874,16 @@ function Hekili:GetOptions()
 									-- Aura
 									['Tracker 5 Aura'] = {
 										type	= 'input',
-										name	= 'Aura',
-										desc	= 'Enter the spell to be tracked using this tracker icon.',
+										name	= L["Aura"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										validate = function(info, val)
 														if val == '' then return true
 														elseif GetSpellInfo(val) then return true
 														else
-															Hekili:Print('|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an actual buff/debuff.')
-															return '|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an actual buff/debuff.'
+															local err = string.format(L["Tracker Aura Error"], L["ERROR"], val)
+															Hekili:Print(err)
+															return err
 														end
 														return true
 													end,
@@ -2049,12 +1898,11 @@ function Hekili:GetOptions()
 									},
 									['Tracker 5 Unit'] = {
 										type	= 'select',
-										name	= 'Unit',
-										desc	= 'Select the unit to monitor for the tracked aura.',
+										name	= L["Unit"],
 										values	= {
-											['focus']	= 'Focus',
-											['player']	= 'Player',
-											['target']	= 'Target'
+											['focus']	= L["Focus"],
+											['player']	= L["Player"],
+											['target']	= L["Target"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -2071,8 +1919,8 @@ function Hekili:GetOptions()
 									-- Totem
 									['Tracker 5 Totem Name'] = {
 										type	= 'input',
-										name	= 'Totem Name',
-										desc	= 'Enter the totem to watch for or leave blank to watch any totem.',
+										name	= L["Totem"],
+										desc	= L["Totem Description"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										hidden	= function()
@@ -2086,8 +1934,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 5 Element'] = {
 										type	= 'select',
-										name	= 'Element',
-										desc	= 'Select which elemental totem to track.  Options are earth, fire, water, air.',
+										name	= L["Element"],
 										values	= {
 											['fire']	= 'Fire',
 											['earth']	= 'Earth',
@@ -2109,16 +1956,16 @@ function Hekili:GetOptions()
 									-- Cooldown
 									['Tracker 5 Ability'] = {
 										type	= 'input',
-										name	= 'Ability',
-										desc	= 'Enter the ability cooldown to be tracked by this icon.',
+										name	= L["Ability"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										validate = function(info, val)
 														if val == '' then return true
 														elseif IsUsableSpell(val) then return true
 														else
-															self:Print('|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an available ability.')
-															return '|cFFFF0000ERROR|r:  ' .. val .. ' does not appear to be an available ability.'
+															local err = string.format(L["Tracker Ability Error"], L["ERROR"], val)
+															self:Print(err)
+															return err
 														end
 													end,
 										order	= 2,
@@ -2142,19 +1989,19 @@ function Hekili:GetOptions()
 									-- Caption Options
 									['Tracker 5 Caption'] = {
 										type	= 'select',
-										name	= 'Caption',
+										name	= L["Caption"],
 										desc	= function()
-														local output = 'Select the text to display on the bottom of the icon.'
+														local output = L["Caption Description"]
 														
 														if self.DB.profile['Tracker 5 Type'] == 'Aura' then
-															output = output .. '  If the tracked spell is watched by your priority module, selecting \'Targets\' will display both the number of targets affected by the spell as well as the total number of active enemy targets.'
+															output = output .. '  ' .. L["Caption Description Aura"]
 
 															if self.Active then
 																local numWatched = 0
 
 																for k,_ in pairs(self.Active:Watchlist()) do
 																	if numWatched == 0 then
-																		output = output .. '\n|cFFFFD100Watched Spells:|r ' .. k
+																		output = output .. '\n|cFFFFD100' .. L["Watched Spells"] .. ':|r ' .. k
 																		numWatched = numWatched + 1
 																	else
 																		output = output .. ', ' .. k
@@ -2166,9 +2013,9 @@ function Hekili:GetOptions()
 														return output
 													end,
 										values	= {
-											['None']	= 'None',
-											['Stacks']	= 'Stacks',
-											['Targets']	= 'Targets'
+											['None']	= L["None"],
+											['Stacks']	= L["Stacks"],
+											['Targets']	= L["Targets"]
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -2182,11 +2029,11 @@ function Hekili:GetOptions()
 									},
 									['Tracker 5 Totem Caption'] = {
 										type	= 'select',
-										name	= 'Caption',
-										desc	= 'Select the text to display on the bottom of the icon.',
+										name	= L['Caption'],
+										desc	= L["Caption Description"],
 										values	= {
-											['None']	= 'None',
-											['Targets']	= 'Targets'
+											['None']	= L["None"],
+											['Targets']	= L["Targets"]'
 										},
 										set		= 'SetOption',
 										get		= 'GetOption',
@@ -2202,17 +2049,16 @@ function Hekili:GetOptions()
 									
 									['Tracker 5 Show'] = {
 										type	= 'select',
-										name	= 'Show',
-										desc	= 'Select when the tracker icon should be visible.',
+										name	= L['Show'],
 										values	= function ()
 														if self.DB.profile['Tracker 5 Type'] == 'Cooldown' then
-															return {	['Absent'] = 'Unusable',
-																		['Present'] = 'Usable',
-																		['Show Always'] = 'Always' }
+															return {	['Absent']		= L['Unusable'],
+																		['Present']		= L['Usable'],
+																		['Show Always']	= L['Always'] }
 														else
-															return {	['Absent'] = 'If Absent',
-																		['Present'] = 'If Present',			
-																		['Show Always'] = 'Always' }
+															return {	['Absent']		= L['Absent'],
+																		['Present']		= L['Present'],
+																		['Show Always'] = L['Always'] }
 														end
 													end,
 										set		= 'SetOption',
@@ -2222,8 +2068,8 @@ function Hekili:GetOptions()
 									
 									['Tracker 5 Timer'] = {
 										type	= 'toggle',
-										name	= 'Show Timer',
-										desc	= 'Show or hide the timer (or cooldown ring) on the ability.  If using OmniCC, this will also determine if the remaining time text is shown.',
+										name	= L['Show Timer'],
+										desc	= L["Show Timer Description"],
 										set		= 'SetOption',
 										get		= 'GetOption',
 										order	= 7
@@ -2232,15 +2078,14 @@ function Hekili:GetOptions()
 							},
 							['T5 Visual'] = {
 								type = 'group',
-								name = 'Visual Elements',
+								name = L["Visual Elements"],
 								inline = true,
 								order = 1,
 								args = {
 									['Tracker 5 Font'] = {
 										type			= 'select',
 										dialogControl	= 'LSM30_Font', --Select your widget here
-										name			= 'Font',
-										desc			= 'Set the font used for the text on the single target icons.',
+										name			= L["Font"],
 										values			= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
 										get				= 'GetOption',
 										set				= 'SetOption',
@@ -2249,8 +2094,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 5 Size'] = {
 										type	= 'range',
-										name 	= 'Icon Size',
-										desc 	= 'Set the height and width of the tracker icon.',
+										name 	= L["Icon Size"],
 										min		= 20,
 										max		= 250,
 										step	= 1,
@@ -2260,8 +2104,7 @@ function Hekili:GetOptions()
 									},
 									['Tracker 5 Font Size'] = {
 										type	= 'range',
-										name 	= 'Font Size',
-										desc 	= 'Set the font size for the tracker icon.',
+										name 	= L["Font Size"],
 										min		= 6,
 										max		= 26,
 										step	= 1,
@@ -2277,18 +2120,18 @@ function Hekili:GetOptions()
 			},
 			['Filters'] = {
 				type = 'group',
-				name = 'Filters',
+				name = L["Filters"],
 				order = 2,
 				args = {
 					['Special Action Lists'] = {
 						type = "group",
-						name = "Special Action Lists",
+						name = L["Special Action Lists"],
 						inline = true,
 						order = 0,
 						args = {
 							['Show Precombat'] = {
 								type	= 'toggle',
-								name	= 'Show Precombat',
+								name	= L["Show Precombat"],
 								desc	= function () return OutputFlags( 'Show Precombat', 'precombat' ) end,
 								set		= 'SetOption',
 								get		= 'GetOption',
@@ -2297,31 +2140,22 @@ function Hekili:GetOptions()
 
 							['Cooldown Enabled'] = {
 								type	= 'toggle',
-								name	= 'Show Cooldowns',
-								desc	= function ()
-											local output
-											if Hekili.DB.profile['Cooldown Enabled'] == true then
-												output = 'Hide cooldowns in both rotations (presently enabled)'
-											else
-												output = 'Show cooldowns in both rotations (presently disabled).'
-											end
-											return output			
-										end,
-								set 		= 'SetOption',
-								get 		= 'GetOption',
-								order	 = 1,
+								name	= L["Show Cooldowns"],
+								set 	= 'SetOption',
+								get 	= 'GetOption',
+								order	= 1,
 							},
 						},
 					},
 					['Cooldowns'] = {
 						type = "group",
-						name = "Cooldown Filters",
+						name = L["Cooldown Filters"],
 						inline = true,
 						order = 1,
 						args = {
 							['Show Bloodlust'] = {
 								type	= 'toggle',
-								name	= 'Show Bloodlust',
+								name	= L['Show Bloodlust'],
 								desc	= function () return OutputFlags( 'Show Bloodlust', 'bloodlust' ) end,
 								set		= 'SetOption',
 								get		= 'GetOption',
@@ -2329,7 +2163,7 @@ function Hekili:GetOptions()
 							},
 							['Show Consumables'] = {
 								type	= 'toggle',
-								name	= 'Show Consumables',
+								name	= L['Show Consumables'],
 								desc	= function () return OutputFlags( 'Show Consumables', 'consumable' ) end,
 								set		= 'SetOption',
 								get		= 'GetOption',
@@ -2337,7 +2171,7 @@ function Hekili:GetOptions()
 							},
 							['Show Professions'] = {
 								type	= 'toggle',
-								name	= 'Show Professions',
+								name	= L['Show Professions'],
 								desc	= function () return OutputFlags( 'Show Professions', 'profession' ) end,
 								set		= 'SetOption',
 								get		= 'GetOption',
@@ -2345,7 +2179,7 @@ function Hekili:GetOptions()
 							},
 							['Show Racials'] = {
 								type	= 'toggle',
-								name	= 'Show Racials',
+								name	= L['Show Racials'],
 								desc	= function () return OutputFlags( 'Show Racials', 'racial' ) end,
 								set		= 'SetOption',
 								get		= 'GetOption',
@@ -2353,8 +2187,8 @@ function Hekili:GetOptions()
 							},
 							['Cooldown Threshold'] = {
 								type 	= 'range',
-								name 	= 'Cooldown Threshold',
-								desc 	= 'Set the maximum cooldown to be shown (to filter out longer abilities).',
+								name 	= L['Cooldown Threshold'],
+								desc 	= L["Cooldown Threshold Description"],
 								min		= 30,
 								max		= 600,
 								step	= 1,
@@ -2367,14 +2201,14 @@ function Hekili:GetOptions()
 					},
 					['General Filters'] = {
 						type = "group",
-						name = "General Filters",
+						name = L["General Filters"],
 						inline = true,
 						order = 2,
 						args = {
 
 							['Show Hardcasts'] = {
 								type	= 'toggle',
-								name	= 'Show Hardcasts',
+								name	= L['Show Hardcasts'],
 								desc 	= function ()
 											local output
 											if Hekili.DB.profile['Cooldown Enabled'] == true then
@@ -2391,7 +2225,7 @@ function Hekili:GetOptions()
 
 							['Show Interrupts'] = {
 								type	= 'toggle',
-								name	= 'Show Interrupts',
+								name	= L['Show Interrupts'],
 								desc	= function () return OutputFlags( 'Show Interrupts', 'interrupt' ) end,
 								set		= 'SetOption',
 								get		= 'GetOption',
@@ -2400,7 +2234,7 @@ function Hekili:GetOptions()
 
 							['Show Talents'] = {
 								type	= 'toggle',
-								name	= 'Show Talents',
+								name	= L['Show Talents'],
 								desc	= function () return OutputFlags( 'Show Talents', 'talent' ) end,
 								set		= 'SetOption',
 								get		= 'GetOption',
@@ -2409,18 +2243,8 @@ function Hekili:GetOptions()
 							
 							['Show AOE in ST'] = {
 								type	= 'toggle',
-								name	= 'Show Blended ST',
-								desc	= function()
-												local output =	'In some cases, AOE abilities may be included in the single target rotation when multiple targets are detected.\n\n' ..
-																'|cFFFFD100Elemental Shaman:|r  When two targets are detected, an Elemental Shaman will get a DPS increase by casting Chain Lightning rather than Lightning Bolt.\n\n' ..
-																'|cFFFFD100Enhancement Shaman:|r  When two targets are affected by Flame Shock, adding Fire Nova to the rotation will be a DPS increase.\n\n'
-												if Hekili.DB.profile['Show AOE in ST'] then
-													output = output .. 'Uncheck this box to exclude AOE abilities from the Single Target priority list.'
-												else
-													output = output .. 'Check this box to include some AOE abilities in the Single Target priority list.'
-												end
-												return output
-											end,
+								name	= L['Show Blended ST'],
+								desc	= L["Show Blended ST Description"]
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 5,
@@ -2428,11 +2252,11 @@ function Hekili:GetOptions()
 
 							['Name Filter'] = {
 								type	= 'input',
-								name	= 'Name Filter',
+								name	= L['Name Filter'],
 								get		= 'GetOption',
 								set		= 'SetOption',
 								multiline = 5,
-								desc	= 'Enter the ability names you wish to filter, separated by commas/spaces/returns.',
+								desc	= L["Name Filter Description"],
 								order	= 6,
 								width	= 'full'
 							},
@@ -2442,43 +2266,39 @@ function Hekili:GetOptions()
 			},
 			['Hotkeys'] = {
 				type = "group",
-				name = "Key Bindings",
+				name = L["Key Bindings"],
 				order = 3,
 				args = {
 					['Visibility Hotkeys'] = {
 						type = 'group',
-						name = 'Visibility',
+						name = L['Visibility'],
 						inline = true,
 						order = 0,
 						args = {
 							['Hekili Hotkey'] = {
 								type	= 'keybinding',
-								name	= 'Toggle Hekili',
-								desc	= 'Bind or unbind a hotkey to toggle the addon on/off.',
+								name	= L["Toggle Addon"],
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 0
 							},
 							['ST Hotkey'] = {
 								type	= 'keybinding',
-								name	= 'Toggle Single Target',
-								desc	= 'Bind or unbind a hotkey to toggle the single target display on/off.',
+								name	= L["Toggle Single Target Display"]
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 1
 							},
 							['AE Hotkey'] = {
 								type	= 'keybinding',
-								name	= 'Toggle Multi-Target',
-								desc	= 'Bind or unbind a hotkey to toggle the multi-target display on/off.',
+								name	= L["Toggle Multi-Target Display"],
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 2
 							},
 							['Integrate Hotkey'] = {
 								type	= 'keybinding',
-								name	= 'Toggle Integration',
-								desc	= 'Bind or unbind a hotkey to allow the multi-target priority to be shown in the single-target display on/off.',
+								name	= L["Toggle Multi Integration"],
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 3
@@ -2487,22 +2307,20 @@ function Hekili:GetOptions()
 					},
 					['Filter Hotkeys'] = {
 						type = 'group',
-						name = 'Filters',
+						name = L['Filters'],
 						inline = true,
 						order = 1,
 						args = {
 							['Cooldown Hotkey'] = {
 								type	= 'keybinding',
-								name	= 'Toggle Cooldowns',
-								desc	= 'Bind or unbind a hotkey to toggle cooldowns on/off.',
+								name	= L['Toggle Cooldowns'],
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 0
 							},
 							['Hardcast Hotkey'] = {
 								type	= 'keybinding',
-								name	= 'Toggle Hardcasts',
-								desc	= 'Bind or unbind a hotkey to toggle hardcasts on/off.',
+								name	= L['Toggle Hardcasts'],
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 1
@@ -3130,7 +2948,10 @@ function Hekili:GetOption(info)
 	if self.DB.profile[opt] ~= nil then
 		return self.DB.profile[opt]
 	else
-		if Hekili:IsVerbose() then Hekili:Print("Error in GetOption(" .. opt .. "): no such option value.") end
+		if Hekili:IsVerbose() then
+			local err = string.format(L["GetOption Error"], opt)
+			Hekili:Print(err)
+		end
 		return nil
 	end
 end

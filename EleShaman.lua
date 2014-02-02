@@ -86,15 +86,15 @@ mod:WatchAura(flame_shock)
 --      Totem:	Element		Totem Name
 -- /AddTracker
 
-mod:AddTracker(	'Flame Shock on Target (show target count)',
+mod:AddTracker(	L["Elemental Flame Shock"],
 				'Aura',		'Targets',	'Show Always',	true,		true,
 				flame_shock,			'target' )
 				
-mod:AddTracker(	'Lightning Shield on Player (show aura stacks)',
+mod:AddTracker(	L["Elemental Lightning Shield"],
 				'Aura',		'Stacks',	'Show Always',	false,		true,
 				lightning_shield,		'player')
 
-mod:AddTracker( 'Fire Totems',	
+mod:AddTracker( L["Elemental Fire Totems"],	
 				'Totem',	'None',		'Present',		true,		false,
 				'fire',					'' )
 
@@ -1162,7 +1162,7 @@ function mod:RefreshState( state )
 
 	-- Put temporary weapon enchants into pBuffs for simplicity's sake.
 	local MH, mhExpires = GetWeaponEnchantInfo()
-	if MH and ttWeaponEnchant(GetInventorySlotInfo("MainHandSlot")) == "Flametongue" then
+	if MH and ttWeaponEnchant(GetInventorySlotInfo("MainHandSlot")) == L["Flametongue"] then
 		state.pBuffs[flametongue_weapon].up			= true
 		state.pBuffs[flametongue_weapon].count		= 1
 		state.pBuffs[flametongue_weapon].remains	= mhExpires / 1000

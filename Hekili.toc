@@ -25,6 +25,7 @@
 ## X-Curse-Repository-ID: wow/hekili/mainline
 
 Embeds.xml
+Locales\Locales.xml
 
 Hekili.lua
 Utils.lua

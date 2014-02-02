@@ -91,15 +91,15 @@ mod:WatchAura(flame_shock)
 --      Totem:	Element		Totem Name
 -- /AddTracker
 
-mod:AddTracker(	'Flame Shock on Target (show target count)',
+mod:AddTracker(	L["Enhancement Flame Shock"],
 				'Aura',		'Targets',	'Show Always',	true,		true,
 				flame_shock,		'target' )
 				
-mod:AddTracker(	'Maelstrom Weapon on Player (show aura stacks)',
+mod:AddTracker(	L["Enhancement Maelstrom Weapon"],
 				'Aura',		'Stacks',	'Show Always',	false,		true,
 				maelstrom_weapon,	'player')
 
-mod:AddTracker( 'Fire Totems',
+mod:AddTracker( L["Enhancement Fire Totems"],
 				'Totem',	'None',		'Present',		true,		false,
 				'fire',		'' )
 
@@ -1383,6 +1383,8 @@ mod:AddToActionList('single',
 -------------------
 -- TIER CHECKING --
 
+-- NOTE - LOCALIZATION UNFRIENDLY, NEED TO SWAP TO ITEMIDs.
+
 local tSlots = {
 	'Helmet',
 	'Spaulders',
@@ -1507,7 +1509,7 @@ function mod:RefreshState( state )
 
 	-- Put temporary weapon enchants into pBuffs for simplicity's sake.
 	local MH, mhExpires, _, OH, ohExpires = GetWeaponEnchantInfo()
-	if MH and ttWeaponEnchant(GetInventorySlotInfo("MainHandSlot")) == "Windfury" then
+	if MH and ttWeaponEnchant(GetInventorySlotInfo("MainHandSlot")) == L["Windfury"] then
 		state.pBuffs[windfury_weapon].up		= true
 		state.pBuffs[windfury_weapon].count		= 1
 		state.pBuffs[windfury_weapon].remains	= mhExpires / 1000
@@ -1517,7 +1519,7 @@ function mod:RefreshState( state )
 		state.pBuffs[windfury_weapon].remains	= 0
 	end
 
-	if OH and ttWeaponEnchant(GetInventorySlotInfo("SecondaryHandSlot")) == "Flametongue" then
+	if OH and ttWeaponEnchant(GetInventorySlotInfo("SecondaryHandSlot")) == L["Flametongue"] then
 		state.pBuffs[flametongue_weapon].up			= true
 		state.pBuffs[flametongue_weapon].count		= 1
 		state.pBuffs[flametongue_weapon].remains	= ohExpires / 1000
@@ -1688,6 +1690,8 @@ function mod:RefreshState( state )
 	------------
 	-- GLYPHS --
 
+	-- LOCALIZATION UNFRIENDLY - SHOULD USE GLYPH IDs
+
 	if not state.glyphs then
 		state.glyphs = {}
 	end
@@ -1714,6 +1718,8 @@ function mod:RefreshState( state )
 
 	-----------------
 	-- SET BONUSES --
+
+	-- LOCALIZATION UNFRIENDLY!
 
 	if not state.set_bonuses then
 		state.set_bonuses = {}
