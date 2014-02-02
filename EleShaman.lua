@@ -24,7 +24,7 @@ local fire_elemental_totem 	= GetSpellInfo(2894)
 local flame_shock 			= GetSpellInfo(8050)
 local flametongue_weapon 	= GetSpellInfo(8024)
 local heroism 				= GetSpellInfo(32182)
-local jade_serpent			= GetItemInfo(76093) or "Potion of the Jade Serpent"
+local jade_serpent			= GetItemInfo(76093) -- or "Potion of the Jade Serpent"
 local lava_beam				= GetSpellInfo(114074)
 local lava_burst			= GetSpellInfo(51505)
 local lifeblood				= GetSpellInfo(121279)
@@ -54,6 +54,11 @@ local unleashed_fury 		= GetSpellInfo(117012)
 -- Talents that we may need to check for, but aren't listed above.
 local primal_elementalist	= GetSpellInfo(117013) -- 'Primal Elementalist'
 local echo_of_the_elements	= GetSpellInfo(108283) -- 'Echo of the Elements'
+
+
+-- Glyphs (required for localization)
+local g_frost_shock				= 55443
+local g_fire_elemental_totem	= 55455
 
 
 -- Burst haste CDs.
@@ -576,6 +581,10 @@ mod.tDebuffsToTrack		= {
 	flame_shock
 }
 
+mod.pGlyphsToTrack							= {}
+mod.pGlyphsToTrack[g_frost_shock]			= true
+mod.pGlyphsToTrack[g_fire_elemental_totem]	= true
+
 
 
 -- As compared to SimC:
@@ -751,7 +760,7 @@ mod:AddToActionList('cooldown',
 					'',
 					'actions+=/lifeblood,if=(glyph.fire_elemental_totem.enabled&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active))|!glyph.fire_elemental_totem.enabled',
 					function( state )
-						if not state.glyphs[fire_elemental_totem] or (state.glyphs[fire_elemental_totem] and state.totems[totem_fire].name == fire_elemental_totem) then
+						if not state.glyphs[g_fire_elemental_totem] or (state.glyphs[g_fire_elemental_totem] and state.totems[totem_fire].name == fire_elemental_totem) then
 							return lifeblood
 						end
 						return nil
@@ -1359,21 +1368,17 @@ function mod:RefreshState( state )
 
 	if not state.glyphs then
 		state.glyphs = {}
-	end
 
-	-- Set all glyphs to false before checking to see which ones are actually active.
-	for k,_ in pairs(state.glyphs) do
-		state.glyphs[k] = false
+		for i,v in ipairs(mod.pGlyphsToTrack) do
+			state.glyphs[v] = false
+		end
 	end
 
 	for i=1, NUM_GLYPH_SLOTS do
 		local enabled, _, _, gID = GetGlyphSocketInfo(i)
 
-		if enabled == 1 and gID then
-			-- Strip "Glyph of" for the sake of most glyphs sharing the name of the spell they modify.
-			local gName = string.match(GetSpellInfo(gID), "^%a+ %a+ (.*)$")
-
-			state.glyphs[gName] = true
+		if enabled == 1 and mod.pGlyphsToTrack[gID] then
+			state.glyphs[gID] = true
 		end
 	end
 

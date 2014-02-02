@@ -40,7 +40,7 @@ local stormlash_totem		= GetSpellInfo(120668)
 local stormstrike			= GetSpellInfo(17364)
 local synapse_springs		= GetSpellInfo(126731)
 local unleash_elements 		= GetSpellInfo(73680)
-local virmens_bite			= GetItemInfo(76089) or "Virmen's Bite"
+local virmens_bite			= GetItemInfo(76089) -- or "Virmen's Bite"
 local wind_shear			= GetSpellInfo(57994)
 local windfury_weapon 		= GetSpellInfo(8232)
 
@@ -60,6 +60,11 @@ local unleashed_fury 		= GetSpellInfo(117012)
 -- Talents that we may need to check for, but aren't listed above.
 local primal_elementalist	= GetSpellInfo(117013) -- 'Primal Elementalist'
 local echo_of_the_elements	= GetSpellInfo(108283) -- 'Echo of the Elements'
+
+
+-- Glyphs (required for localization)
+local g_frost_shock				= 55443
+local g_fire_elemental_totem	= 55455
 
 
 -- Burst haste CDs.
@@ -341,7 +346,7 @@ mod:AddAbility( frost_shock, 8056 )
 	mod:AddHandler( frost_shock, function ( state )
 		cast = state.sGCD
 
-		if state.glyphs[frost_shock] then
+		if state.glyphs[g_frost_shock] then
 			state.cooldowns[flame_shock] = 4.0
 			state.cooldowns[frost_shock] = 4.0
 			state.cooldowns[earth_shock] = 4.0
@@ -580,7 +585,6 @@ mod:AddAbility( windfury_weapon, 57994, 'precombat' )
 	end )
 
 
--- we would need to make glyph name aliases (for localization) if any were different from "Glyph of __________" spell names.
 mod.pBuffsToTrack			= {
 	ancestral_swiftness,
 	ancient_hysteria,
@@ -613,6 +617,10 @@ mod.tDebuffsToTrack		= {
 	unleashed_fury
 }
 
+
+mod.pGlyphsToTrack							= {}
+mod.pGlyphsToTrack[g_frost_shock]			= true
+mod.pGlyphsToTrack[g_fire_elemental_totem]	= true
 
 
 -- As compared to SimC:
@@ -754,7 +762,7 @@ mod:AddToActionList('cooldown',
 					'PE+GFET',
 					'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&(talent.primal_elementalist.enabled&glyph.fire_elemental_totem.enabled&(cooldown.fire_elemental_totem.remains=0|cooldown.fire_elemental_totem.remains>=80))',
 					function( state )
-						if state.talents[elemental_mastery] and	(state.talents[primal_elementalist] and state.glyphs[fire_elemental_totem] and (state.cooldowns[fire_elemental_totem] <= state.cooldowns[lightning_shield] or state.cooldowns[fire_elemental_totem] >= 80)) then
+						if state.talents[elemental_mastery] and	(state.talents[primal_elementalist] and state.glyphs[g_fire_elemental_totem] and (state.cooldowns[fire_elemental_totem] <= state.cooldowns[lightning_shield] or state.cooldowns[fire_elemental_totem] >= 80)) then
 							return elemental_mastery
 						end
 						return nil
@@ -765,7 +773,7 @@ mod:AddToActionList('cooldown',
 					'PE-GFET',
 					'actions+=/elemental_mastery,if=talent.elemental_mastery.enabled&(talent.primal_elementalist.enabled&!glyph.fire_elemental_totem.enabled&(cooldown.fire_elemental_totem.remains=0|cooldown.fire_elemental_totem.remains>=50))',
 					function( state )
-						if state.talents[elemental_mastery] and	(state.talents[primal_elementalist] and not state.glyphs[fire_elemental_totem] and (state.cooldowns[fire_elemental_totem] == state.cooldowns[lightning_shield] or state.cooldowns[fire_elemental_totem] >= 50)) then
+						if state.talents[elemental_mastery] and	(state.talents[primal_elementalist] and not state.glyphs[g_fire_elemental_totem] and (state.cooldowns[fire_elemental_totem] == state.cooldowns[lightning_shield] or state.cooldowns[fire_elemental_totem] >= 50)) then
 							return elemental_mastery
 						end
 						return nil
@@ -810,7 +818,7 @@ mod:AddToActionList('cooldown',
 					'',
 					'actions+=/lifeblood,if=(glyph.fire_elemental_totem.enabled&(pet.primal_fire_elemental.active|pet.greater_fire_elemental.active))|!glyph.fire_elemental_totem.enabled',
 					function( state )
-						if not state.glyphs[fire_elemental_totem] or (state.glyphs[fire_elemental_totem] and state.totems[totem_fire].name == fire_elemental_totem) then
+						if not state.glyphs[g_fire_elemental_totem] or (state.glyphs[g_fire_elemental_totem] and state.totems[totem_fire].name == fire_elemental_totem) then
 							return lifeblood
 						end
 						return nil
@@ -1236,7 +1244,7 @@ mod:AddToActionList('single',
 					'Glyph',
 					'actions.single+=/frost_shock,if=glyph.frost_shock.enabled&set_bonus.tier14_4pc_melee=0',
 					function( state )
-						if state.glyphs[frost_shock] and state.set_bonuses['t14'] < 4 then
+						if state.glyphs[g_frost_shock] and state.set_bonuses['t14'] < 4 then
 							return frost_shock
 						end
 						return nil
@@ -1304,7 +1312,7 @@ mod:AddToActionList('single',
 					'',
 					'actions.single+=/earth_shock,if=(!glyph.frost_shock.enabled|set_bonus.tier14_4pc_melee=1)',
 					function( state )
-						if (not state.glyphs[frost_shock]) or state.set_bonuses['t14'] >= 4 then
+						if (not state.glyphs[g_frost_shock]) or state.set_bonuses['t14'] >= 4 then
 							return earth_shock
 						end
 						return nil
@@ -1710,25 +1718,19 @@ function mod:RefreshState( state )
 	------------
 	-- GLYPHS --
 
-	-- LOCALIZATION UNFRIENDLY - SHOULD USE GLYPH IDs
-
 	if not state.glyphs then
 		state.glyphs = {}
-	end
 
-	-- Set all glyphs to false before checking to see which ones are actually active.
-	for k,_ in pairs(state.glyphs) do
-		state.glyphs[k] = false
+		for i,v in ipairs(mod.pGlyphsToTrack) do
+			state.glyphs[v] = false
+		end
 	end
 
 	for i=1, NUM_GLYPH_SLOTS do
 		local enabled, _, _, gID = GetGlyphSocketInfo(i)
 
-		if enabled == 1 and gID then
-			-- Strip "Glyph of" for the sake of most glyphs sharing the name of the spell they modify.
-			local gName = string.match(GetSpellInfo(gID), "^%a+ %a+ (.*)$")
-
-			state.glyphs[gName] = true
+		if enabled == 1 and mod.pGlyphsToTrack[gID] then
+			state.glyphs[gID] = true
 		end
 	end
 
