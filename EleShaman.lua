@@ -1387,9 +1387,9 @@ function mod:RefreshState( state )
 	if not state.set_bonuses then
 		state.set_bonuses = {}
 	end
-	state.set_bonuses['t14'] = tierCheck( "Firebird's", true )
-	state.set_bonuses['t15'] = tierCheck( "the Witch Doctor" )
-	state.set_bonuses['t16'] = tierCheck( "Celestial Harmony" )
+	state.set_bonuses['t14'] = tierCheck( 't14' )
+	state.set_bonuses['t15'] = tierCheck( 't15' )
+	state.set_bonuses['t16'] = tierCheck( 't16' )
 
 	-- SET BONUSES --
 	-----------------
