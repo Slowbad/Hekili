@@ -2,11 +2,13 @@
 
 local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
 
-function Hekili:NewModule( name, specID, st, ae, cd )
+function Hekili:NewModule( name, specID, st, ae, cd, key )
 	local mod		= {}
 
 	mod['name']		= name
 	mod['spec']		= specID
+
+	if not key then key = name end
 
 	mod.enabled		= {}
 	mod.enabled.ST	= st
@@ -132,14 +134,14 @@ function Hekili:NewModule( name, specID, st, ae, cd )
 		return (self.trackDebuffs[aura] ~= nil)
 	end
 	
-	self.Modules[name] = mod
+	self.Modules[key] = mod
 
 	local success = string.format(L["AddModule Success"], name)
 	self:Print(success)
 
-	return self.Modules[name]
+	return self.Modules[key]
 end
 
 
 -- Add a blank module.
-Hekili:NewModule( L["None"], nil, nil, false, false, false )
+Hekili:NewModule( L["None"], nil, false, false, false, "None" )

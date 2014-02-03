@@ -14,10 +14,10 @@ Hekili.textureCache = setmetatable( {}, { __index =	function(t,v)
 													end } )
 
 -- Caching texture names reduces calls to the API...  And lets us inject some texture names for dynamic abilities that GetSpellTexture() hates by default.
-Hekili.textureCache['Lava Beam'] = 'Interface\\Icons\\Spell_Fire_SoulBurn'
-Hekili.textureCache['Stormblast'] = 'Interface\\Icons\\Spell_Lightning_LightningBolt01'
-Hekili.textureCache['Virmen\'s Bite'] = 'Interface\\ICONS\\TRADE_ALCHEMY_POTIOND6'
-Hekili.textureCache['Potion of the Jade Serpent'] = 'Interface\\Icons\\trade_alchemy_potiond4'
+Hekili.textureCache[GetSpellInfo(114074)] = 'Interface\\Icons\\Spell_Fire_SoulBurn' -- Lava Beam
+Hekili.textureCache[GetSpellInfo(115356)] = 'Interface\\Icons\\Spell_Lightning_LightningBolt01'
+Hekili.textureCache[L["Virmen's Bite"]] = 'Interface\\ICONS\\TRADE_ALCHEMY_POTIOND6'
+Hekili.textureCache[L["Potion of the Jade Serpent"]] = 'Interface\\Icons\\trade_alchemy_potiond4'
 
 local function GetSpellTexture(a)
 	return Hekili.textureCache[a]
@@ -40,10 +40,6 @@ local iteration = 0
 -- Priority DB.
 function Hekili:ProcessPriorityList( id )
 
-	local module = Hekili.Active
-	
-	local _, zoneType = IsInInstance()
-
 	-- Reset Actions
 	for i = 1, 5 do
 		if self.Actions[id][i] then
@@ -55,7 +51,9 @@ function Hekili:ProcessPriorityList( id )
 	
 	local state = self.State
 
-	if module.name == L["None"] then return end
+	if self.DB.profile.Module == 'None' then return end
+
+	local module = Hekili.Active
 
 	module:RefreshState( state )
 

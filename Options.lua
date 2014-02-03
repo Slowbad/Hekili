@@ -154,11 +154,11 @@ function Hekili:GetOptions()
 								values = function()
 											local ptable = {}
 											for k,v in pairs(Hekili.Modules) do
-												if v.spec == GetSpecializationInfo(GetSpecialization()) then
-													ptable[k] = k
-												end
+												--if v.spec == GetSpecializationInfo(GetSpecialization()) then
+													ptable[k] = v.name
+												--end
 											end
-											ptable["None"] = L["None"]
+											-- ptable["None"] = L["None"]
 											return ptable
 										end,
 								set = 'SetOption',
