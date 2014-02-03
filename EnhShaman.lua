@@ -1,4 +1,4 @@
--- EnhShaman.lua
+﻿-- EnhShaman.lua
 -- Default Enhancement Shaman module for Hekili.
 -- Hekili of <Turbo Cyborg Ninjas> - Ner'zhul [A]
 -- October 2013
@@ -40,7 +40,7 @@ local stormlash_totem		= GetSpellInfo(120668)
 local stormstrike			= GetSpellInfo(17364)
 local synapse_springs		= GetSpellInfo(126731)
 local unleash_elements 		= GetSpellInfo(73680)
-local virmens_bite			= GetItemInfo(76089) -- or "Virmen's Bite"
+local virmens_bite			= GetItemInfo(76089) or L["Virmen's Bite"]
 local wind_shear			= GetSpellInfo(57994)
 local windfury_weapon 		= GetSpellInfo(8232)
 

@@ -1,4 +1,4 @@
--- EleShaman.lua
+﻿-- EleShaman.lua
 -- Default Elemental Shaman module for Hekili.
 -- Hekili of <Turbo Cyborg Ninjas> - Ner'zhul [A]
 -- November 2013
@@ -24,7 +24,7 @@ local fire_elemental_totem 	= GetSpellInfo(2894)
 local flame_shock 			= GetSpellInfo(8050)
 local flametongue_weapon 	= GetSpellInfo(8024)
 local heroism 				= GetSpellInfo(32182)
-local jade_serpent			= GetItemInfo(76093) -- or "Potion of the Jade Serpent"
+local jade_serpent			= GetItemInfo(76093) or L["Potion of the Jade Serpent"]
 local lava_beam				= GetSpellInfo(114074)
 local lava_burst			= GetSpellInfo(51505)
 local lifeblood				= GetSpellInfo(121279)
