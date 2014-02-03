@@ -55,7 +55,7 @@ function Hekili:ProcessPriorityList( id )
 	
 	local state = self.State
 
-	if module.name == 'None' then return end
+	if module.name == L["None"] then return end
 
 	module:RefreshState( state )
 

@@ -142,4 +142,4 @@ end
 
 
 -- Add a blank module.
-Hekili:NewModule( "None", nil, nil, false, false, false )
+Hekili:NewModule( L["None"], nil, nil, false, false, false )
