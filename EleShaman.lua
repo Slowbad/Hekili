@@ -784,27 +784,6 @@ mod:AddToActionList('cooldown',
 ---------
 -- AOE --
 
---[[ mod:AddToActionList('aoe',
-					magma_totem,
-					'7+',
-					'6+:  Cast Magma Totem before AoE phase or if there are 7+ targets.',
-					function( state )
-						if state.tCount >= 7 and not state.totems[totem_fire].up then
-							return magma_totem
-						end
-						return nil
-					end ) ]]--
-
---[[ mod:AddToActionList('aoe',
-					earthquake,
-					'6+',
-					'6+:  Cast Earthquake targets.',
-					function( state )
-						if state.tCount >= 6 then
-							return earthquake, nil, (not  state.pBuffs[ancestral_swiftness].up)
-						end
-						return nil
-					end ) ]]--
 
 mod:AddToActionList('aoe',
 					spiritwalkers_grace,
@@ -813,28 +792,6 @@ mod:AddToActionList('aoe',
 					function( state )
 						if state.pBuffs[ascendance].up and state.moving then
 							return spiritwalkers_grace
-						end
-						return nil
-					end )
-
-mod:AddToActionList('aoe',
-					lava_beam,
-					'6+',
-					'6+:  Cast Chain Lightning (Lava Beam w/ Ascendance)',
-					function( state )
-						if state.pBuffs[ascendance].up and state.tCount >= 6 then
-							return lava_beam, nil, (not state.pBuffs[ancestral_swiftness].up)
-						end
-						return nil
-					end )
-					
-mod:AddToActionList('aoe',
-					chain_lightning,
-					'6+',
-					'6+:  Cast Chain Lightning (Lava Beam w/ Ascendance)',
-					function( state )
-						if not state.pBuffs[ascendance].up and state.tCount >= 6 then
-							return chain_lightning, nil, (not state.pBuffs[ancestral_swiftness].up)
 						end
 						return nil
 					end )
@@ -936,7 +893,7 @@ mod:AddToActionList('single',
 					'Cycle',
 					'2 - 5 targets: Single target rotation + cast Flame Shock on 1 additional target.',
 					function( state )
-						if Hekili.DB.profile['Show AOE in ST'] and (state.tCount >= 2 and state.tCount <= 5) and state.fsCount < 2 and state.tDebuffs[flame_shock].up then
+						if Hekili.DB.profile['Show AOE in ST'] and not state.pBuffs[ascendance].up and (state.tCount >= 2 and state.tCount <= 5) and state.fsCount < 2 and state.tDebuffs[flame_shock].up then
 							return flame_shock
 						end
 						return nil
