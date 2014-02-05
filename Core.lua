@@ -224,6 +224,7 @@ function Hekili:DisplayActionButtons( id )
 		( self.DB.profile['PvP Visibility'] == false and pvpZones[zoneType] ) or
 		( self.DB.profile['Single-Target Enabled'] == false and id == 'ST' ) or
 		( self.DB.profile['Multi-Target Enabled'] == false and id == 'AE' ) or
+		( self.DB.profile['Module'] == 'None') or 
 		( UnitHasVehicleUI('player') ) then
 		for i = 1, 5 do
 			self.UI.AButtons[id][i]:Hide()
@@ -439,17 +440,11 @@ end
 -- Visual Engine.
 function Hekili:UpdateVisuals()
 
-	if self.DB.profile.Module == 'None' or not self.Actions or not self.Actions.ST or not self.Actions.ST[1] then
-		return
-	end
-
-	-- DISPLAY ALL THE THINGS.
-	local module = self.Active
-	local startGCD, GCD = GetSpellCooldown( module:GetGCD() )
-
+	-- This will hide our bars if no module is active.
 	self:DisplayActionButtons( 'ST' )
 	self:DisplayActionButtons( 'AE' )
 	
+	-- Trackers should probably get their own DisplayTrackers function.
 	if 	( self.DB.profile['Visibility'] == 'Show with Target' and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) or
 		( self.DB.profile['Visibility'] == 'Show in Combat' and ( not UnitAffectingCombat('player') and ( not UnitExists("target") or not UnitCanAttack("player", "target") ) ) ) or
 		( self.DB.profile['PvP Visibility'] == false and pvpZones[zoneType] ) then
@@ -458,6 +453,14 @@ function Hekili:UpdateVisuals()
 		end
 		return
 	end
+
+	if self.DB.profile.Module == 'None' or not self.Actions or not self.Actions.ST or not self.Actions.ST[1] then
+		return
+	end
+
+	-- DISPLAY ALL THE THINGS.
+	local module = self.Active
+	local startGCD, GCD = GetSpellCooldown( module:GetGCD() )
 
 	-- Light up multi-target.
 	if self.DB.profile['Multi-Target Enabled'] then
