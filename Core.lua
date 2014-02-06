@@ -1,4 +1,4 @@
---	Core.lua
+﻿--	Core.lua
 --	The actual engine of the addon.
 --	Hekili @ Ner'zhul, 10/23/13
 
@@ -437,6 +437,15 @@ function Hekili:MaintainActionLists()
 end
 
 
+-- For 'always visible' totem trackers w/o a specific totem.
+local GenericTotemTexture = {
+	['air'] = select(3, GetSpellInfo(120219)),
+	['earth'] = select(3, GetSpellInfo(120218)),
+	['fire'] = select(3, GetSpellInfo(120217)),
+	['water'] = select(3, GetSpellInfo(120214))
+}
+
+
 -- Visual Engine.
 function Hekili:UpdateVisuals()
 
@@ -504,6 +513,14 @@ function Hekili:UpdateVisuals()
 				local hasTotem, ttmName, _, _, ttmTexture = GetTotemInfo( totems[tElement] )
 				
 				if hasTotem and (tName == '' or tName == ttmName) then present = true end
+
+				if not present then
+					if tName == '' then
+						ttmTexture = GenericTotemTexture[ tElement ]
+					else
+						ttmTexture = select(3, GetSpellInfo( tName ))
+					end
+				end
 				
 				self.UI.Trackers[i].Texture:SetTexture(ttmTexture or 'Interface\\ICONS\\Spell_Nature_BloodLust')
 				
@@ -606,11 +623,19 @@ function Hekili:UpdateTrackerCooldowns()
 
 			elseif tType == 'Totem' then
 				local tElement = self.DB.profile['Tracker '..i..' Element']
+				local tName = self.DB.profile['Tracker '..i..' Totem Name']
 
 				local present, ttmName, ttmStart, ttmDuration = GetTotemInfo( totems[tElement] )
 				
+				if not present and tName ~= '' then
+					ttmStart, ttmDuration = GetSpellCooldown(tName)
+					
+					if not ttmStart then ttmStart = 0 end
+					if not ttmDuration then ttmDuration = 0 end
+				end
+				
 				self.UI.Trackers[i].Cooldown:SetCooldown(ttmStart, ttmDuration)
-				self.UI.Trackers[i].Cooldown:SetReverse(true)
+				self.UI.Trackers[i].Cooldown:SetReverse(present)
 			end
 				
 		else
