@@ -24,6 +24,23 @@ local function GetSpellTexture(a)
 end
 
 
+local function IsUsable(a, item)
+	-- Checking for whether an item is usable is handled before we get here.
+	if item then return true end
+	
+	-- Check 'Stormstrike' for 'Stormblast'.
+	if a == GetSpellInfo(115356) then return IsUsableSpell(GetSpellInfo(17364))
+	-- Check 'Chain Lightning' for 'Lava Beam'.
+	elseif a == GetSpellInfo(114074) then return IsUsableSpell(GetSpellInfo(421))
+	else
+		return IsUsableSpell(a)
+	end
+	
+	-- Will never get here.
+	return false
+end
+
+
 -- Check for PvP.
 local pvpZones = {
 	arena = true,
@@ -91,7 +108,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 				
-				if ckAction and ( module.spells[ ckAction ].item or IsUsableSpell(ckAction) ) and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
+				if ckAction and IsUsable(ckAction, module.spells[ ckAction ].item) and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
 										
 					-- May want to add some smoothing to this.
@@ -118,7 +135,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and ( module.spells[ ckAction ].item or IsUsableSpell(ckAction) ) and not self:IsFiltered(ckAction, true) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
+				if ckAction and IsUsable(ckAction, module.spells[ ckAction ].item) and not self:IsFiltered(ckAction, true) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					
 					ckCooldown = state.cooldowns[ ckAction ]
 					
@@ -146,7 +163,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and ( module.spells[ ckAction ].item or IsUsableSpell(ckAction) ) and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
+				if ckAction and IsUsable(ckAction, module.spells[ ckAction ].item) and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
 					
 					-- May want to add some smoothing to this.
@@ -173,7 +190,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and ( module.spells[ ckAction ].item or IsUsableSpell(ckAction) ) and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
+				if ckAction and IsUsable(ckAction, module.spells[ ckAction ].item) and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
 					
 					-- May want to add some smoothing to this.
@@ -665,6 +682,7 @@ end
 
 function Hekili:RefreshConfig()
 	if self.State then table.wipe(self.State) end
+	self:SetOption( { "enabled" } , self.DB.profile.enabled )
 
 	self:ClearAuras()
 	self:LoadAuras()
