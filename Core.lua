@@ -90,8 +90,8 @@ function Hekili:ProcessPriorityList( id )
 
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
-
-				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
+				
+				if ckAction and ( module.spells[ ckAction ].item or IsUsableSpell(ckAction) ) and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
 										
 					-- May want to add some smoothing to this.
@@ -118,7 +118,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and not self:IsFiltered(ckAction, true) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
+				if ckAction and ( module.spells[ ckAction ].item or IsUsableSpell(ckAction) ) and not self:IsFiltered(ckAction, true) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					
 					ckCooldown = state.cooldowns[ ckAction ]
 					
@@ -146,7 +146,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
+				if ckAction and ( module.spells[ ckAction ].item or IsUsableSpell(ckAction) ) and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
 					
 					-- May want to add some smoothing to this.
@@ -173,7 +173,7 @@ function Hekili:ProcessPriorityList( id )
 				if not ckWait then ckWait = 0 end
 				if not ckHardcast then ckHardcast = false end
 
-				if ckAction and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
+				if ckAction and ( module.spells[ ckAction ].item or IsUsableSpell(ckAction) ) and not self:IsFiltered(ckAction) and ( not ckHardcast or self.DB.profile['Show Hardcasts'] ) then
 					ckCooldown = state.cooldowns[ ckAction ]
 					
 					-- May want to add some smoothing to this.
