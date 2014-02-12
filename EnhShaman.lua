@@ -219,6 +219,7 @@ mod:AddAbility( earth_elemental_totem, 2062 )
 	mod:AddHandler( earth_elemental_totem, function ( state )
 		cast = state.tGCD
 		state.cooldowns[earth_elemental_totem] = ttCooldown(2062)
+		state.cooldowns[fire_elemental_totem] = 60
 	
 		state.totems[totem_earth].up		= true
 		state.totems[totem_earth].name		= earth_elemental_totem
@@ -288,10 +289,16 @@ mod:AddAbility( fire_elemental_totem, 2894 )
 	mod:AddHandler( fire_elemental_totem, function ( state )
 		cast = 1.0
 		state.cooldowns[fire_elemental_totem] = ttCooldown(2894)
+		state.cooldowns[earth_elemental_totem] = 60
 	
 		state.totems[totem_fire].up			= true
 		state.totems[totem_fire].name		= fire_elemental_totem
-		state.totems[totem_fire].remains	= 60
+
+		if state.glyphs[g_fire_elemental_totem] then
+			state.totems[totem_fire].remains	= 30
+		else
+			state.totems[totem_fire].remains	= 60
+		end
 	
 		return cast
 	end )

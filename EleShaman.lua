@@ -282,7 +282,12 @@ mod:AddAbility( fire_elemental_totem, 2894 )
 	
 		state.totems[totem_fire].up			= true
 		state.totems[totem_fire].name		= fire_elemental_totem
-		state.totems[totem_fire].remains	= 60
+
+		if state.glyphs[g_fire_elemental_totem] then
+			state.totems[totem_fire].remains	= 30
+		else
+			state.totems[totem_fire].remains	= 60
+		end
 	
 		return cast
 	end )

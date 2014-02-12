@@ -58,7 +58,7 @@ end
 
 
 function Hekili:PLAYER_SPECIALIZATION_CHANGED()
-	self:RefreshConfig()
+	-- self:RefreshConfig()
 end
 
 

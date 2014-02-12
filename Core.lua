@@ -682,8 +682,13 @@ end
 
 function Hekili:RefreshConfig()
 	if self.State then table.wipe(self.State) end
-	self:SetOption( { "enabled" } , self.DB.profile.enabled )
 
+	if self.DB.profile.enabled and not self:IsEnabled() then
+		self:Enable()
+	elseif not self.DB.profile.enabled and self:IsEnabled() then
+		self:Disable()
+	end
+		
 	self:ClearAuras()
 	self:LoadAuras()
 
