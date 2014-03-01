@@ -2313,14 +2313,14 @@ function Hekili:GetOptions()
 						args = {
 							['Cooldown Hotkey'] = {
 								type	= 'keybinding',
-								name	= L['Toggle Cooldowns'],
+								name	= L["Toggle Cooldowns"],
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 0
 							},
 							['Hardcast Hotkey'] = {
 								type	= 'keybinding',
-								name	= L['Toggle Hardcasts'],
+								name	= L["Toggle Hardcasts"],
 								set		= 'SetOption',
 								get		= 'GetOption',
 								order	= 1
