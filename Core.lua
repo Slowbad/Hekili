@@ -69,7 +69,8 @@ function Hekili:ProcessPriorityList( id )
 	local state = self.State
 
 	if self.DB.profile.Module == 'None' then return end
-
+	if self.cdUpdated < self.eqChanged then self.UpdateSpellCooldowns() end
+	
 	local module = Hekili.Active
 
 	module:RefreshState( state )
@@ -218,7 +219,7 @@ function Hekili:ProcessPriorityList( id )
 		self.Actions[id][i].name 		= useAction
 		self.Actions[id][i].cast		= module.spells[ useAction ].handler( state )
 		self.Actions[id][i].offGCD		= module.spells[ useAction ].offGCD
-		self.Actions[id][i].caption		= useCaption
+		self.Actions[id][i].caption	= useCaption
 		self.Actions[id][i].cooldown	= useCooldown
 		self.Actions[id][i].start		= startTime
 		self.Actions[id][i].time		= state.time
@@ -731,6 +732,7 @@ function Hekili:OnInitialize()
 	self.BossFight		= false
 	self.CombatStart	= 0
 	self.eqChanged		= GetTime()
+	self.cdUpdated		= 0
 	self.TTD			= {}
 	
 	-- Prepare graphical elements (and the engine frame).
@@ -841,6 +843,16 @@ function Hekili:OnDisable()
 		self.UI.Trackers[i]:Hide()
 	end
 	
+end
+
+
+function Hekili:UpdateSpellCooldowns()
+	
+	for k,v in pairs(Hekili.Active.spells) do
+		v.cd = ttCooldown(v.id)
+		v.cdUpdated = GetTime()
+	end
+		
 end
 
 

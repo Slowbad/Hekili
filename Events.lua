@@ -56,7 +56,7 @@ function Hekili:PLAYER_TARGET_CHANGED( _ )
 	self:UpdateTrackerCooldowns()
 end
 
-
+	
 function Hekili:PLAYER_SPECIALIZATION_CHANGED()
 	-- self:RefreshConfig()
 end

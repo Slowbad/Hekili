@@ -580,7 +580,7 @@ mod:AddAbility( wind_shear, 57994, 'offGCD', 'interrupt' )
 		return cast
 	end )
 
-mod:AddAbility( windfury_weapon, 57994, 'precombat' )
+mod:AddAbility( windfury_weapon, 8232, 'precombat' )
 	mod:AddHandler( windfury_weapon, function ( state )
 		cast = state.sGCD
 	

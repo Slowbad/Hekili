@@ -6,6 +6,17 @@ local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
 -- Tooltip Parser Functions
 Hekili.Tooltip = CreateFrame("GameTooltip", "HekiliTooltip", UIParent, "GameTooltipTemplate")
 
+function toLocalNumber( numString )
+	if numString then
+		local localNumString = numString:gsub(",", ".")
+		local localNumber = tonumber(localNumString)
+		return localNumber
+	end
+	
+	return nil
+end
+
+
 function ttCooldown( sID )
 	Hekili.Tooltip:SetOwner( UIParent, "ANCHOR_NONE" ) 
 	Hekili.Tooltip:ClearLines()
@@ -21,18 +32,19 @@ function ttCooldown( sID )
 			timestr = string.match(line, L["Cooldown Parser (Minutes)"])
 
 			if timestr then
-				time = tonumber(timestr)
+				time = toLocalNumber(timestr)
 				time = time * 60
 				return time
 			end
 			
-			time = string.match(line, L["Cooldown Parser (Seconds)"])
-
-			if timestr then return tonumber(timestr) end
+			timestr = string.match(line, L["Cooldown Parser (Seconds)"])
+			
+			if timestr then return toLocalNumber(timestr) end
 		end
 	end
 	return 0
 end
+
 
 -- Check for weapon buffs (WF/FT).
 function ttWeaponEnchant( slot )
@@ -100,7 +112,7 @@ function ttWeaponSpeed( slot )
 		if line then
 			swing = string.match(line, L["Speed"] .. " (.+)$")
 
-			if sTime then return tonumber(swing) end
+			if sTime then return toLocalNumber(swing) end
 		end
 	end
 	return nil

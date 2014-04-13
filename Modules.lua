@@ -44,10 +44,9 @@ function Hekili:NewModule( name, specID, st, ae, cd, key )
 			spell[v] = true
 		end
 		
-		if not spell.item then
-			spell.cooldown	= ttCooldown(ID)
-			spell.cdUpdated	= GetTime()
-		end
+		spell.cd		= 0
+		spell.cdUpdated	= 0
+		-- CDs will be updated following login and any gear changes.  Accurate info is not available yet.
 		
 		self.spells[name]	= spell
 	end

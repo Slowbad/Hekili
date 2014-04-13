@@ -51,15 +51,10 @@ function Hekili:IsFiltered( ability, cooldown )
 			return true
 		elseif spell.profession and not self.DB.profile[ 'Show Professions' ] then
 			return true
-		elseif cooldown and spell.racial and not self.DB.profile[ 'Show Racials' ] then
+		elseif spell.racial and not self.DB.profile[ 'Show Racials' ] then
 			return true
-		elseif spell.cooldown then
-			if spell.cdUpdated < self.eqChanged and not spell.item then
-				spell.cooldown	= ttCooldown(spell.id)
-				spell.cdUpdated	= GetTime()
-			end
-		
-			if spell.cooldown > self.DB.profile['Cooldown Threshold'] then
+		elseif not spell.item then
+			if spell.cd > self.DB.profile['Cooldown Threshold'] then
 				return true
 			end
 		end
