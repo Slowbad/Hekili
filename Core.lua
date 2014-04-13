@@ -69,7 +69,10 @@ function Hekili:ProcessPriorityList( id )
 	local state = self.State
 
 	if self.DB.profile.Module == 'None' then return end
-	if self.cdUpdated < self.eqChanged then self.UpdateSpellCooldowns() end
+	if self.cdUpdated < self.eqChanged then
+		self:UpdateSpellCooldowns()
+		self.cdUpdated = GetTime()
+	end
 	
 	local module = Hekili.Active
 
@@ -850,7 +853,6 @@ function Hekili:UpdateSpellCooldowns()
 	
 	for k,v in pairs(Hekili.Active.spells) do
 		v.cd = ttCooldown(v.id)
-		v.cdUpdated = GetTime()
 	end
 		
 end
