@@ -1544,7 +1544,8 @@ function mod:RefreshState( state )
 
 	-- Put temporary weapon enchants into pBuffs for simplicity's sake.
 	local MH, mhExpires, _, OH, ohExpires = GetWeaponEnchantInfo()
-	if MH and ttWeaponEnchant(GetInventorySlotInfo("MainHandSlot")) == L["Windfury"] then
+	-- We'll just assume your MH enchant is Windfury to avoid localization issues.
+	if MH then
 		state.pBuffs[windfury_weapon].up		= true
 		state.pBuffs[windfury_weapon].count		= 1
 		state.pBuffs[windfury_weapon].remains	= mhExpires / 1000
@@ -1554,7 +1555,8 @@ function mod:RefreshState( state )
 		state.pBuffs[windfury_weapon].remains	= 0
 	end
 
-	if OH and ttWeaponEnchant(GetInventorySlotInfo("SecondaryHandSlot")) == L["Flametongue"] then
+	-- And we'll assume your OH enchant is Flametongue as well.
+	if OH then
 		state.pBuffs[flametongue_weapon].up			= true
 		state.pBuffs[flametongue_weapon].count		= 1
 		state.pBuffs[flametongue_weapon].remains	= ohExpires / 1000
@@ -1881,6 +1883,10 @@ function mod:AdvanceState( state, elapsed )
 		state.lastCast = ''
 	end
 
+	if state.tCast > 0 then
+		state.tCast = max(0, state.tCast - elapsed)
+	end
+	
 	---------------
 	-- COOLDOWNS --
 

@@ -1154,7 +1154,8 @@ function mod:RefreshState( state )
 
 	-- Put temporary weapon enchants into pBuffs for simplicity's sake.
 	local MH, mhExpires = GetWeaponEnchantInfo()
-	if MH and ttWeaponEnchant(GetInventorySlotInfo("MainHandSlot")) == L["Flametongue"] then
+	-- We'll assume your MH weapon imbue is always Flametongue here, to avoid localization.
+	if MH then
 		state.pBuffs[flametongue_weapon].up			= true
 		state.pBuffs[flametongue_weapon].count		= 1
 		state.pBuffs[flametongue_weapon].remains	= mhExpires / 1000
@@ -1490,6 +1491,10 @@ function mod:AdvanceState( state, elapsed )
 		state.lastCast = ''
 	end
 
+	if state.tCast > 0 then
+		state.tCast = max(0, state.tCast - elapsed)
+	end
+	
 	---------------
 	-- COOLDOWNS --
 
