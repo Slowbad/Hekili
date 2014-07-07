@@ -4,7 +4,7 @@
 -- October 2013
 
 Hekili = LibStub("AceAddon-3.0"):NewAddon("Hekili", "AceConsole-3.0", "AceEvent-3.0")
-Hekili.UI = LibStub("AceGUI-3.0")
+Hekili.UI = {}
 
 Hekili:SetDefaultModuleLibraries("AceEvent-3.0")
 
