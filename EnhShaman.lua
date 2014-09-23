@@ -535,7 +535,7 @@ mod:AddAbility( stormstrike, 51876 )
 		return cast
 	end )
 
-mod:AddAbility( synapse_springs, 126731, 'offGCD', 'profession' )
+mod:AddAbility( synapse_springs, 126731, 'offGCD', 'profession', 'item' )
 	mod:AddHandler( synapse_springs, function ( state )
 		cast = 0
 	
