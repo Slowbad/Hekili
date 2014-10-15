@@ -1,418 +1,301 @@
---	UI.lua
---	Insert clever description here.
---	Hekili @ Ner'zhul, 10/23/13
+-- UI.lua
+-- Dynamic UI Elements
 
-local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
 
-Hekili.invDirection = {
-	['BOTTOM']	= 'TOP',
-	['TOP']		= 'BOTTOM',
-	['LEFT']	= 'RIGHT',
-	['RIGHT']	= 'LEFT'
+local Unpacks = Hekili.Utils.Unpacks
+
+
+local invert_direction = {
+	LEFT = 'RIGHT',
+	RIGHT = 'LEFT',
+	TOP = 'BOTTOM',
+	BOTTOM = 'TOP'
 }
 
+-- Builds and maintains the visible UI elements.
+-- Buttons (as frames) are never deleted, but should get reused effectively.
+function Hekili:BuildUI()
 
-function Hekili:CreatePriorityButton( set, number )
-	local name = 'Hekili_' .. set .. '_Action_' .. number
-
-	local button = CreateFrame("Button", name, Hekili.UI.Engine)
-	button.desc = 'Hekili Action Button ('..set..'#'..number..')'
-	button.ability = 'None'
-	
-	-- defaults (that should be preferences)
-	local btnSize = 50
-	local btnDirection = 'RIGHT'
-	local btnSpacing = 5
+	if not self.UI.Engine then
+		self.UI.Engine = CreateFrame("Frame", "Hekili_Engine_Frame", UIParent)
+		self.UI.Engine:SetFrameStrata("BACKGROUND")
+		self.UI.Engine:SetClampedToScreen(true)
+		self.UI.Engine:SetMovable(false)
+		self.UI.Engine:EnableMouse(false)
+		self.UI.Engine:SetAllPoints(UIParent)
 		
-	button:SetFrameStrata("MEDIUM")
-	button:EnableMouse(not Hekili.DB.profile.locked)
-	button:SetMovable(not Hekili.DB.profile.locked)
-	button:SetClampedToScreen(true)
-
-	local group
-	if set == 'ST' then
-		group = 'Single Target'
-	elseif set == 'AE' then
-		group = 'Multi-Target'
-	else
-		group = 'Bad'
+		self.UI.Engine.Ticker	= C_Timer.NewTicker( 1 / self.DB.profile['Updates Per Second'], Hekili.HeartBeat )
+		self.UI.Engine.Auditor	= C_Timer.NewTicker( 1, Hekili.Audit )
 	end
-
-	if number == 1 then
-		button:SetSize( Hekili:GetOption( { group .. ' Primary Icon Size' } ), Hekili:GetOption( { group .. ' Primary Icon Size' } ) )
-	else
-		button:SetSize( Hekili:GetOption( { group .. ' Queued Icon Size' } ), Hekili:GetOption( { group .. ' Queued Icon Size' } ) )
-	end
-
-	button.Texture = button:CreateTexture(nil, "MEDIUM")
-	button.Texture:SetAllPoints(button)
-	button.Texture:SetTexture('Interface\\ICONS\\Spell_Nature_BloodLust')	-- default in case nothing is loaded.
-	button.Texture:SetAlpha(1)
 	
-	button.Cooldown = CreateFrame("Cooldown", name.."_Cooldown" , button, "CooldownFrameTemplate")
-	button.Cooldown:SetAllPoints(button)
-
-	button.Indicator = button:CreateTexture(nil, "MEDIUM")
-	button.Indicator:SetSize(button:GetWidth() / 2, button:GetHeight() / 2)
-	button.Indicator:SetPoint("TOPLEFT", button, "TOPLEFT")
-	button.Indicator:SetAlpha(1)
+	self.UI.Buttons	= self.UI.Buttons or {}
 	
-	button.btmText = button:CreateFontString(name.."BtmText", "OVERLAY" )
-	button.btmText:SetSize(button:GetWidth(), button:GetHeight() / 2)
-	-- button.btmText:SetTextHeight(button:GetHeight() / 3)
-	button.btmText:SetPoint("BOTTOM", button, "BOTTOM")
-	button.btmText:SetJustifyV("BOTTOM")
-	button.btmText:SetTextColor(1, 1, 1, 1)
+	for dispID, display in ipairs( self.DB.profile.displays ) do
+		self.UI.Buttons[dispID] = self.UI.Buttons[dispID] or {}
 
-	button.topText = button:CreateFontString(name.."TopText", "OVERLAY" )
-	button.topText:SetSize(button:GetWidth(), button:GetHeight() / 2)
-	button.topText:SetJustifyH("RIGHT")
-	button.topText:SetJustifyV("TOP")
-	button.topText:SetPoint("TOPRIGHT", button, "TOPRIGHT")
-	button.topText:SetTextColor(0, 1, 0, 1)
-
-	if number == 1 then
-		button.btmText:SetFont(Hekili.LSM:Fetch("font", self.DB.profile[ group..' Font' ]), self.DB.profile[ group..' Primary Font Size' ], "OUTLINE")
-		button.topText:SetFont(Hekili.LSM:Fetch("font", self.DB.profile[ group..' Font' ]), self.DB.profile[ group..' Primary Font Size' ], "OUTLINE")
-	else
-		button.btmText:SetFont(Hekili.LSM:Fetch("font", self.DB.profile[ group..' Font' ]), self.DB.profile[ group..' Queued Font Size' ], "OUTLINE")
-		button.topText:SetFont(Hekili.LSM:Fetch("font", self.DB.profile[ group..' Font' ]), self.DB.profile[ group..' Queued Font Size' ], "OUTLINE")
-	end
-
-	button:ClearAllPoints()
-
-	if number == 1 then
-		-- Position the first icon.
-		button:SetPoint(self.DB.profile[set .. ' Relative To'], self.DB.profile[set .. ' X'], self.DB.profile[set .. ' Y'])
-		
-		button:SetScript("OnEnter", function(self)
-			if ( self:IsMovable() ) then
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-				GameTooltip:SetText(self.desc)
-				GameTooltip:AddLine("Left-click and hold to move.\nRight-click to lock ALL and close.", 1, 1, 1)
-				GameTooltip:Show()
-				self:SetMovable(true)
-				self:EnableMouse(true)
+		for i = 1, max( #self.UI.Buttons[dispID], display['Icons Shown'] ) do
+			self.UI.Buttons[dispID][i] = self:CreateButton( dispID, i )
+			
+			if self.DB.profile.Enabled and i <= display['Icons Shown'] then
+				self.UI.Buttons[dispID][i]:Show()
 			else
-				self:SetMovable(false)
-				self:EnableMouse(false)
-				GameTooltip:Hide()
+				self.UI.Buttons[dispID][i]:Hide()
 			end
-		end)
+			
+			if self.MSQ then self.msqGroup:AddButton( self.UI.Buttons[dispID][i], { Icon = self.UI.Buttons[dispID][i].Texture, Cooldown = self.UI.Buttons[dispID][i].Cooldown } ) end	
+		end
+		
+	end
 
-		button:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
+	if self.MSQ then self.msqGroup:ReSkin() end
+	
+	-- Check for a display that has been removed.
+	for display, buttons in ipairs( self.UI.Buttons ) do
+		if not self.DB.profile.displays[display] then
+			for i,_ in ipairs( buttons) do
+				buttons[i]:Hide()
+			end
+		end
+	end
+	
+	self.builtUI = true
+end
 
-		button:SetScript("OnMouseDown", function(self, btn)
-			if ( self:IsMovable() and btn == "LeftButton" and not self.Moving ) then
+
+local T
+local SyntaxColors = {};
+
+if Hekili.Format then
+	T = Hekili.Format.Tokens;
+	--- Assigns a color to multiple tokens at once.
+	local function Color ( Code, ... )
+		for Index = 1, select( "#", ... ) do
+			SyntaxColors[ select( Index, ... ) ] = Code;
+		end
+	end
+	Color( "|cffB266FF", T.KEYWORD ) -- Reserved words
+
+	Color( "|cffffffff", T.LEFTCURLY, T.RIGHTCURLY,
+		T.LEFTBRACKET, T.RIGHTBRACKET,
+		T.LEFTPAREN, T.RIGHTPAREN )
+		
+	Color( "|cffFF66FF", T.UNKNOWN, T.ADD, T.SUBTRACT, T.MULTIPLY, T.DIVIDE, T.POWER, T.MODULUS,
+		T.CONCAT, T.VARARG, T.ASSIGNMENT, T.PERIOD, T.COMMA, T.SEMICOLON, T.COLON, T.SIZE,
+		T.EQUALITY, T.NOTEQUAL, T.LT, T.LTE, T.GT, T.GTE )
+
+	Color( "|cFFB2FF66", Unpacks( Hekili.Tables, Hekili.Keys, Hekili.Values ) )
+	
+	Color( "|cffFFFF00", T.NUMBER )
+	Color( "|cff888888", T.STRING, T.STRING_LONG )
+	Color( "|cff55cc55", T.COMMENT_SHORT, T.COMMENT_LONG )
+	Color( "|cff55ddcc", -- Minimal standard Lua functions
+		"assert", "error", "ipairs", "next", "pairs", "pcall", "print", "select",
+		"tonumber", "tostring", "type", "unpack",
+		-- Libraries
+		"bit", "coroutine", "math", "string", "table" )
+	Color( "|cffddaaff", -- Some of WoW's aliases for standard Lua functions
+		-- math
+		"abs", "ceil", "floor", "max", "min",
+		-- string
+		"format", "gsub", "strbyte", "strchar", "strconcat", "strfind", "strjoin",
+		"strlower", "strmatch", "strrep", "strrev", "strsplit", "strsub", "strtrim",
+		"strupper", "tostringall",
+		-- table
+		"sort", "tinsert", "tremove", "wipe" )
+end
+
+
+local SpaceLeft = { "(%()" }
+local SpaceRight = { "(%))" }
+local DoubleSpace = { "(!=)", "(~=)", "(>=*)", "(<=*)", "(&)", "(||)" }
+
+local function fmt( Code )
+	for Index = 1, #SpaceLeft do
+		Code = Code:gsub( "%s-"..SpaceLeft[Index].."%s-", " %1")
+	end
+
+	for Index = 1, #SpaceRight do
+		Code = Code:gsub( "%s-"..SpaceRight[Index].."%s-", "%1 ")
+	end
+
+	for Index = 1, #DoubleSpace do
+		Code = Code:gsub( "%s-"..DoubleSpace[Index].."%s-", " %1 ")
+	end
+	
+	Code = Code:gsub( "([^<>~!])(=+)", "%1 %2 ")
+	Code = Code:gsub( "%s+", " " ):trim()
+	return Code
+end
+
+
+function Hekili:CreateButton( display, ID )
+	
+	local name = "Hekili_D" .. display .. "_B" .. ID
+	local disp = self.DB.profile.displays[display]
+	
+	local button = self.UI.Buttons[display][ID] or CreateFrame("Button", name, self.UI.Engine)
+	
+	local btnSize
+	if ID == 1 then
+		btnSize = disp['Primary Icon Size']
+	else
+		btnSize = disp['Queued Icon Size']
+	end
+	local btnDirection	= disp['Queue Direction']
+	local btnSpacing	= disp['Spacing']
+	
+	button:SetFrameStrata( "LOW" )
+	button:SetFrameLevel( 100 - display )
+	button:SetParent(UIParent)
+	button:EnableMouse( not self.DB.profile.Locked )
+	button:SetMovable( not self.DB.profile.Locked )
+	button:SetClampedToScreen( true )
+	
+	button:SetSize( btnSize, btnSize )
+	
+	if not button.Texture then
+		button.Texture = button:CreateTexture(nil, "LOW")
+		button.Texture:SetAllPoints(button)
+		button.Texture:SetTexture('Interface\\ICONS\\Spell_Nature_BloodLust')
+		button.Texture:SetAlpha(1)
+	end
+	
+	if display == 1 and ID == 1 then
+		button.Notification = button.Notification or button:CreateFontString("HekiliNotification", "OVERLAY")
+		button.Notification:SetSize( disp['Primary Icon Size'] * 2 + disp["Spacing"], disp['Primary Icon Size'] )
+		button.Notification:ClearAllPoints()
+		button.Notification:SetPoint( btnDirection, name, invert_direction[ btnDirection ], 0, 0 )
+		button.Notification:SetJustifyV( "CENTER" )
+		button.Notification:SetTextColor(1, 0, 0, 0)
+		button.Notification:SetTextHeight( disp['Primary Icon Size'] / 3 )
+        button.Notification:SetFont( Hekili.LSM:Fetch("font", disp.Font), disp['Primary Icon Size'] / 2.5, "OUTLINE" )		
+	end
+	
+	button.Caption = button.Caption or button:CreateFontString(name.."Caption", "OVERLAY" )
+	button.Caption:SetSize( button:GetWidth(), button:GetHeight() / 2)
+	button.Caption:SetPoint( "BOTTOM", button, "BOTTOM" )
+	button.Caption:SetJustifyV( "BOTTOM" )
+	button.Caption:SetTextColor(1, 1, 1, 1)
+	
+	button.Cooldown = button.Cooldown or CreateFrame("Cooldown", name .. "_Cooldown", button, "CooldownFrameTemplate")
+	button.Cooldown:SetAllPoints(button)
+	
+	button:ClearAllPoints()
+	
+	if ID == 1 then
+		button.Overlay = button.Overlay or button:CreateTexture(nil, "LOW")
+		button.Overlay:SetAllPoints(button)
+		button.Overlay:Hide()
+		
+		button.Caption:SetFont( Hekili.LSM:Fetch("font", disp.Font), disp['Primary Font Size'], "OUTLINE" )
+
+		button:SetPoint( self.DB.profile.displays[ display ].rel or "CENTER", self.DB.profile.displays[ display ].x, self.DB.profile.displays[ display ].y )
+		
+		button:SetScript( "OnMouseDown", function(self, btn)
+			if ( Hekili.Config or not Hekili.DB.profile.Locked ) and btn == "LeftButton" and not self.Moving then
 				self:StartMoving()
 				self.Moving = true
 			end
-		end)
-
-		button:SetScript("OnMouseUp", function(self, btn)
+		end )
+		
+		button:SetScript( "OnMouseUp", function(self, btn)
 			if ( btn == "LeftButton" and self.Moving ) then
 				self:StopMovingOrSizing()
+				Hekili:SaveCoordinates()
 				self.Moving = false
-			end
-			if ( btn == "RightButton" ) then
+			elseif ( btn == "RightButton" and not Hekili.Config and not Hekili.Pause ) then
 				x_offset, y_offset = self:GetCenter()
 				self:StopMovingOrSizing()
 				self.Moving = false
-				Hekili:SetOption({ "locked" }, true)
+				Hekili.DB.profile.Locked = true
+				self:SetMovable( not Hekili.DB.profile.Locked )
+				self:EnableMouse( not Hekili.DB.profile.Locked )
+				-- Hekili:SetOption( { "locked" }, true )
 				GameTooltip:Hide()
 			end
 			Hekili:SaveCoordinates()
-		end)
-
+		end )
+	
 	else
-		if Hekili:GetOption( { group .. ' Queue Direction' } ) == 'RIGHT' then
-			button:SetPoint(Hekili.invDirection[Hekili:GetOption( { group .. ' Queue Direction' } )], 'Hekili_'..set..'_Action_'..(number-1), Hekili:GetOption( { group .. ' Queue Direction' } ), Hekili:GetOption( { group .. ' Icon Spacing' } ), 0)
-		else
-			button:SetPoint(Hekili.invDirection[Hekili:GetOption( { group .. ' Queue Direction' } )], 'Hekili_'..set..'_Action_'..(number-1), Hekili:GetOption( { group .. ' Queue Direction' } ), -1 * Hekili:GetOption( { group .. ' Icon Spacing' } ), 0)
+		button.Caption:SetFont( Hekili.LSM:Fetch("font", disp.Font), disp['Queued Font Size'], "OUTLINE" )
+
+		if btnDirection == 'RIGHT' then
+			button:SetPoint( invert_direction[ btnDirection ], 'Hekili_D' .. display.. "_B" .. ID - 1,  btnDirection, btnSpacing, 0 )
+		elseif btnDirection == 'LEFT' then
+			button:SetPoint( invert_direction[ btnDirection ], 'Hekili_D' .. display.. "_B" .. ID - 1,  btnDirection, -1 *  btnSpacing, 0 )
+		elseif btnDirection == 'TOP' then
+			button:SetPoint( invert_direction[ btnDirection ], 'Hekili_D' .. display.. "_B" .. ID - 1,  btnDirection, 0, btnSpacing )
+		else -- BOTTOM
+			button:SetPoint( invert_direction[ btnDirection ], 'Hekili_D' .. display.. "_B" .. ID - 1,  btnDirection, 0, -1 * btnSpacing )
 		end
-	end	
 
-	button:Hide()
-
-	return button
-end
-
-function Hekili:CreateTracker( num )
-	local name = 'Hekili_Tracker_'..num
-
-	local button = CreateFrame("Button", name, Hekili.UI.Engine)
-	button.desc = 'Hekili Tracker #'..num
+	end
 	
-
-	button:SetSize( self.DB.profile['Tracker '..num..' Size'], self.DB.profile['Tracker '..num..' Size'] )
-	
-	button:SetFrameStrata("MEDIUM")
-	button:EnableMouse(not Hekili.DB.profile.locked)
-	button:SetMovable(not Hekili.DB.profile.locked)
-	button:SetClampedToScreen(true)
-
-	button.Texture = button:CreateTexture(nil, "MEDIUM")
-	button.Texture:SetAllPoints(button)
-	button.Texture:SetTexture('Interface\\ICONS\\Spell_Nature_BloodLust')	-- default in case nothing is loaded.
-	button.Texture:SetAlpha(1)
-	
-	button.Cooldown = CreateFrame("Cooldown", name.."_Cooldown" , button, "CooldownFrameTemplate")
-	button.Cooldown:SetReverse()
-	button.Cooldown:SetAllPoints(button)
-	
-	button.btmText = button:CreateFontString(name.."BtmText", "OVERLAY" )
-	button.btmText:SetSize(button:GetWidth(), button:GetHeight() / 2)
-	button.btmText:SetPoint("BOTTOM", button, "BOTTOM")
-	button.btmText:SetJustifyH("RIGHT")
-	button.btmText:SetJustifyV("BOTTOM")
-	button.btmText:SetTextColor(1, 1, 1, 1)
-
-	button.btmText:SetFont(Hekili.LSM:Fetch("font", self.DB.profile[ 'Tracker Font' ]), self.DB.profile[ 'Tracker 1 Font Size' ], "OUTLINE")
-
-	button:ClearAllPoints()
-
-	button:SetPoint(self.DB.profile['Tracker '..num..' Relative To'], self.DB.profile['Tracker '..num..' X'], self.DB.profile['Tracker '..num..' Y'])
-		
-	button:SetScript("OnEnter", function(self)
-		if ( self:IsMovable() ) then
-			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-			GameTooltip:SetText(self.desc)
-			GameTooltip:AddLine(L["Movable Tooltip"], 1, 1, 1)
-			GameTooltip:Show()
+	button:SetScript( "OnEnter", function(self)
+		if ( ID == 1 and ( not Hekili.Pause ) and ( Hekili.Config or not Hekili.DB.profile.Locked ) ) then
+			Hekili.Tooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
+			Hekili.Tooltip:SetBackdropColor( 0, 0, 0, 1 )
+			Hekili.Tooltip:SetText(Hekili.DB.profile.displays[display].Name .. " (" .. display .. ")")
+			Hekili.Tooltip:AddLine("Left-click and hold to move.", 1, 1, 1)
+			if not Hekili.Config or not Hekili.DB.profile.Locked then Hekili.Tooltip:AddLine("Right-click to lock all and close.",1 ,1 ,1)  end
+			Hekili.Tooltip:Show()
 			self:SetMovable(true)
-			self:EnableMouse(true)
+		elseif ( Hekili.Pause and Hekili.Queue[ display ] and Hekili.Queue[ display ][ ID ] ) then
+			local q = Hekili.Queue[ display ][ ID ]
+			if q then
+				Hekili.Tooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
+				Hekili.Tooltip:SetBackdropColor( 0, 0, 0, 1 )
+				Hekili.Tooltip:SetText( Hekili.Abilities[ q.action ].name )
+				Hekili.Tooltip:AddDoubleLine( q.action_list .. " #"..q.entry, "+"..round( q.time, 2).."s", 1, 1, 1, 1, 1, 1 )
+
+				if q.prioScript then
+					Hekili.Tooltip:AddLine( "\nPriority List Criteria" )
+					
+					local Text = fmt( q.prioScript )
+					Hekili.Tooltip:AddLine( Hekili.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
+					
+					Hekili.Tooltip:AddLine( "Values" )
+					for i = 1, #q.prioElements, 2 do
+						Hekili.Tooltip:AddDoubleLine( q.prioElements[i], Hekili.Utils.FormatValue( q.prioElements[i+1] ), 1, 1, 1, 1, 1, 1 )
+					end
+				end
+				
+				if q.script and q.script ~= "" then
+					Hekili.Tooltip:AddLine( "\nAction Criteria" )
+					
+					local Text = fmt( q.script )
+					Hekili.Tooltip:AddLine( Hekili.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
+					
+					Hekili.Tooltip:AddLine( "Values" )
+					for i = 1, #q.elements, 2 do
+						Hekili.Tooltip:AddDoubleLine(q.elements[i], Hekili.Utils.FormatValue( q.elements[i+1] ), 1, 1, 1, 1, 1, 1)
+					end
+				end
+				Hekili.Tooltip:Show()
+			end
 		else
 			self:SetMovable(false)
 			self:EnableMouse(false)
-			GameTooltip:Hide()
 		end
-	end)
-
-	button:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-
-	button:SetScript("OnMouseDown", function(self, btn)
-		if ( self:IsMovable() and btn == "LeftButton" and not self.Moving ) then
-			self:StartMoving()
-			self.Moving = true
+	end )
+	
+	button:SetScript( "OnLeave", function(self)
+		if Hekili.Tooltip:GetOwner() == self then
+			Hekili.Tooltip:Hide()
 		end
-	end)
-
-	button:SetScript("OnMouseUp", function(self, btn)
-		if ( btn == "LeftButton" and self.Moving ) then
-			self:StopMovingOrSizing()
-			self.Moving = false
-		end
-		if ( btn == "RightButton" ) then
-			x_offset, y_offset = self:GetCenter()
-			self:StopMovingOrSizing()
-			self.Moving = false
-			Hekili:SetOption({ "locked" }, true)
-			GameTooltip:Hide()
-		end
-		Hekili:SaveCoordinates()
-	end)
-
-	button:Hide()
-
+	end )
+	
 	return button
+
 end
+
 
 function Hekili:SaveCoordinates()
-	local _, _, relative, x, y = Hekili.UI.AButtons['ST'][1]:GetPoint()
-	self.DB.profile['ST Relative To'] = relative
-	self.DB.profile['ST X'] = x
-	self.DB.profile['ST Y'] = y
-
-	_, _, relative, x, y = Hekili.UI.AButtons['AE'][1]:GetPoint()
-	self.DB.profile['AE Relative To'] = relative
-	self.DB.profile['AE X'] = x
-	self.DB.profile['AE Y'] = y
-	
-	for i = 1, 5 do
-		_, _, relative, x, y = Hekili.UI.Trackers[i]:GetPoint()
-		self.DB.profile['Tracker '..i..' Relative To'] = relative
-		self.DB.profile['Tracker '..i..' X'] = x
-		self.DB.profile['Tracker '..i..' Y'] = y
+	for k,_ in pairs(Hekili.UI.Buttons) do
+		local _, _, rel, x, y = Hekili.UI.Buttons[k][1]:GetPoint()
+		
+		self.DB.profile.displays[k].rel = rel
+		self.DB.profile.displays[k].x = x
+		self.DB.profile.displays[k].y = y
 	end
-			
-end
-
-
-function Hekili:RefreshUI()
-
-	self.UI.AButtons['ST'][1]:ClearAllPoints()
-	self.UI.AButtons['ST'][1]:SetPoint(self.DB.profile['ST Relative To'], self.DB.profile['ST X'], self.DB.profile['ST Y'])
-	self.UI.AButtons['ST'][1]:EnableMouse(not self.DB.profile.locked)
-	self.UI.AButtons['ST'][1]:SetMovable(not self.DB.profile.locked)
-	self.UI.AButtons['ST'][1]:SetSize(self.DB.profile['Single Target Primary Icon Size'], self.DB.profile['Single Target Primary Icon Size'])
-	self.UI.AButtons['ST'][1].topText:SetSize(self.DB.profile['Single Target Primary Icon Size'], self.DB.profile['Single Target Primary Icon Size'] / 2)
-	self.UI.AButtons['ST'][1].btmText:SetSize(self.DB.profile['Single Target Primary Icon Size'], self.DB.profile['Single Target Primary Icon Size'] / 2)
-
-	local font = Hekili.LSM:Fetch("font", self.DB.profile[ 'Single Target Font' ])
-
-	self.UI.AButtons['ST'][1].topText:SetFont(font, self.DB.profile[ 'Single Target Primary Font Size' ], "OUTLINE")
-	self.UI.AButtons['ST'][1].btmText:SetFont(font, self.DB.profile[ 'Single Target Primary Font Size' ], "OUTLINE")
-
-	for i = 2, 5 do
-		self.UI.AButtons['ST'][i]:SetSize(self.DB.profile['Single Target Queued Icon Size'], self.DB.profile['Single Target Queued Icon Size'])
-		self.UI.AButtons['ST'][i].topText:SetSize(self.DB.profile['Single Target Queued Icon Size'], self.DB.profile['Single Target Queued Icon Size'] / 2)
-		self.UI.AButtons['ST'][i].btmText:SetSize(self.DB.profile['Single Target Queued Icon Size'], self.DB.profile['Single Target Queued Icon Size'] / 2)
-		self.UI.AButtons['ST'][i]:ClearAllPoints()
-
-		self.UI.AButtons['ST'][i].topText:SetFont(font, self.DB.profile[ 'Single Target Queued Font Size' ], "OUTLINE")
-		self.UI.AButtons['ST'][i].btmText:SetFont(font, self.DB.profile[ 'Single Target Queued Font Size' ], "OUTLINE")
-
-		if self.DB.profile['Single Target Queue Direction'] == 'RIGHT' then
-			self.UI.AButtons['ST'][i]:SetPoint(self.invDirection[ self.DB.profile['Single Target Queue Direction'] ], self.UI.AButtons['ST'][i-1], self.DB.profile['Single Target Queue Direction'], self.DB.profile['Single Target Icon Spacing'], 0)
-		else
-			self.UI.AButtons['ST'][i]:SetPoint(self.invDirection[ self.DB.profile['Single Target Queue Direction'] ], self.UI.AButtons['ST'][i-1], self.DB.profile['Single Target Queue Direction'], -1 * self.DB.profile['Single Target Icon Spacing'], 0)
-		end
-	end
-
-
-	self.UI.AButtons['AE'][1]:ClearAllPoints()
-	self.UI.AButtons['AE'][1]:SetPoint(self.DB.profile['AE Relative To'], self.DB.profile['AE X'], self.DB.profile['AE Y'])
-	self.UI.AButtons['AE'][1]:EnableMouse(not self.DB.profile.locked)
-	self.UI.AButtons['AE'][1]:SetMovable(not self.DB.profile.locked)
-	self.UI.AButtons['AE'][1]:SetSize(self.DB.profile['Multi-Target Primary Icon Size'], self.DB.profile['Multi-Target Primary Icon Size'])
-	self.UI.AButtons['AE'][1].topText:SetSize(self.DB.profile['Multi-Target Primary Icon Size'], self.DB.profile['Multi-Target Primary Icon Size'] / 2)
-	self.UI.AButtons['AE'][1].btmText:SetSize(self.DB.profile['Multi-Target Primary Icon Size'], self.DB.profile['Multi-Target Primary Icon Size'] / 2)
-
-	font = Hekili.LSM:Fetch("font", self.DB.profile[ 'Multi-Target Font' ])
-
-	self.UI.AButtons['AE'][1].topText:SetFont(font, self.DB.profile[ 'Multi-Target Primary Font Size' ], "OUTLINE")
-	self.UI.AButtons['AE'][1].btmText:SetFont(font, self.DB.profile[ 'Multi-Target Primary Font Size' ], "OUTLINE")
-
-	for i = 2, 5 do
-		self.UI.AButtons['AE'][i]:SetSize(self.DB.profile['Multi-Target Queued Icon Size'], self.DB.profile['Multi-Target Queued Icon Size'])
-		self.UI.AButtons['AE'][i].topText:SetSize(self.DB.profile['Multi-Target Queued Icon Size'], self.DB.profile['Multi-Target Queued Icon Size'] / 2)
-		self.UI.AButtons['AE'][i].btmText:SetSize(self.DB.profile['Multi-Target Queued Icon Size'], self.DB.profile['Multi-Target Queued Icon Size'] / 2)
-		self.UI.AButtons['AE'][i]:ClearAllPoints()
-
-		self.UI.AButtons['AE'][i].topText:SetFont(font, self.DB.profile[ 'Multi-Target Queued Font Size' ], "OUTLINE")
-		self.UI.AButtons['AE'][i].btmText:SetFont(font, self.DB.profile[ 'Multi-Target Queued Font Size' ], "OUTLINE")
-
-		if self.DB.profile['Multi-Target Queue Direction'] == 'RIGHT' then
-			self.UI.AButtons['AE'][i]:SetPoint(self.invDirection[ self.DB.profile['Multi-Target Queue Direction'] ], self.UI.AButtons['AE'][i-1], self.DB.profile['Multi-Target Queue Direction'], self.DB.profile['Multi-Target Icon Spacing'], 0)
-		else
-			self.UI.AButtons['AE'][i]:SetPoint(self.invDirection[ self.DB.profile['Multi-Target Queue Direction'] ], self.UI.AButtons['AE'][i-1], self.DB.profile['Multi-Target Queue Direction'], -1 * self.DB.profile['Multi-Target Icon Spacing'], 0)
-		end
-	end
-
-	for i = 1, 5 do
-		font = Hekili.LSM:Fetch("font", self.DB.profile[ 'Tracker '..i..' Font' ])
-
-		self.UI.Trackers[i]:SetSize(self.DB.profile[ 'Tracker '..i..' Size' ], self.DB.profile[ 'Tracker '..i..' Size' ])
-		self.UI.Trackers[i].btmText:SetSize( self.DB.profile['Tracker '..i..' Size'], self.DB.profile['Tracker '..i..' Size'] / 2)
-		self.UI.Trackers[i].btmText:SetFont(font, self.DB.profile[ 'Tracker '..i..' Font Size' ], 'OUTLINE')
-
-		self.UI.Trackers[i]:ClearAllPoints()
-		self.UI.Trackers[i]:SetPoint(self.DB.profile['Tracker '..i..' Relative To'], self.DB.profile['Tracker '..i..' X'], self.DB.profile['Tracker '..i..' Y'])
-	end
-
-	if self.LBF then
-		self.stGroup:ReSkin()
-		self.aeGroup:ReSkin()
-		self.trGroup:ReSkin()
-	end
-
-end
-
-
-function Hekili:RefreshBindings()
-	self.DB.profile['Hekili Hotkey']	= GetBindingKey("HEKILI_TOGGLE") or ''
-	self.DB.profile['ST Hotkey']		= GetBindingKey("HEKILI_TOGGLE_SINGLE") or ''
-	self.DB.profile['AE Hotkey']		= GetBindingKey("HEKILI_TOGGLE_MULTI") or ''
-	self.DB.profile['Cooldown Hotkey']	= GetBindingKey("HEKILI_TOGGLE_COOLDOWNS") or ''
-	self.DB.profile['Hardcast Hotkey']	= GetBindingKey("HEKILI_TOGGLE_HARDCASTS") or ''
-	self.DB.profile['Integrate Hotkey']	= GetBindingKey("HEKILI_TOGGLE_INTEGRATE") or ''
-end	
-
-
-function Hekili:LockAllButtons( lock )
-
-	for i = 1, 5 do
-		self.UI.AButtons.ST[i]:SetMovable(not lock)
-		self.UI.AButtons.ST[i]:EnableMouse(not lock)
-		self.UI.AButtons.AE[i]:SetMovable(not lock)
-		self.UI.AButtons.AE[i]:EnableMouse(not lock)
-		self.UI.Trackers[i]:SetMovable(not lock)
-		self.UI.Trackers[i]:EnableMouse(not lock)
-	end
-	
-end
-
-
-function Hekili:InitCoreUI()
-
-	if self.CoreInitialized then
-		return
-	end
-
-	self.UI.Engine = CreateFrame("Frame", "Hekili_Engine_Frame", UIParent)
-	self.UI.Engine:SetFrameStrata("BACKGROUND")
-	self.UI.Engine:SetClampedToScreen(true)
-	self.UI.Engine:SetMovable(false)
-	self.UI.Engine:EnableMouse(false)
-	self.UI.Engine:SetAllPoints(UIParent)
-
-	-- Engine Values
-	self.UI.Engine.VisualInterval = 0.05
-	self.UI.Engine.VisualDelay = 0
-
-	self.UI.Engine.Interval = (1.0 / self.DB.profile['Updates Per Second'])
-	self.UI.Engine.Delay = 0
-
-	self.UI.Engine.AuditorInterval = 0.5
-	self.UI.Engine.AuditorDelay = 0
-	
-    self.UI.Engine:SetScript("OnUpdate", function(self, elapsed)
-		self.VisualDelay = self.VisualDelay - elapsed
-		self.Delay = self.Delay - elapsed
-		self.AuditorDelay = self.AuditorDelay - elapsed
-
-		if Hekili:IsEnabled() and UnitHealth('player') > 0 then
-			if self.AuditorDelay <= 0 then
-				Hekili:Audit()
-				self.AuditorDelay = self.AuditorInterval
-			end
-
-			if self.VisualDelay <= 0 then
-				Hekili:MaintainActionLists()
-				Hekili:UpdateVisuals()
-				self.VisualDelay = self.VisualInterval
-			end
-
-			if self.Delay <= 0 then
-				Hekili:HeartBeat()
-				self.Delay = self.Interval
-			end
-			
-		end
-	end)
-
-	-- For tooltip parsing.
-	if not self.Tooltip then self.Tooltip = CreateFrame("GameTooltip", "HekiliTooltip", UIParent, "GameTooltipTemplate") end
-
-	-- Display Elements
-	self.UI.AButtons = {}
-	self.UI.AButtons['ST'] = {}
-	for i = 1, 5 do
-		self.UI.AButtons.ST[i] = self:CreatePriorityButton( 'ST', i )
-		if self.LBF then self.stGroup:AddButton( self.UI.AButtons.ST[i], { Icon = self.UI.AButtons.ST[i].Texture, Cooldown = self.UI.AButtons.ST[i].Cooldown } ) end	
-	end
-
-	self.UI.AButtons['AE'] = {}
-	for i = 1, 5 do
-		self.UI.AButtons.AE[i] = self:CreatePriorityButton( 'AE', i )
-		if self.LBF then self.aeGroup:AddButton( self.UI.AButtons.AE[i], { Icon = self.UI.AButtons.AE[i].Texture, Cooldown = self.UI.AButtons.AE[i].Cooldown } ) end	
-	end
-	
-	self.UI.Trackers = {}
-	for i = 1, 5 do
-		self.UI.Trackers[i] = self:CreateTracker( i )
-		if self.LBF then self.trGroup:AddButton( self.UI.Trackers[i], { Icon = self.UI.Trackers[i].Texture, Cooldown = self.UI.Trackers[i].Cooldown } ) end
-	end
-	
-	self.CoreInitialized = true
 end

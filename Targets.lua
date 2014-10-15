@@ -1,124 +1,163 @@
 -- Targets.lua
+-- June 2014
 
 
--- Anything hurt by me or my pets will be in this table up to 'Grace Period'.
-Hekili.targets = {}
+local H = Hekili
 
-function Hekili:Targets()
-	return self.targets
-end
 
-function Hekili:UpdateTarget( id, time )
-	self.targets[id] = time
-end
+-- Table to collect enemies that are damaged or debuffed by us or our minions.
+local tCount = 0
+local targets = {}
 
-function Hekili:TargetCount()
-	local count = 0
+
+function H:UpdateTarget( id, time )
+
+	if time then
+		
+		if not targets[id] then
+			tCount = tCount + 1
+		end
+		targets[id]	= time
 	
-	for k,_ in pairs( self.targets ) do
-		count = count + 1
-	end
-
-	return count
-end
-
-
--------------
--- MINIONS --
-
--- Minions should capture pets/totems/guardians/etc.  Anything that does damage on our behalf should be found.
-Hekili.minions = {}
-
-function Hekili:UpdateMinion( id, time )
-	self.minions[id] = time
-end
-
-function Hekili:IsMinion( id )
-	return self.minions[id] ~= nil
-end
-
--- MINIONS --
--------------
-
-
------------
--- AURAS --
-
-Hekili.auras = {}
-
-function Hekili:Auras()
-	return self.auras
-end
-
-function Hekili:LoadAuras()
-	if self.Active then
-		for aura, _ in pairs( self.Active:Watchlist() ) do
-			if not self.auras[ aura ] then self.auras[ aura ] = {} end
-		end	
+	else
+		if targets[id] then
+			tCount = max(0, tCount - 1)
+			targets[id] = nil
+		end
 	end
 end
 
-function Hekili:ClearAuras()
-	for k,v in pairs ( self:Auras() ) do
-		table.wipe(v)
+
+function H:NumTargets()
+	return tCount
+end
+
+
+-- MINIONS
+local minions = {}
+
+
+function H:UpdateMinion( id, time )
+	minions[id]	= time
+end
+
+
+function H:IsMinion( id )
+	return ( minions[id] ~= nil )
+end
+
+
+-- DEBUFFS (was AURAS)
+local dbCount		= {}
+local debuffs		= {}
+local dbPower		= {}
+
+
+function H:WipeDebuffs()
+	for k,_ in pairs( debuffs ) do
+		table.wipe( debuffs[k] )
 	end
 end
 
-function Hekili:UpdateAura( spell, target, time )
-	self.auras[ spell ][ target ] = time
-end
 
-function Hekili:AuraCount( spell )
-	local count = 0
+function H:TrackDebuff( spell, target, time, new )
 
-	if self.Active and self.Active:Watched( spell ) then
-		for k,_ in pairs( self.auras[spell] ) do
-			count = count + 1
+	debuffs[ spell ] = debuffs[ spell ] or {}
+	dbCount[ spell ] = dbCount[ spell ] or 0
+	
+	if not time then
+		if debuffs[ spell ][ target ] then
+			-- Remove it.
+			debuffs[ spell ][ target ]	= nil
+			dbCount[ spell ] = max(0, dbCount[ spell ] - 1)
+		end
+		
+	else
+		if not debuffs[ spell ][ target ] then
+			debuffs[ spell ][ target ]	= {}
+			dbCount[ spell ] = dbCount[ spell ] + 1
+		end
+
+		local debuff = debuffs[ spell ][ target ]
+		debuff.last_seen = time
+	
+		if new then
+			debuff.applied = time
+			if dbPower[ spell ] then
+				debuff.modifier, debuff.tick_dmg, debuff.ticks_remain,
+				debuff.spell_power, debuff.attack_power, debuff.multiplier,
+				debuff.haste_pct, debuff.crit_pct, debuff.crit_dmg, debuff.num_ticks = dbPower[ spell ].handler()
+			end
 		end
 	end
 
-	return count
 end
 
-function Hekili:IsAuraWatched( spell )
-	return ( self.auras[ spell ] ~= nil )
-end
 
-function Hekili:GetAuraTargets( spell )
-	return self.auras[ spell ]
-end
-
--- AURAS --
------------
-
-
--- Remove a GUID from all our tables.
-function Hekili:Eliminate( id )
-	self:UpdateMinion( id, nil )
-	self:UpdateTarget( id, nil )
+function H:DebuffCount( spell )
+	-- v1 would manually count table entries.  I don't think we need to.
+	if debuffs[ spell ] then
+		return ( dbCount[ spell ] or 0 )
+	end
 	
-	for k,_ in pairs( self:Auras() ) do
-		self:UpdateAura( k, id, nil )
+	return 0
+end
+
+
+function H:IsDebuffWatched( spell )
+	return ( debuffs[ spell ] ~= nil )
+end
+
+
+function H:WatchDoT( dot, func, tick, duration )
+	if debuff and func then
+		dbPower[ dot ] = {
+			tick		= tick or 0,
+			duration	= duration or 0,
+			handler		= func
+		}
+		setfenv( dbPower[dot].handler, self.state )
+	end
+end
+
+function H:IsDoTWatched( dot )
+	return ( dbPower[ dot ] ~= nil )
+end
+
+
+function H:GetWatchedDoT( dot )
+	return ( dbPower[ dot ] )
+end
+
+
+function H:Eliminate( id )
+	self:UpdateMinion( id )
+	self:UpdateTarget( id )
+	
+	for k,v in pairs( debuffs ) do
+		self:TrackDebuff( k, id )
 	end
 end
 
 
--- Eliminate auras that have vanished from combat log and wipe targets that are too old.  TOO OLD.
-function Hekili:Audit()
+-- Remove debuffs or 
+function H.Audit()
+	local now			= GetTime()
+	local grace_period	= H.DB.profile['Audit Targets']
+	-- Grace Period was a profile option in v1, need to port it to v2.
 	
-	local now = GetTime()
-	
-	for aura, targets in pairs( self:Auras() ) do
-		for unit, lastTick in pairs( targets ) do
-			if now - lastTick > 5 then
-				self:UpdateAura( aura, unit, nil )
+	for aura, targets in pairs( debuffs ) do
+		for unit, aura_info in pairs( targets ) do
+			-- NYI: Check for dot vs. debuff, since debuffs won't 'tick'
+			if now - aura_info.last_seen > grace_period then
+				H:TrackDebuff( aura, unit )
 			end
 		end
 	end
 	
-	for whom, when in pairs( self:Targets() ) do
-		if now - when > Hekili.DB.profile['Grace Period'] then
-			self:UpdateTarget( whom, nil )
+	for whom, when in pairs( targets ) do
+		if now - when > grace_period then
+			H:UpdateTarget( whom )
 		end
 	end
 	

@@ -1,4 +1,4 @@
-## Interface: 50400
+## Interface: 60000
 ## LoadOnDemand: 1
 ## X-Curse-Packaged-Version: r86
 ## X-Curse-Project-Name: LibSharedMedia-3.0
@@ -49,6 +49,10 @@
 ## X-Curse-Project-ID: hekili
 ## X-Curse-Repository-ID: wow/hekili/mainline
 ## X-Curse-Packaged-Version: r66
+## X-Curse-Project-Name: Hekili
+## X-Curse-Project-ID: hekili
+## X-Curse-Repository-ID: wow/hekili/mainline
+## X-Curse-Packaged-Version: r71
 ## X-Curse-Project-Name: Hekili
 ## X-Curse-Project-ID: hekili
 ## X-Curse-Repository-ID: wow/hekili/mainline

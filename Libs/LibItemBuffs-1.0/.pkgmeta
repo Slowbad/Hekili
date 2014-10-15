@@ -1,0 +1,6 @@
+package-as: LibItemBuffs-1.0
+
+enable-nolib-creation: no
+
+ignore:
+- extractor

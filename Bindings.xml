@@ -1,8 +1,12 @@
 <Bindings>
-    <Binding name="HEKILI_TOGGLE" header="HEKILI_HEADER">Hekili:ToggleEnable();</Binding>
+    <Binding name="HEKILI_TOGGLE_PAUSE" header="HEKILI_HEADER">Hekili:TogglePause();</Binding>
     <Binding name="HEKILI_TOGGLE_COOLDOWNS">Hekili:ToggleCooldowns();</Binding>
-    <Binding name="HEKILI_TOGGLE_HARDCASTS">Hekili:ToggleHardcasts();</Binding>    
-    <Binding name="HEKILI_TOGGLE_SINGLE">Hekili:ToggleSingle();</Binding>
-    <Binding name="HEKILI_TOGGLE_MULTI">Hekili:ToggleMulti();</Binding>
-    <Binding name="HEKILI_TOGGLE_INTEGRATE">Hekili:ToggleIntegration();</Binding>
+    <Binding name="HEKILI_TOGGLE_HARDCASTS">Hekili:ToggleHardcasts();</Binding>
+    <Binding name="HEKILI_TOGGLE_INTERRUPTS">Hekili:ToggleInterrupts();</Binding>
+    <Binding name="HEKILI_TOGGLE_MODE">Hekili:ToggleMode();</Binding>
+    <Binding name="HEKILI_TOGGLE_1">Hekili:Toggle(1);</Binding>
+    <Binding name="HEKILI_TOGGLE_2">Hekili:Toggle(2);</Binding>
+    <Binding name="HEKILI_TOGGLE_3">Hekili:Toggle(3);</Binding>
+    <Binding name="HEKILI_TOGGLE_4">Hekili:Toggle(4);</Binding>
+    <Binding name="HEKILI_TOGGLE_5">Hekili:Toggle(5);</Binding>
 </Bindings>

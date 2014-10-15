@@ -63,7 +63,7 @@ do
 	
 	--[[ UI Event Handlers ]]--
 	
-	-- HACK: This should be no part of the pullout, but there
+	-- HACH: This should be no part of the pullout, but there
 	--       is no other 'clean' way to response to any item-OnEnter
 	--       Used to close Submenus when an other item is entered
 	local function OnEnter(item)

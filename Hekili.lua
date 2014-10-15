@@ -1,51 +1,70 @@
--- Hekili.lua 
--- The really, REALLY basic setup stuff before we get into the meat of the addon.
--- Hekili @ Ner'zhul [A]
--- October 2013
+-- Hekili.lua
+-- April 2014
 
-Hekili = LibStub("AceAddon-3.0"):NewAddon("Hekili", "AceConsole-3.0", "AceEvent-3.0")
-Hekili.UI = {}
+Hekili		= LibStub("AceAddon-3.0"):NewAddon( "Hekili", "AceConsole-3.0", "AceEvent-3.0", "AceSerializer-3.0" )
+Hekili.UI		= {}
 
-Hekili:SetDefaultModuleLibraries("AceEvent-3.0")
 
-Hekili.LBF = LibStub("Masque", true)
-if Hekili.LBF then
-	Hekili.stGroup = Hekili.LBF:Group("Hekili", "Single Target")
-	Hekili.aeGroup = Hekili.LBF:Group("Hekili", "Multi-Target")
-	Hekili.trGroup = Hekili.LBF:Group("Hekili", "Trackers")
+-- LibButtonFrame a.k.a. Masque
+Hekili.MSQ = LibStub("Masque", true)
+if Hekili.MSQ then
+	Hekili.msqGroup = Hekili.MSQ:Group("Hekili")
+	if not Hekili.msqGroup then Hekili.MSQ = nil end
 end
 
-Hekili.LSM = LibStub:GetLibrary("LibSharedMedia-3.0")
+-- LibSharedMedia (fonts, primarily)
+Hekili.LSM	= LibStub("LibSharedMedia-3.0", true)
 
-local L = LibStub("AceLocale-3.0"):GetLocale("Hekili")
 
-BINDING_HEADER_HEKILI_HEADER = "Hekili"
+BINDING_HEADER_HEKILI_HEADER = "Hekili |cFF00FF00v2|r"
 
-BINDING_NAME_HEKILI_TOGGLE				= L["Toggle Addon"]
-BINDING_NAME_HEKILI_TOGGLE_COOLDOWNS	= L["Toggle Cooldowns"]
-BINDING_NAME_HEKILI_TOGGLE_HARDCASTS	= L["Toggle Hardcasts"]
-BINDING_NAME_HEKILI_TOGGLE_SINGLE		= L["Toggle Single Target Display"]
-BINDING_NAME_HEKILI_TOGGLE_MULTI		= L["Toggle Multi-Target Display"]
-BINDING_NAME_HEKILI_TOGGLE_INTEGRATE	= L["Toggle Multi Integration"]
+BINDING_NAME_HEKILI_TOGGLE_PAUSE		= "Pause"
+BINDING_NAME_HEKILI_TOGGLE_COOLDOWNS	= "Toggle Cooldowns"
+BINDING_NAME_HEKILI_TOGGLE_HARDCASTS	= "Toggle Hardcasts"
+BINDING_NAME_HEKILI_TOGGLE_INTERRUPTS	= "Toggle Interrupts"
+BINDING_NAME_HEKILI_TOGGLE_MODE			= "Toggle Mode"
+BINDING_NAME_HEKILI_TOGGLE_1			= "Custom Toggle 1"
+BINDING_NAME_HEKILI_TOGGLE_2			= "Custom Toggle 2"
+BINDING_NAME_HEKILI_TOGGLE_3			= "Custom Toggle 3"
+BINDING_NAME_HEKILI_TOGGLE_4			= "Custom Toggle 4"
+BINDING_NAME_HEKILI_TOGGLE_5			= "Custom Toggle 5"
 
-Hekili.Modules = {}
-
-Hekili.State = {}
-
-Hekili.Actions = {}
-Hekili.Actions['ST'] = {}
-Hekili.Actions['AE'] = {}
-
-for i = 1, 5 do
-	Hekili.Actions['ST'][i] = {}
-	Hekili.Actions['AE'][i] = {}
+function Hekili:RefreshBindings()
+	self.DB.profile['HEKILI_TOGGLE_MODE']		= select(1, GetBindingKey("HEKILI_TOGGLE_MODE"))
+	self.DB.profile['HEKILI_TOGGLE_PAUSE']		= select(1, GetBindingKey("HEKILI_TOGGLE_PAUSE"))
+	self.DB.profile['HEKILI_TOGGLE_COOLDOWNS']	= select(1, GetBindingKey("HEKILI_TOGGLE_COOLDOWNS"))
+	self.DB.profile['HEKILI_TOGGLE_HARDCASTS']	= select(1, GetBindingKey("HEKILI_TOGGLE_HARDCASTS"))
+	self.DB.profile['HEKILI_TOGGLE_1']			= select(1, GetBindingKey("HEKILI_TOGGLE_1"))
+	self.DB.profile['HEKILI_TOGGLE_2']			= select(1, GetBindingKey("HEKILI_TOGGLE_2"))
+	self.DB.profile['HEKILI_TOGGLE_3']			= select(1, GetBindingKey("HEKILI_TOGGLE_3"))
+	self.DB.profile['HEKILI_TOGGLE_4']			= select(1, GetBindingKey("HEKILI_TOGGLE_4"))
+	self.DB.profile['HEKILI_TOGGLE_5']			= select(1, GetBindingKey("HEKILI_TOGGLE_5"))
 end
 
 
-totems = {
-	fire	= 1,
-	earth	= 2,
-	water	= 3,
-	air		= 4
-}
+-- Will move to separate file when addon communication gets implemented.
+Hekili.LibC		= LibStub("LibCompress")
+Hekili.LibCE	= Hekili.LibC:GetAddonEncodeTable()
+
+Hekili.OptionsUI = {}
+
+local H = Hekili
+
+
+Hekili.Tooltip = CreateFrame("GameTooltip", "HekiliTooltip", UIParent, "GameTooltipTemplate")
+-- We need our tooltip to use a solid background to make code legible.
+
+local Backdrop = GameTooltip:GetBackdrop()
+Backdrop.bgFile = [[Interface\Buttons\WHITE8X8]]
+Hekili.Tooltip:SetBackdrop( Backdrop )
+
+
+function Hekili:Error(...)
+	if self.DB.profile.Verbose then
+		local output = string.format( ... )
+		self:Print(output)
+	end
+end
+
+
 
