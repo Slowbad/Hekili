@@ -644,7 +644,7 @@ local mt_cooldowns	= {
 			start = H.state.buff.ascendance.expires - H.Auras[k].duration
 			duration = H.Abilities[k].cooldown
 		end
-		
+			
 		if start then
 			t[k] = {
 				duration = duration,

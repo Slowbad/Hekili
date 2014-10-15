@@ -418,9 +418,10 @@ local s_textures = setmetatable( {},
 		end
 	} )
 
--- Insert textures that don't work well with predictions.
+-- Insert textures that don't work well with predictions.@
 s_textures[GetSpellInfo(115356)] = 'Interface\\Icons\\ability_skyreach_four_wind'	-- Windstrike
-s_textures[GetSpellInfo(114084)] = 'Interface\\Icons\\Spell_Fire_SoulBurn'			-- Lava Beam
+s_textures[GetSpellInfo(114074)] = 'Interface\\Icons\\Spell_Fire_SoulBurn'			-- Lava Beam
+s_textures[GetSpellInfo(421)] = 'Interface\\Icons\\Spell_Nature_ChainLightning'	-- Chain Lightning
 	
 
 	
@@ -512,10 +513,10 @@ function H:ResetState()
 	
 	if cast_time and casting then
 		self:Advance( cast_time )
-		RunHandler( casting )
 		if self.Abilities[ casting] then
 			self.state.cooldown[ casting ].expires = self.state.now + self.state.offset + self.Abilities[ casting ].cooldown
 		end
+		RunHandler( casting )
 	end
 	
 	-- Delay to end of GCD.
@@ -767,7 +768,7 @@ function H:ProcessActionLists()
 		
 		self:ResetState()
 		
-		if self.Config or ( display.Enabled and self:CheckScript( 'D', dispID ) ) then 
+		if display.Enabled and ( display.Specialization == 0 or display.Specialization == GetSpecializationID() ) and ( self.Config or self:CheckScript( 'D', dispID )  ) then 
 			for i = 1, display['Icons Shown'] do
 				local chosen_action, chosen_caption
 				local chosen_wait   = 999

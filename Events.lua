@@ -258,6 +258,8 @@ Hekili.SwingInfo = {
 function H:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName, _, _, interrupt)
 
 	local time = GetTime()
+	
+	local hostile = ( bit.band( destFlags, COMBATLOG_OBJECT_REACTION_FRIENDLY ) == 0 )
 
 	-- Hekili: v1 Tracking System
 	if subtype == 'SPELL_SUMMON' and sourceGUID == UnitGUID('player') then
@@ -304,9 +306,9 @@ function H:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceN
 		end
 		
 	end ]]
-		
+	
 	-- Player/Minion Event
-	if ( sourceGUID == UnitGUID('player') or self:IsMinion( sourceGUID ) ) and sourceGUID ~= destGUID then
+	if hostile and ( sourceGUID == UnitGUID('player') or self:IsMinion( sourceGUID ) ) and sourceGUID ~= destGUID then
 		
 		-- Aura Tracking
 		if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' then
@@ -322,9 +324,7 @@ function H:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceN
 		end
 
 		-- If you don't care about multiple targets, I don't!
-		if self.DB.profile['Multi-Target Enabled'] == false and self.DB.profile['Integration Enabled'] == false and self.DB.profile['Show AOE in ST'] == false then
-			return true
-		elseif subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
+		if subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
 			self:UpdateTarget( destGUID, time )
 		end
 

@@ -235,7 +235,7 @@ function Hekili:CreateButton( display, ID )
 		if ( ID == 1 and ( not Hekili.Pause ) and ( Hekili.Config or not Hekili.DB.profile.Locked ) ) then
 			Hekili.Tooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
 			Hekili.Tooltip:SetBackdropColor( 0, 0, 0, 1 )
-			Hekili.Tooltip:SetText(Hekili.DB.profile.displays[display].Name .. " (" .. display .. ")")
+			Hekili.Tooltip:SetText(Hekili.DB.profile.displays[ display ].Name .. " (" .. display .. ")")
 			Hekili.Tooltip:AddLine("Left-click and hold to move.", 1, 1, 1)
 			if not Hekili.Config or not Hekili.DB.profile.Locked then Hekili.Tooltip:AddLine("Right-click to lock all and close.",1 ,1 ,1)  end
 			Hekili.Tooltip:Show()

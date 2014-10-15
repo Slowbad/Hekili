@@ -11,6 +11,10 @@
 ## X-Curse-Project-ID: libdualspec-1-0
 ## X-Curse-Repository-ID: wow/libdualspec-1-0/mainline
 ## X-Curse-Packaged-Version: r30
+## X-Curse-Packaged-Version: r78
+## X-Curse-Project-Name: Hekili
+## X-Curse-Project-ID: hekili
+## X-Curse-Repository-ID: wow/hekili/mainline
 
 
 LibStub.lua

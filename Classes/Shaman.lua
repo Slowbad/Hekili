@@ -95,6 +95,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	AddAura( "ascendance", 114049, "duration", 15 )
 	AddAura( "ancestral_swiftness", 16188, "duration", 600 )
 	AddAura( "echo_of_the_elements", 159103, "duration", 20 )
+	AddAura( "elemental_blast", 117014, "duration", 8 )
 	AddAura( "elemental_fusion", 157174, "duration", 15, "max_stacks", 2 )
 	AddAura( "elemental_mastery", 16166, "duration", 20 )
 	AddAura( "improved_chain_lightning", 157766, "duration", 10 )
@@ -427,9 +428,10 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 
 	AddHandler( 'lava_beam', Hekili.Abilities[ 'chain_lightning' ].handler )
 	
-	AddHandler( 'lava_blast', function ()
+	AddHandler( 'lava_burst', function ()
 		if buff.lava_surge.up then H:RemoveBuff( 'lava_surge' )
 		elseif buff.ancestral_swiftness.up then H:RemoveBuff( 'ancestral_swiftness' ) end
+		if buff.echo_of_the_elements.up then H:RemoveBuff( 'echo_of_the_elements' ) end
 	end )
 	
 	AddHandler( 'lava_lash', function ()
@@ -535,7 +537,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	
 	Hekili.Default( "@Enhancement, AOE", 'actionLists', "^1^T^SSpecialization^N263^SName^S@Enhancement,~`AOE^SActions^T^N1^T^SAbility^Sliquid_magma^SEnabled^B^SScript^Spet.searing_totem.remains>=15|pet.magma_totem.remains>=15|pet.fire_elemental_totem.remains>=15^SName^SLiquid~`Magma^t^N2^T^SAbility^Sfire_nova^SEnabled^B^SScript^Sactive_dot.flame_shock>=3^SName^SFire~`Nova^t^N3^T^SEnabled^B^SName^SWait^SArgs^Ssec=cooldown.fire_nova.remains^SAbility^Swait^SScript^Sactive_dot.flame_shock>=4&cooldown.fire_nova.remains<=action.fire_nova.gcd^t^N4^T^SAbility^Smagma_totem^SEnabled^B^SScript^S!totem.fire.active^SName^SMagma~`Totem^t^N5^T^SEnabled^b^SName^SAncestral~`Swiftness^SAbility^Sancestral_swiftness^t^N6^T^SAbility^Slava_lash^SEnabled^B^SScript^Sdot.flame_shock.ticking^SName^SLava~`Lash^t^N7^T^SAbility^Selemental_blast^SEnabled^B^SScript^Sbuff.maelstrom_weapon.react>=1^SName^SElemental~`Blast^t^N8^T^SAbility^Schain_lightning^SEnabled^B^SScript^Sactive_enemies>=4&(buff.maelstrom_weapon.react=5|(buff.ancestral_swiftness.up&buff.maelstrom_weapon.react>=3))^SName^SChain~`Lightning^t^N9^T^SEnabled^B^SName^SUnleash~`Elements^SAbility^Sunleash_elements^t^N10^T^SEnabled^B^SName^SFlame~`Shock^SArgs^Scycle_targets=1^SAbility^Sflame_shock^SScript^S!ticking^t^N11^T^SAbility^Slightning_bolt^SEnabled^B^SScript^S(!glyph.chain_lightning.enabled|active_enemies<=3)&(buff.maelstrom_weapon.react=5|(buff.ancestral_swiftness.up&buff.maelstrom_weapon.react>=3))^SName^SLightning~`Bolt^t^N12^T^SEnabled^B^SName^SWindstrike^SAbility^Swindstrike^t^N13^T^SAbility^Sfire_nova^SEnabled^B^SScript^Sactive_dot.flame_shock>=2^SName^SFire~`Nova~`(1)^t^N14^T^SAbility^Schain_lightning^SEnabled^B^SScript^Sactive_enemies>=2&buff.maelstrom_weapon.react>=1^SName^SChain~`Lightning~`(1)^t^N15^T^SEnabled^B^SName^SStormstrike^SAbility^Sstormstrike^t^N16^T^SAbility^Sfrost_shock^SEnabled^B^SScript^Sactive_enemies<4^SName^SFrost~`Shock^t^N17^T^SAbility^Schain_lightning^SEnabled^B^SScript^Sactive_enemies>=4&buff.maelstrom_weapon.react>=1^SName^SChain~`Lightning~`(2)^t^N18^T^SAbility^Slightning_bolt^SEnabled^B^SScript^S(!glyph.chain_lightning.enabled|active_enemies<=3)&buff.maelstrom_weapon.react>=1^SName^SLightning~`Bolt~`(1)^t^N19^T^SAbility^Sfire_nova^SEnabled^B^SScript^Sactive_dot.flame_shock>=1^SName^SFire~`Nova~`(2)^t^t^t^^" )
 	
-	Hekili.Default( "@Enhancement, Cooldowns", 'actionLists', "^1^T^SSpecialization^N263^SName^S@Enhancement,~`Cooldowns^SActions^T^N1^T^SAbility^Sbloodlust^SName^SBloodlust^SScript^Starget.health_pct<25|time>0.500^SEnabled^b^t^N2^T^SEnabled^b^SAbility^Sheroism^SName^SHeroism^SScript^Starget.health_pct<25|time>0.500^t^N3^T^SEnabled^B^SName^SBlood~`Fury^SAbility^Sblood_fury^t^N4^T^SEnabled^B^SName^SBerserking^SAbility^Sberserking^t^N5^T^SEnabled^B^SName^SElemental~`Mastery^SAbility^Selemental_mastery^t^N6^T^SEnabled^B^SName^SStorm~`Elemental~`Totem^SAbility^Sstorm_elemental_totem^t^N7^T^SEnabled^B^SName^SFire~`Elemental~`Totem^SAbility^Sfire_elemental_totem^t^N8^T^SAbility^Sascendance^SName^SAscendance^SScript^Scooldown.strike.remains>=3^SEnabled^B^t^N9^T^SEnabled^B^SName^SFeral~`Spirit^SAbility^Sferal_spirit^t^t^t^^" )
+	Hekili.Default( "@Enhancement, Cooldowns", 'actionLists', "^1^T^SActions^T^N1^T^SEnabled^b^SName^SBloodlust^SScript^Starget.health_pct<25|time>0.500^SAbility^Sbloodlust^t^N2^T^SAbility^Sheroism^SEnabled^b^SName^SHeroism^SScript^Starget.health_pct<25|time>0.500^t^N3^T^SEnabled^B^SName^SBlood~`Fury^SAbility^Sblood_fury^t^N4^T^SEnabled^B^SName^SBerserking^SAbility^Sberserking^t^N5^T^SEnabled^B^SName^SElemental~`Mastery^SAbility^Selemental_mastery^t^N6^T^SEnabled^B^SName^SStorm~`Elemental~`Totem^SAbility^Sstorm_elemental_totem^t^N7^T^SEnabled^B^SName^SFire~`Elemental~`Totem^SAbility^Sfire_elemental_totem^t^N8^T^SEnabled^B^SName^SAscendance^SScript^Scooldown.strike.remains>=action.stormstrike.cooldown/2^SAbility^Sascendance^t^N9^T^SEnabled^B^SName^SFeral~`Spirit^SAbility^Sferal_spirit^t^t^SSpecialization^N263^SName^S@Enhancement,~`Cooldowns^t^^" )
 	
 	Hekili.Default( "@Shaman, Interrupt", 'actionLists', "^1^T^SName^S@Shaman,~`Interrupt^SSpecialization^N0^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SWind~`Shear^SAbility^Swind_shear^SCaption^SShear^SScript^Starget.casting^t^t^t^^" )
 	

@@ -87,10 +87,14 @@ function Modify( tab, key, elem, ... )
 		loader = loader .. args[i] .. '\n'
 	end
 	
-	if entry.gcdType == 'melee' then
-		loader = loader .. 'return x * melee_haste\n' .. 'end'
+	if elem == 'cast' then
+		if entry.gcdType == 'melee' then
+			loader = loader .. 'return x * melee_haste\n' .. 'end'
+		else
+			loader = loader .. 'return x * spell_haste\n' .. 'end'
+		end
 	else
-		loader = loader .. 'return x * spell_haste\n' .. 'end'
+		loader = loader .. 'return x\n' .. 'end'
 	end
 	
 	local success, outcome = pcall( loadstring( loader ) )

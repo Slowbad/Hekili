@@ -16,8 +16,7 @@ function Hekili:GetDefaults()
 			Locked			= false,
 			Verbose			= false,
 			
-			Mode					= nil, -- Single Target
-			Hardcasts				= true,
+			Hardcasts		= true,
 			
 			['Audit Targets']		= 5,
 			['Updates Per Second']	= 10,

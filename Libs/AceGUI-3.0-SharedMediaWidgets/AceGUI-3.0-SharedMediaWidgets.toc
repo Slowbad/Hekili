@@ -4,6 +4,10 @@
 ## X-Curse-Project-ID: ace-gui-3-0-shared-media-widgets
 ## X-Curse-Repository-ID: wow/ace-gui-3-0-shared-media-widgets/mainline
 ## X-Curse-Packaged-Version: r32
+## X-Curse-Packaged-Version: r78
+## X-Curse-Project-Name: Hekili
+## X-Curse-Project-ID: hekili
+## X-Curse-Repository-ID: wow/hekili/mainline
 
 
 ## Title: Lib: AceGUI-3.0-SharedMediaWidgets
