@@ -203,6 +203,8 @@ function H:UpdateGear()
 	else
 		self.state.offhand_speed = 0
 	end
+	
+	Hekili.Tooltip:Hide()
 
 end
 

@@ -1033,15 +1033,11 @@ function H:UpdateDisplays()
 
 									elseif display['Primary Caption'] == 'ratio' then
 										if display['Primary Caption Aura'] then
-											local name, _, _, count = UnitDebuff( 'target', display['Primary Caption Aura'], nil, 'PLAYER' )
-											if name then
+											if H:DebuffCount( display['Primary Caption Aura'] ) > 0 or H:NumTargets() > 1 then
 												button.Caption:SetText( H:DebuffCount( display['Primary Caption Aura'] ) .. ' / ' .. H:NumTargets() )
 											else
-												if self:NumTargets() > 0 then button.Caption:SetText( '0 / ' .. self:NumTargets() )
-												else
-													button.Caption:SetJustifyH('CENTER')
-													button.Caption:SetText(caption)
-												end
+												button.Caption:SetJustifyH('CENTER')
+												button.Caption:SetText(caption)
 											end
 										end
 

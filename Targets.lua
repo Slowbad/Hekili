@@ -10,6 +10,9 @@ local tCount = 0
 local targets = {}
 
 
+Hekili.Targets = targets
+
+
 function H:UpdateTarget( id, time )
 
 	if time then
