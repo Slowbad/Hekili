@@ -21,9 +21,9 @@ function H:OnInitialize()
 	LibDualSpec:EnhanceDatabase(self.DB, "Hekili")
 	LibDualSpec:EnhanceOptions(self.Options.args.profiles, self.DB)
 
-	self.DB.RegisterCallback(self, "OnProfileChanged",	"RefreshOptions")
-	self.DB.RegisterCallback(self, "OnProfileCopied",	"RefreshOptions")
-	self.DB.RegisterCallback(self, "OnProfileReset",	"RefreshOptions")
+	self.DB.RegisterCallback(self, "OnProfileChanged",	"TotalRefresh")
+	self.DB.RegisterCallback(self, "OnProfileCopied",	"TotalRefresh")
+	self.DB.RegisterCallback(self, "OnProfileReset",	"TotalRefresh")
 	
 	LibStub("AceConfig-3.0"):RegisterOptionsTable("Hekili", self.Options)
 	self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Hekili", "Hekili")

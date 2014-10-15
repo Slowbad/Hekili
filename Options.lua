@@ -1554,6 +1554,22 @@ function Hekili:GetOptions()
 end
 
 
+function Hekili:TotalRefresh()
+
+	if self.CheckForActionLists then self:CheckForActionLists() end
+
+	for i, queue in ipairs( self.Queue ) do
+		for j, _ in pairs( queue ) do
+			self.Queue[i][j] = nil
+		end
+		self.Queue[i] = nil
+	end
+
+	self:RefreshOptions()
+	self:BuildUI()
+end
+
+
 function Hekili:RefreshOptions()
 
 	-- Remove existing displays from Options and rebuild the options table.
