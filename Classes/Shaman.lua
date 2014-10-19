@@ -325,7 +325,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	AddHandler( 'chain_lightning', function ()
 		if buff.maelstrom_weapon.stack == 5 then H:RemoveBuff( 'maelstrom_weapon' )
 		elseif buff.ancestral_swiftness.up then H:RemoveBuff( 'ancestral_swiftness' )
-		else buff.maelstrom_weapon.up then H:RemoveBuff( 'maelstrom_weapon' ) end
+		elseif buff.maelstrom_weapon.up then H:RemoveBuff( 'maelstrom_weapon' ) end
 		
 		if perk.enhanced_chain_lightning.enabled then
 			H:Buff( 'improved_chain_lightning', 15, min( glyph.chain_lightning.enabled and 5 or 3, active_enemies) )
