@@ -128,6 +128,39 @@ local function fmt( Code )
 end
 
 
+function Hekili:ShowDiagnosticTooltip( q )
+	self.Tooltip:SetOwner( UIParent, "ANCHOR_CURSOR" )
+	self.Tooltip:SetBackdropColor( 0, 0, 0, 1 )
+	self.Tooltip:SetText( self.Abilities[ q.action ].name )
+	self.Tooltip:AddDoubleLine( q.action_list .. " #"..q.entry, "+"..round( q.time, 2).."s", 1, 1, 1, 1, 1, 1 )
+
+	if q.prioScript then
+		self.Tooltip:AddLine( "\nPriority List Criteria" )
+		
+		local Text = fmt( q.prioScript )
+		self.Tooltip:AddLine( self.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
+		
+		self.Tooltip:AddLine( "Values" )
+		for k, v in pairs( q.prioElements ) do
+			self.Tooltip:AddDoubleLine( k, self.Utils.FormatValue( v ) , 1, 1, 1, 1, 1, 1 )
+		end
+	end
+	
+	if q.script and q.script ~= "" then
+		self.Tooltip:AddLine( "\nAction Criteria" )
+		
+		local Text = fmt( q.script )
+		self.Tooltip:AddLine( self.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
+		
+		self.Tooltip:AddLine( "Values" )
+		for k,v in pairs( q.elements ) do
+			self.Tooltip:AddDoubleLine( k, self.Utils.FormatValue( v ) , 1, 1, 1, 1, 1, 1 )
+		end
+	end
+	self.Tooltip:Show()
+end
+
+
 function Hekili:CreateButton( display, ID )
 	
 	local name = "Hekili_D" .. display .. "_B" .. ID
@@ -241,38 +274,7 @@ function Hekili:CreateButton( display, ID )
 			Hekili.Tooltip:Show()
 			self:SetMovable(true)
 		elseif ( Hekili.Pause and Hekili.Queue[ display ] and Hekili.Queue[ display ][ ID ] ) then
-			local q = Hekili.Queue[ display ][ ID ]
-			if q then
-				Hekili.Tooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
-				Hekili.Tooltip:SetBackdropColor( 0, 0, 0, 1 )
-				Hekili.Tooltip:SetText( Hekili.Abilities[ q.action ].name )
-				Hekili.Tooltip:AddDoubleLine( q.action_list .. " #"..q.entry, "+"..round( q.time, 2).."s", 1, 1, 1, 1, 1, 1 )
-
-				if q.prioScript then
-					Hekili.Tooltip:AddLine( "\nPriority List Criteria" )
-					
-					local Text = fmt( q.prioScript )
-					Hekili.Tooltip:AddLine( Hekili.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
-					
-					Hekili.Tooltip:AddLine( "Values" )
-					for i = 1, #q.prioElements, 2 do
-						Hekili.Tooltip:AddDoubleLine( q.prioElements[i], Hekili.Utils.FormatValue( q.prioElements[i+1] ), 1, 1, 1, 1, 1, 1 )
-					end
-				end
-				
-				if q.script and q.script ~= "" then
-					Hekili.Tooltip:AddLine( "\nAction Criteria" )
-					
-					local Text = fmt( q.script )
-					Hekili.Tooltip:AddLine( Hekili.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
-					
-					Hekili.Tooltip:AddLine( "Values" )
-					for i = 1, #q.elements, 2 do
-						Hekili.Tooltip:AddDoubleLine(q.elements[i], Hekili.Utils.FormatValue( q.elements[i+1] ), 1, 1, 1, 1, 1, 1)
-					end
-				end
-				Hekili.Tooltip:Show()
-			end
+			Hekili:ShowDiagnosticTooltip( Hekili.Queue[ display ][ ID ] )
 		else
 			self:SetMovable(false)
 			self:EnableMouse(false)
@@ -280,9 +282,7 @@ function Hekili:CreateButton( display, ID )
 	end )
 	
 	button:SetScript( "OnLeave", function(self)
-		if Hekili.Tooltip:GetOwner() == self then
-			Hekili.Tooltip:Hide()
-		end
+		Hekili.Tooltip:Hide()
 	end )
 	
 	return button

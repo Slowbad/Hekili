@@ -56,7 +56,7 @@ function AddAbility( key, id, cost, cast, gcd, cooldown, ... )
 	AbilityElements( key, "cost", cost, "cast", cast, "gcdType", gcd, "cooldown", cooldown, ... )
 	
 	-- Haste
-	AbilityMods( key, "cast", 'x = x * haste' ) -- hmm
+	-- AbilityMods( key, "cast", 'x = x * haste' ) -- hmm
 
 end
 

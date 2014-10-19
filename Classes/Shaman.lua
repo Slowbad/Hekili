@@ -303,6 +303,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 
 	AddHandler( 'ascendance', function ()
 		H:Buff( 'ascendance', 15 )
+		H:SetCooldown( 'lava_burst', 0 )
 		H:SetCooldown( 'stormstrike', 0 )
 		H:SetCooldown( 'windstrike', 0 )
 		H:SetCooldown( 'strike', 0 )
@@ -322,9 +323,9 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	end )
 
 	AddHandler( 'chain_lightning', function ()
-		if buff.ancestral_swiftness.up then H:RemoveBuff( 'ancestral_swiftness' )
-		elseif buff.maelstrom_weapon.up then H:RemoveBuff( 'maelstrom_weapon' )
-		end
+		if buff.maelstrom_weapon.stack == 5 then H:RemoveBuff( 'maelstrom_weapon' )
+		elseif buff.ancestral_swiftness.up then H:RemoveBuff( 'ancestral_swiftness' )
+		else buff.maelstrom_weapon.up then H:RemoveBuff( 'maelstrom_weapon' ) end
 		
 		if perk.enhanced_chain_lightning.enabled then
 			H:Buff( 'improved_chain_lightning', 15, min( glyph.chain_lightning.enabled and 5 or 3, active_enemies) )
@@ -353,6 +354,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	end )
 
 	AddHandler( 'earthquake', function ()
+		H:RemoveBuff( 'echo_of_the_elements' )
 		H:RemoveBuff( 'improved_chain_lightning' )
 	end )
 	
@@ -398,8 +400,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	AddHandler( 'frost_shock', function()
 		local cooldown = 6
 		
-		if spec.elemental then cooldown = 5 end
-		if glyph.frost_shock.enabled then cooldown = 4 end
+		if glyph.frost_shock.enabled then cooldown = cooldown - 2 end
 		if spec.enhancement then cooldown = cooldown * haste end
 		
 		H:RemoveBuff( 'elemental_fusion' )
@@ -429,8 +430,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	AddHandler( 'lava_beam', Hekili.Abilities[ 'chain_lightning' ].handler )
 	
 	AddHandler( 'lava_burst', function ()
-		if buff.lava_surge.up then H:RemoveBuff( 'lava_surge' )
-		elseif buff.ancestral_swiftness.up then H:RemoveBuff( 'ancestral_swiftness' ) end
+		if buff.lava_surge.up then H:RemoveBuff( 'lava_surge' )  end
 		if buff.echo_of_the_elements.up then H:RemoveBuff( 'echo_of_the_elements' ) end
 	end )
 	

@@ -94,88 +94,96 @@ function SimToLua( str, assign )
 end
 
 
-function H:LoadScripts()
-
-	self.Scripts      = self.Scripts or {}
-	self.Scripts['D'] = self.Scripts['D'] or {} -- displays
-	self.Scripts['P'] = self.Scripts['P'] or {} -- priority queues
-	self.Scripts['A'] = self.Scripts['A'] or {} -- actions
+function Hekili:ConvertScript( node, hasModifiers )
+	local Translated		= SimToLua( node.Script )
+	local sFunction, Error	= loadstring( 'return ' .. Translated )
+	local sElements			= self:ScriptElements( Translated )
 	
- 	for i,v in ipairs( self.Scripts['D'] ) do
-		table.wipe( self.Scripts['D'][i] )
-	end
-	for i,v in ipairs( self.Scripts['P'] ) do
-		table.wipe( self.Scripts['P'][i] )
-	end
-	for k,v in pairs( self.Scripts['A'] ) do
-		table.wipe( self.Scripts['A'][k] )
-	end
-
-	for i, display in ipairs( self.DB.profile.displays ) do
-
-		local script_str	= SimToLua( display.Script )
-		local script, err	= loadstring( 'return ' .. script_str )
-		
-		if script then setfenv( script, self.state ) end
-
-		self.Scripts['D'][i] = {
-			script		= script,
-			str			= script_str,
-			error		= err
-		} 
-		
-		for q, priority in ipairs( display.Queues ) do
-			local key			= 'D' .. i .. '-' .. q
-			
-			local script_str	= SimToLua( priority.Script )
-			local script, err	= loadstring( 'return ' .. script_str )
-
-			if script then setfenv( script, self.state ) end
-
-			self.Scripts['P'][key] = {
-				script		= script,
-				error		= err,
-				translated	= script_str ~= 'true' and script_str or nil,
-				entered		= priority.Script ~= '' and priority.Script or nil,
-			}
-		end
-	end
-
-	for i, list in ipairs( self.DB.profile.actionLists ) do
-		for a, action in ipairs( list.Actions ) do
-			local key		= 'L' .. i .. '-' .. a
+	local Output			= {}
 	
-			local script_str	= SimToLua( action.Script )
-			local script, err	= loadstring( 'return ' .. script_str )
+	if sFunction then
+		setfenv( sFunction, self.state )
+	end
+
+	Output = {
+		Conditions	= sFunction,
+		Error		= Error,
+		Elements	= sElements,
+		Modifiers	= {},
+		
+		Lua			= Translated,
+		SimC		= node.Script and string.trim( node.Script ) or nil
+	}
+	
+	if hasModifiers and ( node.Args and node.Args ~= '' ) then
+		local tModifiers	= SimToLua( node.Args, true )
+		
+		for m in tModifiers:gmatch("[^.|^$]+") do
+			local Key, Value = m:match("(.-)=(.-)$")
 			
-			if script then setfenv( script, self.state ) end
-
-			self.Scripts['A'][key] = {
-				script		= script,
-				error		= err,
-				translated	= script_str ~= 'true' and script_str or nil,
-				entered		= action.Script,
-				mods		= {}
-			}	
-
-			if action.Args and action.Args ~= '' then
-				local mods = self.Scripts['A'][key].mods
+			if Key and Value then
+				local sFunction, Error = loadstring( 'return ' .. Value )
 				
-				local mod_str	= SimToLua( action.Args, true )
-				for m in mod_str:gmatch("[^,|^$]+") do
-					local var, val = m:match("(.-)=(.-)$")
-					
-					if var and val then
-						local m_script, err = loadstring( 'return ' .. val )
-						if m_script then setfenv( m_script, self.state ) end
-					
-						mods[var] = m_script
-					end
+				if sFunction then
+					setfenv( sFunction, self.state )
+					Output.Modifiers[ Key ] = sFunction
 				end
 			end
 		end
-	end 
+	end
+
+	return Output
+end
+
+
+function Hekili:GatherValues( node )
+	if not node.Elements then
+		return nil
+	end
+
+	local Output = {}
 	
+	for k, v in pairs( node.Elements ) do
+		_, Output[k] = pcall( v )
+	end
+	
+	return Output
+end
+
+
+function Hekili:LoadScripts()
+	self.Scripts	= self.Scripts or { D = {}, P = {}, A = {} }
+
+	local Displays, Priorities, Actions = self.Scripts.D, self.Scripts.P, self.Scripts.A
+	local Profile = self.DB.profile
+	
+	for i, _ in ipairs( Displays ) do
+		Displays[i] = nil
+	end
+	
+	for k, _ in pairs( Priorities ) do
+		Priorities[k] = nil
+	end
+	
+	for k, _ in pairs( Actions ) do
+		Actions[k] = nil
+	end
+	
+	for i, display in ipairs( self.DB.profile.displays ) do
+		Displays[ i ] = self:ConvertScript( display )
+		
+		for j, priority in ipairs( display.Queues ) do
+			local pKey = 'D'..i..'-'..j
+			Priorities[ pKey ] = self:ConvertScript( priority )
+		end
+	end
+	
+	for i, list in ipairs( self.DB.profile.actionLists ) do
+		for a, action in ipairs( list.Actions) do
+			local aKey = 'L'..i..'-'..a
+			Actions[ aKey ] = self:ConvertScript( action, true )
+		end
+	end
 end
 
 
@@ -183,7 +191,7 @@ function StripScript( str, thorough )
 	if not str then return 'true' end
 	
 	-- Remove the 'return ' that was added during conversion.
-	str = str:gsub("return ", "")
+	str = str:gsub("^return ", "")
 	
 	-- Remove comments and parentheses.
 	str = str:gsub("%-%-.-\n", ""):gsub("[()]", "")
@@ -205,123 +213,57 @@ function StripScript( str, thorough )
 end
 
 
-function ThoroughlyCheck( str )
-	local err, found = nil, false
-
-	local check = StripScript( str, true )
+function Hekili:ScriptElements( script )
+	local Elements, Check = {}, StripScript( script, true )
 	
-	for i in check:gmatch("%S+") do
-		local test = loadstring( 'return ' .. ( i or true ) )
-		
-		if test then setfenv( test, Hekili.state ) end
-			
-		local success, out = pcall ( test )
-		
-		if tostring(out) ~= i then
-			if success then
-				if type(out) == 'number' then
-					err = string.format("%s%s%s: %.2f", ( err or '' ), ( found and '\n   ' or '   ' ), i, out)
-				else
-					err = string.format("%s%s%s: %s", ( err or '' ), ( found and '\n   ' or '   ' ), i, tostring(out))
-				end
-			else
-				err = ( err or '' ) .. ( found and '\n   ' or '   ') .. ( out:match("^.*: (.*)") or out )
-			end
-			found = true
-		end
-	end
-	
-	return err
-end
+	for i in Check:gmatch( "%S+" ) do
+		if not Elements[i] then
+			local eFunction = loadstring( 'return '.. (i or true) )
 
+			if eFunction then setfenv( eFunction, Hekili.state ) end
 
-function Hekili:ScriptElements( str )
-	local found	= false
-	local sElems 	= {}
-	
-	str = SimToLua(str)
-
-	local check	= StripScript( str, true )
-	
-	for i in check:gmatch("%S+") do
-		local test = loadstring( 'return ' .. ( i or true ) )
+			local success, value = pcall( eFunction )
 		
-		if test then setfenv( test, Hekili.state ) end
-		
-		local success, out = pcall ( test )
-		
-		-- Rule out constants.
-		if tostring(out) ~= i then
-			local found = false
-			for n = 1, #sElems, 2 do
-				if sElems[n] == i then
-					found = true
-					break
-				end
-			end
-			
-			if not found then
-				sElems[ #sElems + 1 ] = i
-				if success then
-					sElems[ #sElems + 1 ] = out
-				else
-					sElems[ #sElems + 1 ] = out:match("^.*: (.*)") or out
-				end
+			-- Rule out constants, numbers by giving it a test run.
+			if tostring(value) ~= i then
+				Elements[i] = eFunction
 			end
 		end
 	end
 	
-	return sElems
-end
+	return Elements
+end			
 	
 
 
-function H:CheckScript( cat, arg1, arg2, action )
-
+function Hekili:CheckScript( cat, arg1, arg2, action )
+	
 	if action then self.state.this_action = action end
 
-	local success, value
-	local script = nil
+	local tblScript
 	
-	if cat == 'D' then -- Displays
-		success, value = pcall( self.Scripts['D'][arg1].script )
-		
-	elseif cat == 'P' then -- Priority Queue
-		success, value = pcall( self.Scripts['P']['D'..arg1..'-'..arg2].script )
-
-		if success then
-			local script = self.Scripts['P']['D'..arg1..'-'..arg2].entered
-			local elements = self:ScriptElements( script )
-			
-			if script then script = string.trim(script) end
-			return value, script, elements
-		end
-		
-	elseif cat == 'A' then -- Action
-		success, value = pcall( self.Scripts['A']['L'..arg1..'-'..arg2].script )
-		
-		if success then
-			local script = self.Scripts['A']['L'..arg1..'-'..arg2].entered
-			local elements = self:ScriptElements( script )
-			
-			if script then script = string.trim(script) end
-			return value, script, elements
-		end
-		
+	if cat == 'D' then
+		tblScript = self.Scripts.D[arg1]
+	elseif cat == 'P' then
+		tblScript = self.Scripts.P['D'..arg1..'-'..arg2]
+	elseif cat == 'A' then
+		tblScript = self.Scripts.A['L'..arg1..'-'..arg2]
 	else
 		return false
-	
 	end
 	
-	if not success then
-		return false
+	local success, value = pcall( tblScript.Conditions )
+	
+	if success then
+		return value, tblScript.SimC, self:GatherValues( tblScript )
 	end
-		
-	return value
+	
+	return false
+	
 end
 
 
-function H:GetModifiers( list, entry )
+function Hekili:GetModifiers( list, entry )
 
 	local mods = {}
 	
@@ -419,13 +361,9 @@ local s_textures = setmetatable( {},
 	} )
 
 -- Insert textures that don't work well with predictions.@
-s_textures[GetSpellInfo(115356)] = 'Interface\\Icons\\ability_skyreach_four_wind'	-- Windstrike
-s_textures[GetSpellInfo(114074)] = 'Interface\\Icons\\Spell_Fire_SoulBurn'			-- Lava Beam
-s_textures[GetSpellInfo(421)] = 'Interface\\Icons\\Spell_Nature_ChainLightning'	-- Chain Lightning
-	
-
-	
-	
+s_textures[GetSpellInfo(115356)]	= 'Interface\\Icons\\ability_skyreach_four_wind'	-- Windstrike
+s_textures[GetSpellInfo(114074)]	= 'Interface\\Icons\\Spell_Fire_SoulBurn'			-- Lava Beam
+s_textures[GetSpellInfo(421)]		= 'Interface\\Icons\\Spell_Nature_ChainLightning'	-- Chain Lightning
 	
 local function GetSpellTexture( spell )
 	return ( s_textures[ spell ] )
@@ -808,12 +746,12 @@ function H:ProcessActionLists()
 
 										end
 									
-									elseif ( self.Abilities[ s.this_action ].cast == 0 or self.Hardcasts ) and IsKnown( s.this_action ) and IsUsable( s.this_action ) and HasRequiredResources( s.this_action ) and CriteriaPassed then
+									elseif ( self.Abilities[ s.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and IsKnown( s.this_action ) and IsUsable( s.this_action ) and HasRequiredResources( s.this_action ) and CriteriaPassed then
 										local wait_time = WaitTime( s.this_action )
 										
 										if wait_time < chosen_wait then
 											chosen_action	= s.this_action
-											chosen_caption	= entry.Caption or ''
+											chosen_caption	= entry.Caption
 											chosen_wait		= wait_time
 
 											Queue[i].display	= dispID
