@@ -725,7 +725,7 @@ function H:ProcessActionLists()
 											-- Check for commands before checking actual actions.
 											if entry.Ability == 'wait' then
 												if CriteriaPassed then
-													local args = self:GetModifiers( listID, n )
+													local args = self:GetModifiers( listID, actID )
 													if not args.sec then args.sec = 1 end
 													if args.sec > 0 then
 														self:Advance( args.sec )
