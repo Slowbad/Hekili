@@ -323,7 +323,8 @@ function H:OnEnable()
 			self.msqGroup:ReSkin()
 		end
 		
-		C_Timer.After( 1 / self.DB.profile['Updates Per Second'], Hekili.HeartBeat )
+		C_Timer.After( 1 / self.DB.profile['Updates Per Second'], Hekili.ProcessActionLists )
+		C_Timer.After( 1 / self.DB.profile['Updates Per Second'], Hekili.UpdateDisplays )
 		C_Timer.After( 1, Hekili.Audit )
 	
 	else
@@ -670,6 +671,8 @@ end
 Hekili.Queue = {}
 function H:ProcessActionLists()
 
+	local self = Hekili
+
 	if not self.DB.profile.Enabled or self.Pause then
 		return
 	end
@@ -844,6 +847,8 @@ function H:ProcessActionLists()
 		
 	end
 
+	C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self.ProcessActionLists )
+	
 end
 
 
@@ -903,6 +908,8 @@ end
 local lastDisplay = {}
 
 function H:UpdateDisplays()
+
+	local self = Hekili
 
 	if not self.DB.profile.Enabled then
 		return
@@ -1045,6 +1052,9 @@ function H:UpdateDisplays()
 			end
 		end
 	end
+	
+	C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self.UpdateDisplays )
+	
 end
 
 
