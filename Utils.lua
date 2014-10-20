@@ -4,7 +4,7 @@
 local H		= Hekili
 H.Utils			= {}
 
-
+local strformat = string.format
 
 function H.Utils.FormatKey( s )
 	return ( strlower(s):gsub("[^a-z0-9_ ]", ""):gsub("%s", "_") )
@@ -13,7 +13,7 @@ end
 
 if not round then
 	round = function ( num, places )
-		return tonumber(string.format("%." .. (places or 0) .. "f", num))
+		return tonumber(strformat("%." .. (places or 0) .. "f", num))
 	end
 end
 
@@ -25,11 +25,12 @@ local COLOR_STRING		= '|cFF008888'
 local COLOR_DEFAULT	= '|cFFFFFFFF'
 local COLOR_NORMAL		= '|r'
 
+
 function H.Utils.FormatValue( value )
 	if type( value ) == 'number' then
 		-- Check for decimal places.
 		if select(2, math.modf( value )) ~= 0 then
-			return string.format( "%s%.2f%s", COLOR_NUMBERS, value, COLOR_NORMAL )
+			return strformat( "%s%.2f%s", COLOR_NUMBERS, value, COLOR_NORMAL )
 		else
 			return COLOR_NUMBERS .. value .. COLOR_NORMAL
 		end
@@ -84,6 +85,7 @@ function H.Utils.GetSpecializationID()
 end
 
 
+--[[
 function DeepCopy(orig)
     local orig_type = type(orig)
     local copy
@@ -97,8 +99,20 @@ function DeepCopy(orig)
         copy = orig
     end
     return copy
+end ]]
+
+
+-- Deep Copy from http://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value
+function tblCopy(obj, seen)
+  if type(obj) ~= 'table' then return obj end
+  if seen and seen[obj] then return seen[obj] end
+  local s = seen or {}
+  local res = setmetatable({}, getmetatable(obj))
+  s[obj] = res
+  for k, v in pairs(obj) do res[tblCopy(k, s)] = tblCopy(v, s) end
+  return res
 end
-Hekili.Utils.DeepCopy = DeepCopy
+Hekili.Utils.tblCopy = tblCopy
 
 
 function H.Utils.Unpacks( ... )

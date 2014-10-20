@@ -11,13 +11,42 @@ function Hekili:UPDATE_BINDINGS()
 end
 
 
-function H:PLAYER_ENTERING_WORLD()
+function Hekili:CacheDurableDisplayCriteria()
+	
+	self.DisplayVisible		= self.DisplayVisible or {}
+	self.PriorityVisible	= self.PriorityVisible or {}
+	self.ListVisible		= self.ListVisible or {}
+	self.ActionVisible		= self.ActionVisible or {}
+	
+	for i, display in ipairs( self.DB.profile.displays ) do
+		self.DisplayVisible[ i ] = display.Enabled and ( display.Specialization == 0 or display.Specialization == self.Specialization )
+
+		for j, priority in ipairs( display.Queues ) do
+			self.PriorityVisible[ i..':'..j ] = priority.Enabled and priority['Action List'] ~= 0
+		end
+	end
+	
+	for i, list in ipairs( self.DB.profile.actionLists ) do
+		self.ListVisible[ i ] = list.Specialization == 0 or list.Specialization == self.Specialization
+		
+		for j, action in ipairs( list.Actions ) do
+			self.ActionVisible[ i..':'..j ] = action.Enabled and action.Ability
+		end
+	end
+	
+end
+
+
+function Hekili:PLAYER_ENTERING_WORLD()
 	self.Specialization = GetSpecializationInfo( GetSpecialization() )
+	self.GUID = UnitGUID("player")
 
 	if self.SetClassModifiers then self:SetClassModifiers() end
 	self:UpdateGlyphs()
 	self:UpdateTalents()
 	
+	self:CacheDurableDisplayCriteria()
+
 	self:UpdateGear()
 	
 	if not InitialGearUpdate then
@@ -26,6 +55,8 @@ function H:PLAYER_ENTERING_WORLD()
 	
 	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 end
+
+
 
 
 function H:PLAYER_LOGOUT()
@@ -43,7 +74,12 @@ end
 function H:ACTIVE_TALENT_GROUP_CHANGED()
 	
 	self.Specialization = GetSpecializationInfo( GetSpecialization() )
-	self:SetClassModifiers()
+	if self.SetClassModifiers then self:SetClassModifiers() end
+
+	self:UpdateGlyphs()
+	self:UpdateTalents()
+
+	self:CacheDurableDisplayCriteria()
 	
 	for k,v in pairs( self.Queue ) do
 		for i = 1, #v do
@@ -66,8 +102,8 @@ end
 
 function H:UpdateTalents()
 
-	for k,_ in pairs( self.state.talent ) do
-		self.state.talent[k] = nil
+	for k,_ in pairs( self.State.talent ) do
+		self.State.talent[k] = nil
 	end
 	
 	local group = GetActiveSpecGroup()
@@ -78,22 +114,22 @@ function H:UpdateTalents()
 		
 			for k,v in pairs( self.Talents ) do
 				if name == v.name then
-					self.state.talent[ k ] = { enabled = enabled }
+					self.State.talent[ k ] = { enabled = enabled }
 					break
 				end
 			end
 		end
 	end
 	
-	for k,_ in pairs( self.state.perk ) do
-		self.state.perk[k] = nil
+	for k,_ in pairs( self.State.perk ) do
+		self.State.perk[k] = nil
 	end
 	
 	for k,v in pairs( self.Perks ) do
 		if IsSpellKnown( v.id ) then
-			self.state.perk[ k ] = { enabled = true }
+			self.State.perk[ k ] = { enabled = true }
 		else
-			self.state.perk[ k ] = { enabled = false }
+			self.State.perk[ k ] = { enabled = false }
 		end
 	end
 	
@@ -109,8 +145,8 @@ end
 
 function H:UpdateGlyphs()
 
-	for k,_ in pairs( self.state.glyph ) do
-		self.state.glyph[k] = nil
+	for k,_ in pairs( self.State.glyph ) do
+		self.State.glyph[k] = nil
 	end
 	
 	for i=1, NUM_GLYPH_SLOTS do
@@ -119,7 +155,7 @@ function H:UpdateGlyphs()
 		for k,v in pairs( self.Glyphs ) do
 			if gID == v.id then
 				if enabled and v.name then
-					self.state.glyph[ k ] = { enabled = true }
+					self.State.glyph[ k ] = { enabled = true }
 					break
 				end
 			end
@@ -137,12 +173,12 @@ H.GLYPH_UPDATED = H.GLYPH_ADDED
 
 
 function H:ENCOUNTER_START()
-	self.boss			= true
+	self.Boss			= true
 end
 
 
 function H:ENCOUNTER_END()
-	self.boss			= false
+	self.Boss			= false
 end
 
 
@@ -151,8 +187,8 @@ function H:UpdateGear()
 
 	local self = self or Hekili
 
-	for k,_ in pairs( self.state.set_bonus ) do
-		self.state.set_bonus[k] = 0
+	for k,_ in pairs( self.State.set_bonus ) do
+		self.State.set_bonus[k] = 0
 	end
 	
 	for set_name, items in pairs( self.Gear ) do
@@ -160,16 +196,16 @@ function H:UpdateGear()
 			local iName = GetItemInfo( item )
 			
 			if IsEquippedItem(iName) then
-				self.state.set_bonus[set_name] = self.state.set_bonus[set_name] + 1
+				self.State.set_bonus[set_name] = self.State.set_bonus[set_name] + 1
 			end
 		end
 	end
 
 	local g1, g2, g3 = GetInventoryItemGems(1)
 	if (g1 and self.MetaGem[g1]) or (g2 and self.MetaGem[g2]) or (g3 and self.MetaGem[g3]) then
-		self.state.crit_meta = true
+		self.State.crit_meta = true
 	else
-		self.state.crit_meta = false
+		self.State.crit_meta = false
 	end
 
 	Hekili.Tooltip:SetOwner( UIParent, "ANCHOR_NONE") 
@@ -182,12 +218,12 @@ function H:UpdateGear()
 		
 		local WS = _G["HekiliTooltipTextRight5"]:GetText()
 		if WS then
-			self.state.mainhand_speed = tonumber( WS:match("%d[.,]%d+") )
+			self.State.mainhand_speed = tonumber( WS:match("%d[.,]%d+") )
 		end
 		
 		InitialGearUpdate = true
 	else
-		self.state.mainhand_speed = 0
+		self.State.mainhand_speed = 0
 		
 	end
 	
@@ -198,10 +234,10 @@ function H:UpdateGear()
 		
 		local WS = _G["HekiliTooltipTextRight5"]:GetText()
 		if WS then
-			self.state.offhand_speed = tonumber( WS:match("%d[.,]%d+") )
+			self.State.offhand_speed = tonumber( WS:match("%d[.,]%d+") )
 		end
 	else
-		self.state.offhand_speed = 0
+		self.State.offhand_speed = 0
 	end
 	
 	Hekili.Tooltip:Hide()
@@ -257,23 +293,29 @@ Hekili.SwingInfo = {
 -- Use dots/debuffs to count active targets.
 -- Track dot power (until 6.0) for snapshotting.
 -- Note that this was ported from an unreleased version of Hekili, and is currently only counting damaged enemies.
-function H:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName, _, _, interrupt)
+function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName, _, _, interrupt)
+
+	if subtype == 'UNIT_DIED' or subtype == 'UNIT_DESTROYED' and self:KnownTarget( destGUID ) then
+		self:Eliminate( destGUID )
+		return
+	end
+
+	if sourceGUID ~= self.GUID and not self:IsMinion( sourceGUID ) then
+		return
+	end
+
+	local hostile = ( bit.band( destFlags, COMBATLOG_OBJECT_REACTION_FRIENDLY ) == 0 )
 
 	local time = GetTime()
 	
-	local hostile = ( bit.band( destFlags, COMBATLOG_OBJECT_REACTION_FRIENDLY ) == 0 )
-
 	-- Hekili: v1 Tracking System
-	if subtype == 'SPELL_SUMMON' and sourceGUID == UnitGUID('player') then
-		self:UpdateMinion( destGUID, GetTime() )
-	end
-	
-	if subtype == 'UNIT_DIED' or subtype == 'UNIT_DESTROYED' then
-		self:Eliminate( destGUID )
+	if subtype == 'SPELL_SUMMON' and sourceGUID == self.GUID then
+		self:UpdateMinion( destGUID, time )
+		return
 	end
 
 	--[[  DW Swing Logic, save for warrior implementation.
-	if sourceGUID == UnitGUID('player') and subtype:sub(1, 5) == "SWING" then
+	if sourceGUID == self.GUID and subtype:sub(1, 5) == "SWING" then
 		local speed = {}
 		speed.MH, speed.OH = UnitAttackSpeed("player")
 		if (#swing == 5) then
@@ -310,7 +352,7 @@ function H:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceN
 	end ]]
 	
 	-- Player/Minion Event
-	if hostile and ( sourceGUID == UnitGUID('player') or self:IsMinion( sourceGUID ) ) and sourceGUID ~= destGUID then
+	if hostile and sourceGUID ~= destGUID then
 		
 		-- Aura Tracking
 		if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' then
@@ -325,7 +367,6 @@ function H:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceN
 			self:TrackDebuff( spellName, destGUID )
 		end
 
-		-- If you don't care about multiple targets, I don't!
 		if subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
 			self:UpdateTarget( destGUID, time )
 		end

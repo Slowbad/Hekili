@@ -23,9 +23,6 @@ function Hekili:BuildUI()
 		self.UI.Engine:SetMovable(false)
 		self.UI.Engine:EnableMouse(false)
 		self.UI.Engine:SetAllPoints(UIParent)
-		
-		self.UI.Engine.Ticker	= C_Timer.NewTicker( 1 / self.DB.profile['Updates Per Second'], Hekili.HeartBeat )
-		self.UI.Engine.Auditor	= C_Timer.NewTicker( 1, Hekili.Audit )
 	end
 	
 	self.UI.Buttons	= self.UI.Buttons or {}
@@ -36,11 +33,10 @@ function Hekili:BuildUI()
 		for i = 1, max( #self.UI.Buttons[dispID], display['Icons Shown'] ) do
 			self.UI.Buttons[dispID][i] = self:CreateButton( dispID, i )
 			
-			if self.DB.profile.Enabled and i <= display['Icons Shown'] then
+			--[[ if self.DB.profile.Enabled and i <= display['Icons Shown'] then
 				self.UI.Buttons[dispID][i]:Show()
-			else
-				self.UI.Buttons[dispID][i]:Hide()
-			end
+			else ]]
+			self.UI.Buttons[dispID][i]:Hide()
 			
 			if self.MSQ then self.msqGroup:AddButton( self.UI.Buttons[dispID][i], { Icon = self.UI.Buttons[dispID][i].Texture, Cooldown = self.UI.Buttons[dispID][i].Cooldown } ) end	
 		end
@@ -131,30 +127,34 @@ end
 function Hekili:ShowDiagnosticTooltip( q )
 	self.Tooltip:SetOwner( UIParent, "ANCHOR_CURSOR" )
 	self.Tooltip:SetBackdropColor( 0, 0, 0, 1 )
-	self.Tooltip:SetText( self.Abilities[ q.action ].name )
-	self.Tooltip:AddDoubleLine( q.action_list .. " #"..q.entry, "+"..round( q.time, 2).."s", 1, 1, 1, 1, 1, 1 )
+	self.Tooltip:SetText( self.Abilities[ q.actName ].name )
+	self.Tooltip:AddDoubleLine( q.alName.." #"..q.action, "+"..round( q.time, 2).."s", 1, 1, 1, 1, 1, 1 )
 
-	if q.prioScript then
+	if q.PrioScript then
 		self.Tooltip:AddLine( "\nPriority List Criteria" )
 		
-		local Text = fmt( q.prioScript )
+		local Text = fmt( q.PrioScript )
 		self.Tooltip:AddLine( self.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
 		
-		self.Tooltip:AddLine( "Values" )
-		for k, v in pairs( q.prioElements ) do
-			self.Tooltip:AddDoubleLine( k, self.Utils.FormatValue( v ) , 1, 1, 1, 1, 1, 1 )
+		if q.PrioElements then
+			self.Tooltip:AddLine( "Values" )
+			for k, v in pairs( q.PrioElements ) do
+				self.Tooltip:AddDoubleLine( k, self.Utils.FormatValue( v ) , 1, 1, 1, 1, 1, 1 )
+			end
 		end
 	end
 	
-	if q.script and q.script ~= "" then
+	if q.ActScript and q.ActScript ~= "" then
 		self.Tooltip:AddLine( "\nAction Criteria" )
 		
-		local Text = fmt( q.script )
+		local Text = fmt( q.ActScript )
 		self.Tooltip:AddLine( self.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
 		
-		self.Tooltip:AddLine( "Values" )
-		for k,v in pairs( q.elements ) do
-			self.Tooltip:AddDoubleLine( k, self.Utils.FormatValue( v ) , 1, 1, 1, 1, 1, 1 )
+		if q.ActElements then
+			self.Tooltip:AddLine( "Values" )
+			for k,v in pairs( q.ActElements ) do
+				self.Tooltip:AddDoubleLine( k, self.Utils.FormatValue( v ) , 1, 1, 1, 1, 1, 1 )
+			end
 		end
 	end
 	self.Tooltip:Show()

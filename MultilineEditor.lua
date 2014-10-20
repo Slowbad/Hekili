@@ -223,8 +223,7 @@ local function GenerateDiagnosticTooltip(widget, event)
 	
 	if descStyle and descStyle ~= "tooltip" then return end
 	
-	GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-
+	GameTooltip:SetOwner( widget.frame, "ANCHOR_TOPRIGHT" )
 	GameTooltip:SetText(name, 1, .82, 0, 1)
 	
 	if type(arg) == "string" then
@@ -239,7 +238,7 @@ local function GenerateDiagnosticTooltip(widget, event)
 		
 		if actID then
 			action = Hekili.DB.profile.actionLists[ listID ].Actions[ actID ].Ability
-			local result = Hekili:CheckScript( 'A', listID, actID, action )
+			local result = Hekili:CheckScript( 'A', listID..':'..actID, action )
 
 			GameTooltip:AddDoubleLine( "Shown", Hekili.Utils.FormatValue( result ), 1, 1, 1, 1, 1, 1 )
 			tested = true
@@ -255,20 +254,19 @@ local function GenerateDiagnosticTooltip(widget, event)
 		else
 			local prioID = tonumber( path[3]:match( "^P(%d+)" ) )
 			
-			local result = Hekili:CheckScript( 'P', dispID, prioID )
+			local result = Hekili:CheckScript( 'P', dispID..':'..prioID )
 			GameTooltip:AddDoubleLine( "Shown", Hekili.Utils.FormatValue( result ), 1, 1, 1, 1, 1, 1 )
 		end
 		tested = true
 	
 	end
 	
-	
-	if arg and #arg > 1 then
+	if arg then
 		if tested then GameTooltip:AddLine(" ") end
 	
 		GameTooltip:AddLine( "Values" )
-		for i = 1, #arg, 2 do
-			GameTooltip:AddDoubleLine(arg[i], Hekili.Utils.FormatValue( arg[i+1] ), 1, 1, 1, 1, 1, 1)
+		for k, v in pairs( arg ) do
+			GameTooltip:AddDoubleLine( k, Hekili.Utils.FormatValue( v ), 1, 1, 1, 1, 1, 1 )
 		end
 	end
 	
@@ -277,6 +275,7 @@ local function GenerateDiagnosticTooltip(widget, event)
 	end
 	
 	GameTooltip:Show()
+	
 end
 
 

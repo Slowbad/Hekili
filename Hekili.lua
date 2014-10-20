@@ -2,8 +2,9 @@
 -- April 2014
 
 Hekili		= LibStub("AceAddon-3.0"):NewAddon( "Hekili", "AceConsole-3.0", "AceEvent-3.0", "AceSerializer-3.0" )
-Hekili.UI		= {}
+Hekili.UI	= {}
 
+local strformat = string.format
 
 -- LibButtonFrame a.k.a. Masque
 Hekili.MSQ = LibStub("Masque", true)
@@ -60,10 +61,8 @@ Hekili.Tooltip:SetBackdrop( Backdrop )
 
 
 function Hekili:Error(...)
-	if self.DB.profile.Verbose then
-		local output = string.format( ... )
-		self:Print(output)
-	end
+	local output = strformat( ... )
+	self:Print(output)
 end
 
 

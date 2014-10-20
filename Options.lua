@@ -4,7 +4,9 @@
 local H = Hekili
 local GetClassID = H.Utils.GetClassID
 local GetSpecializationID = H.Utils.GetSpecializationID
-local DeepCopy = H.Utils.DeepCopy
+local tblCopy = H.Utils.tblCopy
+
+local strformat, strmatch = string.format, string.match
 
 -- Default Table
 function Hekili:GetDefaults()
@@ -14,7 +16,7 @@ function Hekili:GetDefaults()
 			Release			= 1,
 			Enabled			= true,
 			Locked			= false,
-			Verbose			= false,
+			Debug			= false,
 			
 			Hardcasts		= true,
 			
@@ -133,7 +135,7 @@ function Hekili:NewDisplayOption( key )
 					local dispIdx = tonumber( dispKey:match( "^D(%d+)" ) )
 					
 					if val == '' then return true
-					elseif string.match(val, "@") then
+					elseif strmatch(val, "@") then
 						Hekili:Print("The @ character is reserved for default lists by the addon author.")
 						return "The @ character is reserved for default lists by the addon author."
 					end
@@ -161,7 +163,7 @@ function Hekili:NewDisplayOption( key )
 				order	= 11,
 				validate = function(info, val)
 					if val == '' then return true end
-					if string.match(val, "@") then
+					if strmatch(val, "@") then
 						Hekili:Print("The @ character is reserved for default action lists.")
 						return "The @ character is reserved for default action lists."
 					else
@@ -216,7 +218,7 @@ function Hekili:NewDisplayOption( key )
 				func		=	function(info, ...)
 					-- Key to Current Display (string)
 					local dispKey = info[2]
-					local dispIdx = tonumber( string.match( dispKey, "^D(%d+)" ) )
+					local dispIdx = tonumber( strmatch( dispKey, "^D(%d+)" ) )
 
 					for i, queue in ipairs( self.DB.profile.displays[dispIdx].Queues ) do
 						for k,v in pairs( queue ) do
@@ -305,8 +307,8 @@ function Hekili:NewDisplayOption( key )
 							local dispIdx = tonumber( dispKey:match("^D(%d+)" ) )
 							
 							Hekili:ResetState()
-							Hekili.state.this_action = 'wait'
-							return Hekili:ScriptElements( self.DB.profile.displays[ dispIdx ].Script )
+							Hekili.State.this_action = 'wait'
+							return Hekili:GatherValues( self.Scripts.D[ dispIdx ] )
 						end,
 						multiline = 6,
 						order	= 10,
@@ -413,7 +415,7 @@ function Hekili:NewDisplayOption( key )
 						name	= 'Primary Caption',
 						desc	= "This allows you to override the caption on the primary icon under a variety of circumstances.",
 						hidden	= function(info)
-							local display = tonumber( string.match( info[2], "^D(%d+)" ) )
+							local display = tonumber( strmatch( info[2], "^D(%d+)" ) )
 							if not self.DB.profile.displays[ display ]['Action Captions'] then
 								return true
 							end
@@ -434,7 +436,7 @@ function Hekili:NewDisplayOption( key )
 						name	= 'Aura',
 						desc	= "Enter the name of the aura to check for certain Primary Caption overrides.",
 						hidden	= function(info)
-							local display = tonumber( string.match( info[2], "^D(%d+)" ) )
+							local display = tonumber( strmatch( info[2], "^D(%d+)" ) )
 							if not self.DB.profile.displays[ display ]['Action Captions'] then
 								return true
 							end
@@ -494,7 +496,7 @@ function Hekili:NewPriorityQueue( display, name )
 	end
 	
 	if type(display) == string then
-		display = tonumber( string.match( display, "^D(%d+)") )
+		display = tonumber( strmatch( display, "^D(%d+)") )
 	end
 	
 	for i,v in ipairs( self.DB.profile.displays[display].Queues ) do
@@ -617,9 +619,9 @@ function Hekili:NewPriorityQueueOption( display, key )
 					local dispIdx, prioIdx = tonumber( dispKey:match("^D(%d+)" ) ), tonumber( prioKey:match("^P(%d+)") )
 					local prio = self.DB.profile.displays[ dispIdx ].Queues[ prioIdx ]
 					
-					Hekili:ResetState()
-					Hekili.state.this_action = 'wait'
-					return Hekili:ScriptElements( prio.Script )
+					self:ResetState()
+					self.State.this_action = 'wait'
+					return self:GatherValues( self.Scripts.P[ dispIdx..':'..prioIdx ] )
 				end,
 				multiline = 6,
 				order	= 12,
@@ -634,9 +636,9 @@ function Hekili:NewPriorityQueueOption( display, key )
 				func		=	function(info, ...)
 					-- Key to Current Display (string)
 					local dispKey = info[2]
-					local dispIdx = tonumber( string.match( dispKey, "^D(%d+)" ) )
+					local dispIdx = tonumber( strmatch( dispKey, "^D(%d+)" ) )
 					local queueKey = info[3]
-					local queueIdx = tonumber( string.match( queueKey, "^P(%d+)" ) )
+					local queueIdx = tonumber( strmatch( queueKey, "^P(%d+)" ) )
 
 					-- Will need to be more elaborate later.
 					table.remove( self.DB.profile.displays[dispIdx].Queues, queueIdx )
@@ -686,7 +688,7 @@ function Hekili:NewActionListOption( index )
 		type		= "group",
 		name		= name,
 		icon		= function(info)
-			local list = tonumber( string.match( info[#info], "^L(%d+)" ) )
+			local list = tonumber( strmatch( info[#info], "^L(%d+)" ) )
 			if self.DB.profile.actionLists[ list ].Specialization > 0 then
 				return select( 4, GetSpecializationInfoByID( self.DB.profile.actionLists[ list ].Specialization ) )
 			else return 'Interface\\Addons\\Hekili\\Textures\\' .. select(2, UnitClass('player')) .. '.blp' end
@@ -738,13 +740,13 @@ function Hekili:NewActionListOption( index )
 				order		= 21,
 				validate = function(info, val)
 					if val == '' then return true
-					elseif string.match(val, "@") then
+					elseif strmatch(val, "@") then
 						Hekili:Print("The @ character is reserved for defaults.")
 						return "The @ character is reserved for defaults."
 					end
 					
 					local listKey = info[2]
-					local listIdx = tonumber( string.match( listKey, "^L(%d+)" ) )
+					local listIdx = tonumber( strmatch( listKey, "^L(%d+)" ) )
 					
 					for i,v in ipairs(self.DB.profile.actionLists[listIdx].Actions) do
 						if val == v.Name then
@@ -833,7 +835,7 @@ function Hekili:NewActionListOption( index )
 				order		= 999,
 				func		=	function(info, ...)
 					local actKey = info[2]
-					local actIdx = tonumber( string.match( actKey, "^L(%d+)" ) )
+					local actIdx = tonumber( strmatch( actKey, "^L(%d+)" ) )
 					
 					for d_key, display in ipairs( self.DB.profile.displays ) do
 						for l_key, list in ipairs ( display.Queues ) do
@@ -870,7 +872,7 @@ function Hekili:NewAction( aList, name )
 	end
 	
 	if type(aList) == string then
-		aList = tonumber( string.match( aList, "^A(%d+)") )
+		aList = tonumber( strmatch( aList, "^A(%d+)") )
 	end
 	
 	local clear, suffix, name_arg = 0, 1, name
@@ -948,7 +950,7 @@ function Hekili:NewActionOption( aList, index )
 				desc	= "Enter a unique name for this action in the action list.  This is typically the ability name accompanied by a short description.",
 				order	= 02,
 				validate = function(info, val)
-					local listIdx = tonumber( string.match( info[2], "^L(%d+)" ) )
+					local listIdx = tonumber( strmatch( info[2], "^L(%d+)" ) )
 					
 					for i, action in pairs( self.DB.profile.actionLists[ aList ].Actions) do
 						if action.Name == val then
@@ -991,8 +993,8 @@ function Hekili:NewActionOption( aList, index )
 					local listIdx, actIdx = tonumber( listKey:match("^L(%d+)" ) ), tonumber( actKey:match("^A(%d+)" ) )
 					
 					Hekili:ResetState()
-					Hekili.state.this_action = self.DB.profile.actionLists[ listIdx ].Actions[ actIdx ].Ability
-					return Hekili:ScriptElements( self.DB.profile.actionLists[ listIdx ].Actions[ actIdx ].Script )
+					Hekili.State.this_action = self.DB.profile.actionLists[ listIdx ].Actions[ actIdx ].Ability
+					return Hekili:GatherValues( self.Scripts.A[ listIdx..':'..actIdx ] )
 				end,
 				multiline = 6,
 				order	= 10,
@@ -1018,9 +1020,9 @@ function Hekili:NewActionOption( aList, index )
 				func		=	function(info, ...)
 					-- Key to Current Display (string)
 					local listKey = info[2]
-					local listIdx = tonumber( string.match( listKey, "^L(%d+)" ) )
+					local listIdx = tonumber( strmatch( listKey, "^L(%d+)" ) )
 					local actKey = info[3]
-					local actIdx = tonumber( string.match( actKey, "^A(%d+)" ) )
+					local actIdx = tonumber( strmatch( actKey, "^A(%d+)" ) )
 
 					-- Will need to be more elaborate later.
 					self.ACD:SelectGroup("Hekili", 'actionLists', listKey )
@@ -1072,10 +1074,10 @@ function Hekili:GetOptions()
 						desc	= "Locks or unlocks all displays for movement, except when the options window is open.",
 						order	= 2
 					},
-					Verbose	= {
+					Debug	= {
 						type	= "toggle",
-						name	= "Verbose",
-						desc	= "If checked, additional help text will be shown within configuration options.  Some additional information will also show in your chat frame.",
+						name	= "Debug",
+						desc	= "If checked, the addon will collect additional information that you can view by pausing the addon and placing your mouse over your displayed abilities.",
 						order	= 3
 					},
 					['Counter'] = {
@@ -1134,12 +1136,6 @@ function Hekili:GetOptions()
 					header	= {
 						type		= "description",
 						name		= "A display is a group of 1 to 10 icons.  Each display can multiple priority lists, with customized criteria and actions for display.",
-						hidden		=	function ()
-											if not self.DB.profile.Verbose then
-												return "guiHidden"
-											end
-											return false
-										end,
 						order		= 0
 					},
 					['New Display'] = {
@@ -1149,7 +1145,7 @@ function Hekili:GetOptions()
 						width		= 'full',
 						validate	= function(info, val)
 										if val == '' then return true end
-										if string.match(val, "@") then
+										if strmatch(val, "@") then
 											Hekili:Print("The @ character is reserved for default action lists.")
 											return "The @ character is reserved for default action lists."
 										else
@@ -1175,12 +1171,6 @@ function Hekili:GetOptions()
 					footer = {
 						type		= "description",
 						name		= "If you login or /reloadui with no displays loaded, the addon will reload the default displays for your class.",
-						hidden		=	function ()
-											if not self.DB.profile.Verbose then
-												return "guiHidden"
-											end
-											return false
-										end,
 						order		= 3
 					}
 				}
@@ -1195,12 +1185,6 @@ function Hekili:GetOptions()
 					header	= {
 						type		= "description",
 						name		= "Each action list is a selection of several abilities and the conditions for using them.",
-						hidden		=	function ()
-											if not self.DB.profile.verbose then
-												return "guiHidden"
-											end
-											return false
-										end,
 						order		= 997
 					},
 					['New Action List'] = {
@@ -1210,7 +1194,7 @@ function Hekili:GetOptions()
 						width		= "full",
 						validate = function(info, val)
 										if val == '' then return true
-										elseif string.match(val, "@") then
+										elseif strmatch(val, "@") then
 											Hekili:Print("The @ character is reserved for default action lists.")
 											return "The @ character is reserved for default action lists."
 										end
@@ -1346,7 +1330,7 @@ function Hekili:GetOptions()
 										return "'" .. val .. "' is a reserved toggle name."
 									end
 
-									if string.match(val, "[^a-z]") then
+									if strmatch(val, "[^a-z]") then
 										Hekili:Print("Toggle names must be all lowercase alphabet characters.")
 										return "Toggle names must be all lowercase alphabet characters."
 
@@ -1384,7 +1368,7 @@ function Hekili:GetOptions()
 										return "'" .. val .. "' is a reserved toggle name."
 									end
 
-									if string.match(val, "[^a-z]") then
+									if strmatch(val, "[^a-z]") then
 										Hekili:Print("Toggle names must be all lowercase alphabet characters.")
 										return "Toggle names must be all lowercase alphabet characters."
 
@@ -1422,7 +1406,7 @@ function Hekili:GetOptions()
 										return "'" .. val .. "' is a reserved toggle name."
 									end
 
-									if string.match(val, "[^a-z]") then
+									if strmatch(val, "[^a-z]") then
 										Hekili:Print("Toggle names must be all lowercase alphabet characters.")
 										return "Toggle names must be all lowercase alphabet characters."
 
@@ -1460,7 +1444,7 @@ function Hekili:GetOptions()
 										return "'" .. val .. "' is a reserved toggle name."
 									end
 
-									if string.match(val, "[^a-z]") then
+									if strmatch(val, "[^a-z]") then
 										Hekili:Print("Toggle names must be all lowercase alphabet characters.")
 										return "Toggle names must be all lowercase alphabet characters."
 
@@ -1498,7 +1482,7 @@ function Hekili:GetOptions()
 										return "'" .. val .. "' is a reserved toggle name."
 									end
 
-									if string.match(val, "[^a-z]") then
+									if strmatch(val, "[^a-z]") then
 										Hekili:Print("Toggle names must be all lowercase alphabet characters.")
 										return "Toggle names must be all lowercase alphabet characters."
 
@@ -1574,7 +1558,7 @@ function Hekili:RefreshOptions()
 
 	-- Remove existing displays from Options and rebuild the options table.
 	for k,_ in pairs(self.Options.args.displays.args) do
-		if string.match(k, "D(%d+)") then
+		if strmatch(k, "D(%d+)") then
 			self.Options.args.displays.args[k] = nil
 		end
 	end
@@ -1593,7 +1577,7 @@ function Hekili:RefreshOptions()
 	end
 	
 	for k,_ in pairs(self.Options.args.actionLists.args) do
-		if string.match(k, "^L(%d+)") then
+		if strmatch(k, "^L(%d+)") then
 			self.Options.args.actionLists.args[ k ] = nil
 		end
 	end
@@ -1634,11 +1618,11 @@ function Hekili:GetOption(info)
 		end
 		
 	elseif category == 'displays' then
-		local display = tonumber( string.match( info[2], "^D(%d+)" ) )
+		local display = tonumber( strmatch( info[2], "^D(%d+)" ) )
 
 		if depth == 4 then
-			if string.match(info[3], "^P(%d+)") then -- Priority Queue
-				local prio = tonumber( string.match( info[3], "^P(%d+)" ) )
+			if strmatch(info[3], "^P(%d+)") then -- Priority Queue
+				local prio = tonumber( strmatch( info[3], "^P(%d+)" ) )
 				
 				if option == 'Move' then
 					return prio
@@ -1665,10 +1649,10 @@ function Hekili:GetOption(info)
 		end
 		
 	elseif category == 'actionLists' then
-		local list = tonumber( string.match( info[2], "^L(%d+)" ) )
+		local list = tonumber( strmatch( info[2], "^L(%d+)" ) )
 		
 		if depth == 4 then -- Specific Action Options
-			local act = tonumber( string.match( info[3], "^A(%d+)" ) )
+			local act = tonumber( strmatch( info[3], "^A(%d+)" ) )
 			
 			if option == 'Move' then
 				return act
@@ -1754,13 +1738,11 @@ function Hekili:SetOption(info, input)
 			return
 			
 		elseif option == 'Audit Targets' then
-			self.UI.Engine.Auditor:Cancel()
-			self.UI.Engine.Auditor = C_Timer.NewTicker( input, self.Audit )
+			-- Do nothing, the Auditor will update itself.
 		
 		elseif option == 'Updates Per Second' then
-			self.UI.Engine.Ticker:Cancel()
-			self.UI.Engine.Ticker = C_Timer.NewTicker( 1 / input, self.HeartBeat )
-	
+			-- Do nothing, next heartbeat will handle it.
+		
 		elseif option:match('TOGGLE') then
 			-- Clear the old binding.
 			if GetBindingKey(option) then
@@ -1773,12 +1755,12 @@ function Hekili:SetOption(info, input)
 		
 	elseif category == 'displays' then
 		local dispKey = info[2]
-		local display = tonumber( string.match( dispKey, "^D(%d+)" ) )
+		local display = tonumber( strmatch( dispKey, "^D(%d+)" ) )
 
 		if depth == 4 then
-			if string.match( info[3], "^P(%d+)" ) then -- Specific Priority List Options
+			if strmatch( info[3], "^P(%d+)" ) then -- Specific Priority List Options
 				local pKey = info[3]
-				local prio = tonumber( string.match( pKey, "^P(%d+)" ) )
+				local prio = tonumber( strmatch( pKey, "^P(%d+)" ) )
 				
 				if option == 'Name' then
 					self.Options.args.displays.args[ dispKey ].args[ pKey ].name =  '|cFFFFD100' .. prio .. '.|r ' .. input
@@ -1814,10 +1796,12 @@ function Hekili:SetOption(info, input)
 				self.DB.profile.displays[ display ][ option ] = input
 				self:BuildUI()
 			end
+			self:CacheDurableDisplayCriteria()
 			
 		elseif option == 'New Display' then
 			local key, index = self:NewDisplay( input )
 			if key then self.Options.args.displays.args[ key ] = self:NewDisplayOption( index ) end
+			self:CacheDurableDisplayCriteria()
 			self:LoadScripts()
 			self:BuildUI()
 			return
@@ -1842,9 +1826,10 @@ function Hekili:SetOption(info, input)
 			end
 			self.DB.profile.displays[ #self.DB.profile.displays + 1 ] = import
 			self:RefreshOptions()
-			self:BuildUI()
+			self:CacheDurableDisplayCriteria()
 			self:LoadScripts()
-			return true
+			self:BuildUI()
+			return
 				
 		else
 			if option == 'Name' then
@@ -1863,8 +1848,9 @@ function Hekili:SetOption(info, input)
 				local key, index = self:NewPriorityQueue( display, input )
 				if key then
 					self.Options.args.displays.args[ dispKey ].args[ key ] = self:NewPriorityQueueOption( display, index )
-					-- self:RefreshOptions()
+					self:RefreshOptions()
 				end
+				self:CacheDurableDisplayCriteria()
 				self:LoadScripts()
 				return true
 				
@@ -1872,10 +1858,11 @@ function Hekili:SetOption(info, input)
 				local index = #self.DB.profile.displays + 1
 				local key = 'D'..index
 				
-				self.DB.profile.displays[index] = DeepCopy( self.DB.profile.displays[ display ] )
+				self.DB.profile.displays[index] = tblCopy( self.DB.profile.displays[ display ] )
 				self.DB.profile.displays[index].Name = input
 				
 				self.Options.args.displays.args[ key ] = self:NewDisplayOption( index )
+				self:CacheDurableDisplayCriteria()
 				self:LoadScripts()
 				self:BuildUI()
 				return
@@ -1887,23 +1874,25 @@ function Hekili:SetOption(info, input)
 			
 				self.DB.profile.displays[ display ] = import
 				self:RefreshOptions()
-				self:BuildUI()
+				self:CacheDurableDisplayCriteria()
 				self:LoadScripts()
+				self:BuildUI()
 				return true
 				
 			end
 
 			self.DB.profile.displays[ display ][ option ] = input
+			self:CacheDurableDisplayCriteria()
 			
 		end
 		
 	elseif category == 'actionLists' then
 		local listKey = info[2]
-		local listIdx = tonumber( string.match( listKey, "^L(%d+)" ) )
+		local listIdx = tonumber( strmatch( listKey, "^L(%d+)" ) )
 
 		if depth == 4 then -- Specific Action Options
 			local aKey = info[3]
-			local act = tonumber( string.match( aKey, "^A(%d+)" ) )
+			local act = tonumber( strmatch( aKey, "^A(%d+)" ) )
 			
 			if option == 'Name' then
 				self.Options.args.actionLists.args[ listKey ].args[ aKey ].name =  '|cFFFFD100' .. act .. '.|r ' .. input
@@ -1925,6 +1914,7 @@ function Hekili:SetOption(info, input)
 			end
 			
 			self.DB.profile.actionLists[ listIdx ].Actions[ act ][ option ] = input
+			self:CacheDurableDisplayCriteria()
 			return
 			
 		elseif option == 'New Action List' then
@@ -1938,7 +1928,7 @@ function Hekili:SetOption(info, input)
 			local index = #self.DB.profile.actionLists + 1
 			local key = 'L'..index
 				
-			self.DB.profile.actionLists[index] = DeepCopy( self.DB.profile.actionLists[ listIdx ] )
+			self.DB.profile.actionLists[index] = tblCopy( self.DB.profile.actionLists[ listIdx ] )
 			self.DB.profile.actionLists[index].Name = input
 			
 			self.Options.args.actionLists.args[ key ] = self:NewActionListOption( index )
@@ -1972,6 +1962,7 @@ function Hekili:SetOption(info, input)
 			if key then
 --					self.Options.args.actionLists.args[ listKey ].args['Actions'].args[ key ] = self:NewActionOption( listIdx, index )
 				self.Options.args.actionLists.args[ listKey ].args[ key ] = self:NewActionOption( listIdx, index )
+				self:CacheDurableDisplayCriteria()
 				self:LoadScripts()
 			end
 			return true
@@ -2011,8 +2002,9 @@ function Hekili:SetOption(info, input)
 
 			end
 			for i = 1, #good do table.wipe(good[i]) end
-			self:LoadScripts()
 			self:RefreshOptions()
+			self:CacheDurableDisplayCriteria()
+			self:LoadScripts()
 			return				
 		
 		elseif option == 'Import Action List' then
@@ -2035,6 +2027,7 @@ function Hekili:SetOption(info, input)
 			end
 			self.DB.profile.actionLists[ #self.DB.profile.actionLists + 1 ] = import
 			self:RefreshOptions()
+			self:CacheDurableDisplayCriteria()
 			self:LoadScripts()
 			return true			
 		
@@ -2043,6 +2036,7 @@ function Hekili:SetOption(info, input)
 		end
 			
 		self.DB.profile.actionLists[ listIdx ][ option ] = input
+		self:CacheDurableDisplayCriteria()
 		
 	else
 		self:Error("Unknown option category '" .. category .. "' in SetOption().")
@@ -2052,6 +2046,17 @@ function Hekili:SetOption(info, input)
 	
 	return true
 end
+
+
+Hekili.TrackFunctions = {
+	"ResetState",
+	"ProcessActionLists",
+	"UpdateDisplays",
+	"CheckScript",
+	"COMBAT_LOG_EVENT_UNFILTERED"
+}
+	
+	
 
 
 function Hekili:CmdLine( input )
@@ -2081,6 +2086,25 @@ function Hekili:CmdLine( input )
 		end
 		self:SaveCoordinates()
 	
+	elseif input:trim() == 'times' then
+		Hekili.TrackFunctions = {
+			"ResetState",
+			"ProcessActionLists",
+			"UpdateDisplays",
+			"CheckScript",
+			"COMBAT_LOG_EVENT_UNFILTERED"
+		}
+		ResetCPUUsage()
+		C_Timer.After( 60, function ()
+			UpdateAddOnCPUUsage()
+			print("Hekili Function CPU Usage:  " .. GetAddOnCPUUsage("Hekili") )
+			for i,v in ipairs( self.TrackFunctions ) do
+				local usage, calls = GetFunctionCPUUsage( Hekili[v], false )
+				local subs = select( 2, GetFunctionCPUUsage( Hekili[v], true) ) - usage
+				print( strformat("%5s %10s %10s %10s : %s", strformat( "%5d", calls ), strformat( "%5.2f", usage), strformat( "%5.2f", subs), calls > 0 and strformat( "%5.2f", ( usage / calls ) )  or 0 , v ) )
+			end
+		end )
+
 	else
 		LibStub("AceConfigCmd-3.0"):HandleCommand("hekili", "Hekili", input)
 	end
@@ -2091,7 +2115,7 @@ function Hekili:SerializeDisplay( num )
 
 	if not self.DB.profile.displays[ num ] then return nil end
 	
-	local serial = DeepCopy( self.DB.profile.displays[ num ] )
+	local serial = tblCopy( self.DB.profile.displays[ num ] )
 	
 	-- Change actionlist IDs to actionlist names so we can validate later.
 	for i,v in ipairs( serial.Queues ) do
@@ -2132,7 +2156,7 @@ function Hekili:SerializeActionList( num )
 
 	if not self.DB.profile.actionLists[ num ] then return nil end
 	
-	local serial = DeepCopy( self.DB.profile.actionLists[ num ] )
+	local serial = tblCopy( self.DB.profile.actionLists[ num ] )
 	
 	-- return self:Serialize(flat_display)
 	return self:Serialize( serial )

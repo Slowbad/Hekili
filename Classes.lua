@@ -101,7 +101,7 @@ function Modify( tab, key, elem, ... )
 	
 	if success then
 		entry['str_'..elem] = loader
-		entry.mods[elem] = setfenv( outcome, Hekili.state )
+		entry.mods[elem] = setfenv( outcome, Hekili.State )
 	else
 		entry.mods[elem] = outcome .. '\n' .. loader
 	end
@@ -127,6 +127,8 @@ function AddPerk( key, id )
 			name = name
 		}
 	end
+	
+	H.Keys[ #H.Keys + 1 ] = key
 end
 			
 
@@ -259,7 +261,7 @@ H.Utils.SetGCD = SetGCD
 
 
 function AddHandler( ability, f )
-	AbilityElements( ability, 'handler', setfenv( f, Hekili.state ) )
+	AbilityElements( ability, 'handler', setfenv( f, Hekili.State ) )
 end
 H.Utils.AddHandler = AddHandler
 

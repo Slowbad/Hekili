@@ -12,7 +12,6 @@ local targets = {}
 
 Hekili.Targets = targets
 
-
 function H:UpdateTarget( id, time )
 
 	if time then
@@ -33,6 +32,11 @@ end
 
 function H:NumTargets()
 	return tCount
+end
+
+
+function H:KnownTarget( id )
+	return self.Targets[ id ] ~= nil
 end
 
 
@@ -119,7 +123,7 @@ function H:WatchDoT( dot, func, tick, duration )
 			duration	= duration or 0,
 			handler		= func
 		}
-		setfenv( dbPower[dot].handler, self.state )
+		setfenv( dbPower[dot].handler, self.State )
 	end
 end
 
@@ -163,5 +167,7 @@ function H.Audit()
 			H:UpdateTarget( whom )
 		end
 	end
+	
+	C_Timer.After( 1, Hekili.Audit )
 	
 end
