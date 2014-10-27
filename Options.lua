@@ -1219,7 +1219,7 @@ function Hekili:GetOptions()
 							end
 
 							for i, default in ipairs( self.Defaults ) do
-								if not exists[ i ] and default.type == 'displays' then
+								if not exists[ default.name ] and default.type == 'displays' then
 									local import = self:DeserializeDisplay( default.import )
 									
 									if import then
