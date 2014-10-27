@@ -93,6 +93,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	
 	-- Player Buffs / Debuffs
 	AddAura( "ancestral_swiftness", 16188, "duration", 600 )
+	AddAura( "ascendance", 114051, "duration", 15 )
 	AddAura( "echo_of_the_elements", 159103, "duration", 20 )
 	AddAura( "elemental_blast", 117014, "duration", 8 )
 	AddAura( "elemental_fusion", 157174, "duration", 15, "max_stacks", 2 )
@@ -135,6 +136,8 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	
 	--	name, ID, cost (table), cast, gcdType, cooldown, ...
 	AddAbility( 'ancestral_swiftness'  , 16188 , 0    , 0  , 'off'  , 90  )
+
+	AddAbility( 'ascendance'           , 165341, 0.052, 0	, 'off'  , 120 )
 	
 	AddAbility( 'bloodlust'            , 2825  , 0.215, 0  , 'off'  , 300 )
 	
@@ -205,6 +208,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	-- Order is important.
 	local cast_ancestral_swiftness = 'if buff.ancestral_swiftness.up then return 0 end'
 	local cast_lava_surge          = 'if buff.lava_surge.up then return 0 end'
+	local cast_lightning_bolt		= 'x = x - 0.5'
 	local cast_maelstrom_weapon    = 'if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end'
 	
 	local cd_ascendance            = 'if buff.ascendance.up then return 0 end'
@@ -231,9 +235,13 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 		
 		-- Enhancement
 		if self.Specialization == 263 then
-			AddAbility( 'ascendance', 165341, 0.052, 0, 'off', 120 )
-			AddAura( "ascendance", 114051, "duration", 15 )
-	
+			Hekili.minGCD = 1.0
+			
+			AbilityElements( 'ascendance', 'id', 165341 )
+			AuraElements( 'ascendance', 'id', 114051 )
+
+			AbilityElements( 'lightning_bolt', 'cast', 2.5 )
+		
 			AbilityMods( 'chain_lightning', 'cast', cast_ancestral_swiftness, cast_maelstrom_weapon )
 			AbilityMods( 'chain_lightning', 'cost', cast_maelstrom_weapon )
 			
@@ -266,9 +274,13 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	
 		-- Elemental
 		elseif self.Specialization == 262 then
-			AddAbility( 'ascendance', 165339, 0.052, 0, 'off', 120 )
-			AddAura( "ascendance", 114050, "duration", 15 )
+			Hekili.minGCD = 1.5
 
+			AbilityElements( 'ascendance', 'id', 165339 )
+			AuraElements( 'ascendance', 'id', 114050 )
+
+			AbilityElements( 'lightning_bolt', 'cast', 2.0 )
+			
 			AbilityMods( 'chain_lightning', 'cast', cast_ancestral_swiftness )
 		
 			AbilityMods( 'earthquake', 'cast', cast_ancestral_swiftness )
@@ -285,7 +297,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 
 			AbilityMods( 'lava_burst', 'cast', cast_lava_surge, cast_ancestral_swiftness )
 			AbilityMods( 'lava_burst', 'cooldown', cd_ascendance, cd_echo_of_the_elements )
-
+			
 			AbilityMods( 'lightning_bolt', 'cast', cast_ancestral_swiftness )
 			
 			AbilityMods( 'spiritwalkers_focus', 'cooldown', cd_spiritwalkers_focus )
@@ -296,14 +308,6 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 		
 		end
 		
-		AddHandler( 'ascendance', function ()
-			H:Buff( 'ascendance', 15 )
-			H:SetCooldown( 'lava_burst', 0 )
-			H:SetCooldown( 'stormstrike', 0 )
-			H:SetCooldown( 'windstrike', 0 )
-			H:SetCooldown( 'strike', 0 )
-		end )
-
 		-- Shared
 		AbilityMods( 'fire_elemental_totem', 'cooldown', cd_fire_elemental_totem )
 
@@ -314,6 +318,16 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	AddHandler( 'ancestral_swiftness', function ()
 		H:Buff( 'ancestral_swiftness', 60 ) 
 	end )
+
+
+	AddHandler( 'ascendance', function ()
+		H:Buff( 'ascendance', 15 )
+		H:SetCooldown( 'lava_burst', 0 )
+		H:SetCooldown( 'stormstrike', 0 )
+		H:SetCooldown( 'windstrike', 0 )
+		H:SetCooldown( 'strike', 0 )
+	end )
+
 
 	AddHandler( 'berserking', function ()
 		H:Buff( 'berserking', 10 )

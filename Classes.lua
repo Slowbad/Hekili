@@ -55,9 +55,6 @@ function AddAbility( key, id, cost, cast, gcd, cooldown, ... )
 	
 	AbilityElements( key, "cost", cost, "cast", cast, "gcdType", gcd, "cooldown", cooldown, ... )
 	
-	-- Haste
-	-- AbilityMods( key, "cast", 'x = x * haste' ) -- hmm
-
 end
 
 	
@@ -70,7 +67,8 @@ function AbilityElements( key, ... )
 		local k, v = args[i], args[i+1]
 		
 		if k and v then
-			ability.elem[k] = v
+			if k == 'id' then ability[k] = v
+			else ability.elem[k] = v end
 		end
 	end
 
@@ -165,7 +163,8 @@ function AuraElements( key, ... )
 		local k, v = args[i], args[i+1]
 		
 		if k and v then
-			aura.elem[k] = v
+			if k == 'id' then aura[k] = v
+			else aura.elem[k] = v end
 		end
 	end
 

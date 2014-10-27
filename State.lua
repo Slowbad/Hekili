@@ -218,7 +218,13 @@ local mt_state		= {
 			return max( t.gcd, H.Abilities[ t.this_action ].cast )
 			
 		elseif k == 'gcd' then
-			-- return ( t.cooldown[ H.GCD ].remains or 0 )
+			local gcdType = H.Abilities[ t.this_action ].gcdType
+
+			if gcdType == 'spell' then return max( 1.0, 1.5 * t.haste )
+			elseif gcdType == 'melee' then return max( H.minGCD, 1.5 * t.haste )
+			elseif gcdType == 'totem' then return 1.0
+			end
+			
 			return max( 1.0, 1.5 * t.haste )
 		
 		elseif k == 'cast_time' then
@@ -1104,15 +1110,15 @@ local mt_default_action	= {
 			if t.gcdType == 'offGCD' then return 0
 			elseif t.gcdType == 'spell' then return max( 1.0, 1.5 * s.haste )
 			-- This needs a class/spec check to confirm GCD is reduced by haste.
-			elseif t.gcdType == 'melee' then return max( 1.0, 1.5 * s.haste )
+			elseif t.gcdType == 'melee' then return max( H.minGCD, 1.5 * s.haste )
 			elseif t.gcdType == 'totem' then return 1
 			else return 1.5 end
 			
 		elseif k == 'execute_time' then
-			return max( t.gcd, t.base_cast * s.haste )
+			return max( t.gcd, t.cast )
 			
 		elseif k == 'cast_time' then
-			return t.base_cast
+			return H.Abilities[ t.action ].cast
 		
 		elseif k == 'ticking' then
 			-- print("checking " .. s.this_action .. " ticking in mt_default_action: " .. tostring( s.dot[ s.this_action ].ticking ) )
@@ -1172,7 +1178,7 @@ local mt_actions = {
 		
 		t[k] = {
 			action		= k,
-			base_cast	= action.cast,
+			base_cast	= action.elem.cast,
 			cooldown	= action.cooldown,
 			gcdType		= action.gcdType
 		}

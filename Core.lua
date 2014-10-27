@@ -5,7 +5,7 @@ local H = Hekili
 
 local SpellRange = LibStub("SpellRange-1.0")
 local FormatKey, GetSpecializationID, GetResourceName, RunHandler = H.Utils.FormatKey, H.Utils.GetSpecializationID, H.Utils.GetResourceName, H.Utils.RunHandler
-local strtrim = string.trim
+local trim = string.trim
 local MT = Hekili.MT
 local tblCopy = Hekili.Utils.tblCopy
 
@@ -114,7 +114,7 @@ function Hekili:ConvertScript( node, hasModifiers )
 		Modifiers	= {},
 		
 		Lua			= Translated,
-		SimC		= node.Script and strtrim( node.Script ) or nil
+		SimC		= node.Script and trim( node.Script ) or nil
 	}
 	
 	if hasModifiers and ( node.Args and node.Args ~= '' ) then

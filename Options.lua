@@ -1858,7 +1858,7 @@ function Hekili:SetOption( info, input )
 			return
 		
 		else -- Toggle Names.
-			if strtrim( input ) == "" then
+			if trim( input ) == "" then
 				profile[ option ] = nil
 			end
 			
@@ -2071,7 +2071,7 @@ function Hekili:SetOption( info, input )
 					RebuildScripts, RebuildOptions, Select = true, true, 'A'..input
 				
 				elseif option == 'Script' or option == 'Args' then
-					input = input:strtrim()
+					input = input:trim()
 					action[ option ] = input
 					RebuildScripts = true
 				
