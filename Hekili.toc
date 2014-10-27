@@ -21,7 +21,6 @@ Classes.lua
 Classes\Shaman.lua
 # Classes\Paladin.lua
 # Classes\Warrior.lua
-Actions.lua
 Events.lua
 Targets.lua
 Options.lua

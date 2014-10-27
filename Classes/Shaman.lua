@@ -92,7 +92,6 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	AddGlyph( "totemic_encirclement", 58057  )
 	
 	-- Player Buffs / Debuffs
-	AddAura( "ascendance", 114049, "duration", 15 )
 	AddAura( "ancestral_swiftness", 16188, "duration", 600 )
 	AddAura( "echo_of_the_elements", 159103, "duration", 20 )
 	AddAura( "elemental_blast", 117014, "duration", 8 )
@@ -128,6 +127,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 
 	-- Gear Sets
 	AddItemSet( "tier17", 115579, 115576, 115577, 115578, 115575 )
+	AddItemSet( "tier16_caster", 99341, 99347, 99340, 99342, 99095 )
 	AddItemSet( "tier16_melee", 99347, 99340, 99341, 99342, 99343 )
 	AddItemSet( "tier15_melee", 96689, 96690, 96691, 96692, 96693 )
 	AddItemSet( "tier14_melee", 87138, 87137, 87136, 87135, 87134 )
@@ -135,8 +135,6 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	
 	--	name, ID, cost (table), cast, gcdType, cooldown, ...
 	AddAbility( 'ancestral_swiftness'  , 16188 , 0    , 0  , 'off'  , 90  )
-	
-	AddAbility( 'ascendance'           , 114049, 0.052, 0  , 'off'  , 120 )
 	
 	AddAbility( 'bloodlust'            , 2825  , 0.215, 0  , 'off'  , 300 )
 	
@@ -233,6 +231,9 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 		
 		-- Enhancement
 		if self.Specialization == 263 then
+			AddAbility( 'ascendance', 165341, 0.052, 0, 'off', 120 )
+			AddAura( "ascendance", 114051, "duration", 15 )
+	
 			AbilityMods( 'chain_lightning', 'cast', cast_ancestral_swiftness, cast_maelstrom_weapon )
 			AbilityMods( 'chain_lightning', 'cost', cast_maelstrom_weapon )
 			
@@ -265,6 +266,9 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	
 		-- Elemental
 		elseif self.Specialization == 262 then
+			AddAbility( 'ascendance', 165339, 0.052, 0, 'off', 120 )
+			AddAura( "ascendance", 114050, "duration", 15 )
+
 			AbilityMods( 'chain_lightning', 'cast', cast_ancestral_swiftness )
 		
 			AbilityMods( 'earthquake', 'cast', cast_ancestral_swiftness )
@@ -292,6 +296,14 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 		
 		end
 		
+		AddHandler( 'ascendance', function ()
+			H:Buff( 'ascendance', 15 )
+			H:SetCooldown( 'lava_burst', 0 )
+			H:SetCooldown( 'stormstrike', 0 )
+			H:SetCooldown( 'windstrike', 0 )
+			H:SetCooldown( 'strike', 0 )
+		end )
+
 		-- Shared
 		AbilityMods( 'fire_elemental_totem', 'cooldown', cd_fire_elemental_totem )
 
@@ -301,14 +313,6 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 	-- All actions that modify the game state are included here.
 	AddHandler( 'ancestral_swiftness', function ()
 		H:Buff( 'ancestral_swiftness', 60 ) 
-	end )
-
-	AddHandler( 'ascendance', function ()
-		H:Buff( 'ascendance', 15 )
-		H:SetCooldown( 'lava_burst', 0 )
-		H:SetCooldown( 'stormstrike', 0 )
-		H:SetCooldown( 'windstrike', 0 )
-		H:SetCooldown( 'strike', 0 )
 	end )
 
 	AddHandler( 'berserking', function ()

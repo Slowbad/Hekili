@@ -13,21 +13,23 @@ end
 
 function Hekili:CacheDurableDisplayCriteria()
 	
-	self.DisplayVisible		= self.DisplayVisible or {}
-	self.PriorityVisible	= self.PriorityVisible or {}
-	self.ListVisible		= self.ListVisible or {}
-	self.ActionVisible		= self.ActionVisible or {}
+	self.DisplayVisible		= {}
+	self.HookVisible	= {}
+	self.ListVisible		= {}
+	self.ActionVisible		= {}
 	
 	for i, display in ipairs( self.DB.profile.displays ) do
-		self.DisplayVisible[ i ] = display.Enabled and ( display.Specialization == 0 or display.Specialization == self.Specialization )
+		self.DisplayVisible[ i ] = display.Enabled and ( display.Specialization == 0 or display.Specialization == self.Specialization ) and ( display['Talent Group'] == 0 or display['Talent Group'] == GetActiveSpecGroup() )
 
 		for j, priority in ipairs( display.Queues ) do
-			self.PriorityVisible[ i..':'..j ] = priority.Enabled and priority['Action List'] ~= 0
+			self.HookVisible[ i..':'..j ] = priority.Enabled and priority['Action List'] ~= 0
 		end
 	end
 	
 	for i, list in ipairs( self.DB.profile.actionLists ) do
-		self.ListVisible[ i ] = list.Specialization == 0 or list.Specialization == self.Specialization
+		if list.Enabled == nil then list.Enabled = true end
+
+		self.ListVisible[ i ] = list.Enabled and ( list.Specialization == 0 or list.Specialization == self.Specialization )
 		
 		for j, action in ipairs( list.Actions ) do
 			self.ActionVisible[ i..':'..j ] = action.Enabled and action.Ability

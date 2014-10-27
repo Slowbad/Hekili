@@ -103,9 +103,8 @@ function Hekili:NewDisplayOption( key )
 			Enabled = {
 				type	= 'toggle',
 				name	= 'Enabled',
-				desc	= 'Enable this display (hides the display and ignores its priority list(s) if unchecked).',
+				desc	= 'Enable this display (hides the display and ignores its hooked action list(s) if unchecked).',
 				order	= 1,
-				width	= 'full',
 			},
 			['Name'] = {
 				type	= 'input',
@@ -113,7 +112,7 @@ function Hekili:NewDisplayOption( key )
 				desc	= 'Rename this display.  Names beginning with @ are reserved for default displays.',
 				order	= 2,
 				validate = function(info, val)
-					local key = tonumber(info[2])
+					local key = tonumber( info[2]:match("^D(%d+)") )
 					for i, display in pairs( self.DB.profile.displays) do
 						if i ~= key and display.Name == val then
 							return "That display name is already in use."
@@ -125,100 +124,183 @@ function Hekili:NewDisplayOption( key )
 				end,
 				width	= 'full',
 			},
-			['Add Priority List'] = {
-				type	= "input",
-				name	= "Add Priority List",
-				desc	= "Adds a hook for a priority list.  You can specific which action list to use, and under which conditions to use the list.",
-				order	= 03,
-				validate = function(info, val)
-					local dispKey = info[2]
-					local dispIdx = tonumber( dispKey:match( "^D(%d+)" ) )
+			['Talent Group'] = {
+				type	= 'select',
+				name	= 'Talent Group',
+				desc	= 'Choose the talent group(s) for this display.',
+				order	= 3,
+				values	= {
+					[0] = 'Both',
+					[1] = 'Primary',
+					[2] = 'Secondary'
+				},
+				width	= "double"
+			},		
+			['PvE Visibility'] = {
+				type	= 'select',
+				name	= 'PvE Visibility',
+				desc	= 'Set the visibility for this display in PvE zones.',
+				order	= 4,
+				values	= {
+					always	= 'Show Always',
+					combat	= 'Show in Combat',
+					target	= 'Show with Target',
+					zzz		= 'Never'
+				},
+			},
+			['Specialization'] = {
+				type	= 'select',
+				name	= 'Specialization',
+				desc	= 'Choose the talent specialization(s) for this display.',
+				order	= 5,
+				values	= function(info)
+					local class = select(2, UnitClass("player"))
+					if not class then return nil end
 					
-					if val == '' then return true
-					elseif strmatch(val, "@") then
-						Hekili:Print("The @ character is reserved for default lists by the addon author.")
-						return "The @ character is reserved for default lists by the addon author."
+					local num = GetNumSpecializations()
+					local list = {}
+					
+					for i = 1, num do
+						local specID, name = GetSpecializationInfoForClassID( GetClassID(class), i )
+						list[specID] = '|T' .. select( 4, GetSpecializationInfoByID( specID ) ) .. ':0|t ' .. name
 					end
 					
-					for i,v in ipairs(self.DB.profile.displays[ dispIdx ].Queues) do
-						if val == v.Name then
-							Hekili:Print("That name is already in use.")
-							return "That name is already in use."
-						end
-					end
-					
-					return true
+					list[ 0 ] = '|TInterface\\Addons\\Hekili\\Textures\\' .. class .. '.blp:0|t Any'
+					return list
 				end,
+				width	= 'double',
+			},
+			['PvP Visibility'] = {
+				type	= 'select',
+				name	= 'PvP Visibility',
+				desc	= 'Set the visibility for this display in PvP zones.',
+				order	= 6,
+				values	= {
+					always	= 'Show Always',
+					combat	= 'Show in Combat',
+					target	= 'Show with Target',
+					zzz		= 'Never'
+				},
+			},
+			Script = {
+				type	= 'input',
+				name	= 'Conditions',
+				desc	= 'Enter the conditions (Lua or SimC-like syntax) for this display to be visible.',
+				dialogControl = "HekiliCustomEditor",
+				arg	= function(info)
+					local dispKey = info[2]
+					local dispIdx = tonumber( dispKey:match("^D(%d+)" ) )
+					
+					Hekili:ResetState()
+					Hekili.State.this_action = 'wait'
+					return Hekili:GatherValues( self.Scripts.D[ dispIdx ] )
+				end,
+				multiline = 6,
+				order	= 7,
+				usage	= 'See http://www.curse.com/addons/wow/hekili for a reference list of game state options.',
 				width	= 'full'
 			},
-			impHeader = {
-				type		= 'header',
-				name		= 'Import/Export',
-				order		= 10,
+			BLANK = {
+				type	= "description",
+				name	= " ",
+				width	= "full",
+				order	= 20
 			},
-			['Copy To'] = {
-				type	= 'input',
-				name	= 'Copy To',
-				desc	= 'Enter a name for the new display.  All settings, including priority lists, will be duplicated in the new display.',
-				order	= 11,
-				validate = function(info, val)
-					if val == '' then return true end
-					if strmatch(val, "@") then
-						Hekili:Print("The @ character is reserved for default action lists.")
-						return "The @ character is reserved for default action lists."
-					else
-						for k,v in ipairs(self.DB.profile.displays) do
-							if val == v.Name then
-								Hekili:Print("That name is already in use.")
-								return "That name is already in use."
+			['Add Hook'] = {
+				type	= "execute",
+				name	= "Add Hook",
+				desc	= "Adds a new hook for an action list.  You can specific which action list to use, and under which conditions to use the list.",
+				order	= 21,
+				func	= function (info)
+					local dispKey, display = info[2], tonumber( info[2]:match("^D(%d+)") )
+				
+					local clear, suffix, name, result = 0, 1, "New Hook", "New Hook"
+					while clear < #self.DB.profile.displays[ display ].Queues do
+						for i, queue in ipairs( self.DB.profile.displays[ display ].Queues ) do
+							if queue.Name == result then
+								result = name .. ' (' .. suffix .. ')'
+								suffix = suffix + 1
+							else
+								clear = clear + 1
 							end
 						end
 					end
+			
+					local key, index = self:NewHook( display, result )
+					if key then
+						self.Options.args.displays.args[ dispKey ].args[ key ] = self:NewHookOption( display, index )
+						self:RefreshOptions()
+					end
+					self:CacheDurableDisplayCriteria()
+					self:LoadScripts()
+				end
+			},
+			Reload = {
+				type		= "execute",
+				name		= "Reload Display",
+				desc		= "Reloads this display from the default options available. Style settings are left untouched, but hooks and criteria are reset.",
+				confirm		= true,
+				confirmText	= "Reload the default settings for this default display?",
+				order		= 22,
+				hidden		= function( info, ... )
+					local dispKey, dispID = info[2], tonumber( strmatch( info[2], "^D(%d+)" ) )
+					local display = self.DB.profile.displays[ dispID ]
+					
+					if self:IsDefault( display.Name, 'displays' ) then
+						return false
+					end
+					
 					return true
 				end,
-				width	= 'full',
-			},
-			['Import'] = {
-				type	= 'input',
-				name	= 'Import Display',
-				desc	= "Paste the export string from another display to copy its settings to this display.  All settings will be copied, except for the display name.",
-				order	= 11,
-				width	= 'full',
-			},
-			['Export'] = {
-				type	= 'input',
-				name	= 'Export Display',
-				desc	= "Copy this export string and paste it into another display's Import field to copy all settings from this display to another existing display.",
-				get		= function(info)
-					local dispKey = info[2]
-					local dispIdx = tonumber( dispKey:match("^D(%d+)") )
+				func		= function( info, ... )
+					local dispKey, dispID = info[2], tonumber( strmatch( info[2], "^D(%d+)" ) )
+					local display = self.DB.profile.displays[ dispID ]
 					
-					return Hekili:SerializeDisplay( dispIdx )
+					local _, defaultID = self:IsDefault( display.Name, 'displays' )
+					
+					local import = self:DeserializeDisplay( self.Defaults[ defaultID ].import )
+					
+					local settings_to_keep = { "Primary Icon Size", "Queued Font Size", "Primary Font Size", "Primary Caption Aura", "rel", "Spacing", "Queue Direction", "Queued Icon Size", "Font", "x", "y", "Icons Shown", "Action Captions", "Primary Caption", "Primary Caption Aura" }
+					
+					for k, _ in pairs( settings_to_keep ) do
+						import[ k ] = display[ k ]
+					end
+					
+					self.DB.profile.displays[ dispID ] = import
+					self:RefreshOptions()
+					self:LoadScripts()
+					self:BuildUI()
 				end,
-				set		= function(...)
-					return
-				end,
-				order	= 12,
-				width	= 'full',
-				multiline = 6,
-				dialogControl = 'HekiliCustomEditor'
 			},
-			delHeader = {
-				type		= 'header',
-				name		= 'Delete',
-				order		= 998
+			BLANK2 = {
+				type	= "description",
+				name	= " ",
+				order	= 22,
+				hidden	= function( info, ... )
+					local dispKey, dispID = info[2], tonumber( strmatch( info[2], "^D(%d+)" ) )
+					local display = self.DB.profile.displays[ dispID ]
+					
+					if self:IsDefault( display.Name, 'displays' ) then
+						return true
+					end
+					
+					return false
+				end,
+				width	= "single",
 			},
 			Delete = {
 				type		= "execute",
 				name		= "Delete Display",
-				desc		= "Deletes this display and all associated priority lists and criteria.  The action lists will remain untouched.",
+				desc		= "Deletes this display and all associated action list hooks and criteria.  The action lists will remain untouched.",
 				confirm		= true,
-				confirmText	= "Permanently delete this display and all associated priority lists?",
-				order		= 999,
+				confirmText	= "Permanently delete this display and all associated action list hooks?",
+				order		= 23,
 				func		=	function(info, ...)
+					if not info[2] then return end
+					
 					-- Key to Current Display (string)
 					local dispKey = info[2]
-					local dispIdx = tonumber( strmatch( dispKey, "^D(%d+)" ) )
+					local dispIdx = tonumber( strmatch( info[2], "^D(%d+)" ) )
 
 					for i, queue in ipairs( self.DB.profile.displays[dispIdx].Queues ) do
 						for k,v in pairs( queue ) do
@@ -234,115 +316,27 @@ function Hekili:NewDisplayOption( key )
 					self.ACD:SelectGroup("Hekili", 'displays' )
 				end
 			},
-			Criteria = {
-				type	= 'group',
-				name	= 'Criteria',
-				order	= 10,
-				args	= {
-					['Talent Group'] = {
-						type	= 'select',
-						name	= 'Talent Group',
-						desc	= 'Choose the talent group(s) for this display.',
-						order	= 00,
-						values	= {
-							[0] = 'Both',
-							[1] = 'Primary',
-							[2] = 'Secondary'
-						},
-						width	= "double"
-					},		
-					['PvE Visibility'] = {
-						type	= 'select',
-						name	= 'PvE Visibility',
-						desc	= 'Set the visibility for this display in PvE zones.',
-						order	= 01,
-						values	= {
-							always	= 'Show Always',
-							combat	= 'Show in Combat',
-							target	= 'Show with Target',
-							zzz		= 'Never'
-						},
-					},
-					['Specialization'] = {
-						type	= 'select',
-						name	= 'Specialization',
-						desc	= 'Choose the talent specialization(s) for this display.',
-						order	= 02,
-						values	= function(info)
-							local class = select(2, UnitClass("player"))
-							if not class then return nil end
-							
-							local num = GetNumSpecializations()
-							local list = {}
-							
-							for i = 1, num do
-								local specID, name = GetSpecializationInfoForClassID( GetClassID(class), i )
-								list[specID] = '|T' .. select( 4, GetSpecializationInfoByID( specID ) ) .. ':0|t ' .. name
-							end
-							
-							list[ 0 ] = '|TInterface\\Addons\\Hekili\\Textures\\' .. class .. '.blp:0|t Any'
-							return list
-						end,
-						width	= 'double',
-					},
-					['PvP Visibility'] = {
-						type	= 'select',
-						name	= 'PvP Visibility',
-						desc	= 'Set the visibility for this display in PvP zones.',
-						order	= 03,
-						values	= {
-							always	= 'Show Always',
-							combat	= 'Show in Combat',
-							target	= 'Show with Target',
-							zzz		= 'Never'
-						},
-					},
-					Script = {
-						type	= 'input',
-						name	= 'Conditions',
-						desc	= 'Enter the conditions (Lua or SimC-like syntax) for this display to be visible.',
-						dialogControl = "HekiliCustomEditor",
-						arg	= function(info)
-							local dispKey = info[2]
-							local dispIdx = tonumber( dispKey:match("^D(%d+)" ) )
-							
-							Hekili:ResetState()
-							Hekili.State.this_action = 'wait'
-							return Hekili:GatherValues( self.Scripts.D[ dispIdx ] )
-						end,
-						multiline = 6,
-						order	= 10,
-						usage	= 'See http://www.curse.com/addons/wow/hekili for a reference list of game state options.',
-						width	= 'full'
-					},
-				}
-			},
-			UI = {
+			['UI and Style'] = {
 				type	= 'group',
 				name	= 'UI and Style',
-				order	= 20,
+				order	= 9,
 				args	= {
-					iconHeader = {
-						type	= 'header',
-						name	= 'Icons and Layout',
-						order	= 0,
-					},
 					x = {
 						type	= 'input',
 						name	= "Position (X)",
 						desc	= "Enter the horizontal position of this display's primary icon relative to the center of your screen.  Negative numbers move the icon left, positive numbers move the icon right.",
-						order	= 1,
+						order	= 2,
 					},
 					y = {
 						type	= 'input',
 						name	= "Position (Y)",
 						desc	= "Enter the vertical position of this display's primary icon relative to the center of your screen.  Negative numbers move the icon up, positive numbers move the icon down.",
-						order	= 2,
-					},
-					BLANK1 = {
-						type	= "description",
-						name	= " ",
 						order	= 3,
+					},
+					iconHeader = {
+						type	= 'header',
+						name	= 'Icons and Layout',
+						order	= 8,
 					},
 					['Icons Shown'] = {
 						type	= 'range',
@@ -350,7 +344,7 @@ function Hekili:NewDisplayOption( key )
 						desc	= "Select the number of icons to display.  This also determines the number of actions the addon will try to predict.",
 						min	= 1,
 						max	= 10,
-						order	= 6,
+						order	= 10,
 						step	= 1,
 					},
 					Spacing = {
@@ -359,25 +353,19 @@ function Hekili:NewDisplayOption( key )
 						desc	= "Select the number of pixels to skip between icons in this display.",
 						min	= -10,
 						max	= 50,
-						order	= 7,
+						order	= 11,
 						step	= 1,
 					},
 					['Queue Direction'] = {
 						type	= 'select',
 						name	= 'Queue Direction',
-						order	= 10,
+						order	= 12,
 						values	= {
 							TOP		= 'Up',
 							BOTTOM	= 'Down',
 							LEFT	= 'Left',
 							RIGHT	= 'Right'
 						},
-						width	= 'double'
-					},
-					BLANK2 = {
-						type	= 'description',
-						name	= " ",
-						order	= 11,
 					},
 					['Primary Icon Size'] = {
 						type	= 'range',
@@ -397,18 +385,49 @@ function Hekili:NewDisplayOption( key )
 						order	= 22,
 						step	= 1,
 					},
+					fontHeader = {
+						type	= 'header',
+						name	= 'Style',
+						order	= 30,
+					},
+					Font = {
+						type	= 'select',
+						name	= 'Font',
+						desc	= "Select the font to use on all icons in this display.",
+						dialogControl = 'LSM30_Font',
+						order	= 31,
+						values	= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
+					},
+					['Primary Font Size'] = {
+						type	= 'range',
+						name	= 'Primary Font Size',
+						desc	= "Enter the size of the font for primary icon captions.",
+						min	= 6,
+						max	= 30,
+						order	= 32,
+						step	= 1,
+					},
+					['Queued Font Size'] = {
+						type	= 'range',
+						name	= 'Queued Font Size',
+						desc	= "Enter the size of the font for queued icon captions.",
+						min	= 6,
+						max	= 30,
+						order	= 33,
+						step	= 1,
+					},
 					captionHeader = {
 						type	= 'header',
 						name	= 'Captions',
-						order	= 30,
+						order	= 40,
 					},
 					-- Captions
 					['Action Captions'] = {
 						type	= 'toggle',
 						name	= 'Action Captions',
 						desc	= "Enable or disable action captions.  This allows you to display additional information about a particular action when shown.",
-						order	= 31,
-						width	= 'full',
+						order	= 51,
+						width	= 'full'
 					},
 					['Primary Caption'] = {
 						type	= 'select',
@@ -421,7 +440,7 @@ function Hekili:NewDisplayOption( key )
 							end
 							return false
 						end,
-						order	= 32,
+						order	= 52,
 						values	= {
 							default	= 'Use Default Captions',
 							targets	= 'Show # of Targets',
@@ -442,40 +461,61 @@ function Hekili:NewDisplayOption( key )
 							end
 							return false
 						end,
-						order	= 33,
-						width	= 'double',
+						order	= 53,
+					}
+				}
+			},
+			['Import/Export'] = {
+				type	= 'group',
+				name	= 'Import/Export',
+				order	= 10,
+				args	= {	
+					['Copy To'] = {
+						type	= 'input',
+						name	= 'Copy To',
+						desc	= 'Enter a name for the new display.  All settings, including action list hooks, will be duplicated in the new display.',
+						order	= 11,
+						validate = function(info, val)
+							if val == '' then return true end
+							if strmatch(val, "@") then
+								Hekili:Print("The @ character is reserved for default action lists.")
+								return "The @ character is reserved for default action lists."
+							else
+								for k,v in ipairs(self.DB.profile.displays) do
+									if val == v.Name then
+										Hekili:Print("That name is already in use.")
+										return "That name is already in use."
+									end
+								end
+							end
+							return true
+						end,
+						width	= 'full',
 					},
-					fontHeader = {
-						type	= 'header',
-						name	= 'Style',
-						order	= 40,
+					['Import'] = {
+						type	= 'input',
+						name	= 'Import Display',
+						desc	= "Paste the export string from another display to copy its settings to this display.  All settings will be copied, except for the display name.",
+						order	= 11,
+						width	= 'full',
 					},
-					['Primary Font Size'] = {
-						type	= 'range',
-						name	= 'Primary Font Size',
-						desc	= "Enter the size of the font for primary icon captions.",
-						min	= 6,
-						max	= 30,
-						order	= 41,
-						step	= 1,
-					},
-					['Queued Font Size'] = {
-						type	= 'range',
-						name	= 'Queued Font Size',
-						desc	= "Enter the size of the font for queued icon captions.",
-						min	= 6,
-						max	= 30,
-						order	= 42,
-						step	= 1,
-					},
-					Font = {
-						type	= 'select',
-						name	= 'Font',
-						desc	= "Select the font to use on all icons in this display.",
-						dialogControl = 'LSM30_Font',
-						order	= 43,
-						values	= Hekili.LSM:HashTable("font"), -- pull in your font list from LSM
-						width	= 'full'
+					['Export'] = {
+						type	= 'input',
+						name	= 'Export Display',
+						desc	= "Copy this export string and paste it into another display's Import field to copy all settings from this display to another existing display.",
+						get		= function(info)
+							local dispKey = info[2]
+							local dispIdx = tonumber( dispKey:match("^D(%d+)") )
+							
+							return Hekili:SerializeDisplay( dispIdx )
+						end,
+						set		= function(...)
+							return
+						end,
+						order	= 12,
+						width	= 'full',
+						multiline = 6,
+						dialogControl = 'HekiliCustomEditor'
 					},
 				}
 			},
@@ -487,9 +527,9 @@ function Hekili:NewDisplayOption( key )
 end
 
 
--- DISPLAYS > PRIORITY QUEUES
--- Add a priority queue to a display.
-function Hekili:NewPriorityQueue( display, name )
+-- DISPLAYS > HOOKS
+-- Add a hook to a display.
+function Hekili:NewHook( display, name )
 
 	if not name then
 		return nil
@@ -501,7 +541,7 @@ function Hekili:NewPriorityQueue( display, name )
 	
 	for i,v in ipairs( self.DB.profile.displays[display].Queues ) do
 		if v.Name == name then
-			self:Error('NewPriorityQueue() - tried to use an existing display name.')
+			self:Error('NewHook() - tried to use an existing display name.')
 			return nil
 		end
 	end
@@ -520,10 +560,10 @@ function Hekili:NewPriorityQueue( display, name )
 end
 
 
--- Add a priority queue to the options UI.
+-- Add a hook to the options UI.
 -- display	(number)	The index of the display to which this entry is attached.
--- key		(number)	The index for this particular priority queue entry.
-function Hekili:NewPriorityQueueOption( display, key )
+-- key		(number)	The index for this particular hook.
+function Hekili:NewHookOption( display, key )
 
 	if not key or not self.DB.profile.displays[display].Queues[ key ] then
 		return nil
@@ -549,8 +589,8 @@ function Hekili:NewPriorityQueueOption( display, key )
 				name	= 'Position',
 				order	= 01,
 				values	= function(info)
-					local dispKey, prioKey = info[2], info[3]
-					local dispIdx, prioIdx = tonumber( dispKey:match("^D(%d+)") ), tonumber( prioKey:match("^P(%d+)") )
+					local dispKey, hookKey = info[2], info[3]
+					local dispIdx, hookID = tonumber( dispKey:match("^D(%d+)") ), tonumber( hookKey:match("^P(%d+)") )
 					local list = {}
 					for i = 1, #self.DB.profile.displays[ dispIdx ].Queues do
 						list[i] = i
@@ -594,34 +634,18 @@ function Hekili:NewPriorityQueueOption( display, key )
 					return lists
 				end,
 			},
-			--[[ FUTURE FEATURE: Toggle Modes
-			Single = {
-				type	= 'toggle',
-				name	= 'Single Target',
-				order	= 05,
-			},
-			Cleave = {
-				type	= 'toggle',
-				name	= 'Cleave',
-				order	= 06,
-			},
-			AOE = {
-				type	= 'toggle',
-				name	= 'AOE',
-				order	= 07
-			}, ]]
 			Script = {
 				type	= 'input',
 				name	= 'Conditions',
 				dialogControl = "HekiliCustomEditor",
 				arg	= function(info)
-					local dispKey, prioKey = info[2], info[3]
-					local dispIdx, prioIdx = tonumber( dispKey:match("^D(%d+)" ) ), tonumber( prioKey:match("^P(%d+)") )
-					local prio = self.DB.profile.displays[ dispIdx ].Queues[ prioIdx ]
+					local dispKey, hookKey = info[2], info[3]
+					local dispIdx, hookID = tonumber( dispKey:match("^D(%d+)" ) ), tonumber( hookKey:match("^P(%d+)") )
+					local prio = self.DB.profile.displays[ dispIdx ].Queues[ hookID ]
 					
 					self:ResetState()
 					self.State.this_action = 'wait'
-					return self:GatherValues( self.Scripts.P[ dispIdx..':'..prioIdx ] )
+					return self:GatherValues( self.Scripts.P[ dispIdx..':'..hookID ] )
 				end,
 				multiline = 6,
 				order	= 12,
@@ -629,7 +653,7 @@ function Hekili:NewPriorityQueueOption( display, key )
 			},
 			Delete = {
 				type		= "execute",
-				name		= "Delete Priority List",
+				name		= "Delete Hook",
 				confirm		= true,
 				-- confirmText	= '
 				order		= 999,
@@ -665,6 +689,7 @@ function Hekili:NewActionList( name )
 	end
 
 	self.DB.profile.actionLists[index] = {
+		Enabled			= false,
 		Name			= name,
 		Specialization	= GetSpecializationID() or 0,
 		Script			= '',
@@ -695,6 +720,12 @@ function Hekili:NewActionListOption( index )
 		end,
 		order		= 10 + index,
 		args		= {
+			Enabled	= {
+				type	= 'toggle',
+				name	= 'Enabled',
+				desc	= "Enable or disable this action list for processing in all displays.",
+				order	= 1,
+			},
 			Name	= {
 				type	= "input",
 				name	= "Name",
@@ -705,14 +736,14 @@ function Hekili:NewActionListOption( index )
 					end
 					return true
 				end,
-				order	= 1,
+				order	= 2,
 				width	= "full",
 			},
 			Specialization = {
 				type	= 'select',
 				name	= 'Specialization',
 				desc	= "Select the class specialization for this action list.  If you select 'Any', the list will work in all specializations, though abilities unavailable to your specialization will not be recommended.",
-				order	= 5,
+				order	= 3,
 				values	= function(info)
 					local class = select(2, UnitClass("player"))
 					if not class then return nil end
@@ -727,100 +758,100 @@ function Hekili:NewActionListOption( index )
 					end
 					return list
 				end,
-			},
-			['Actions'] = {
-				type	= 'header',
-				name	= 'Actions',
-				order	= 20,
+				width	= 'full'
 			},
 			['Add Action'] = {
-				type		= "input",
+				type		= "execute",
 				name		= "Add Action",
-				desc		= "Enter a unique name for the next action.  This is usually an action name paired with some kind of description.",
-				order		= 21,
-				validate = function(info, val)
-					if val == '' then return true
-					elseif strmatch(val, "@") then
-						Hekili:Print("The @ character is reserved for defaults.")
-						return "The @ character is reserved for defaults."
-					end
-					
-					local listKey = info[2]
-					local listIdx = tonumber( strmatch( listKey, "^L(%d+)" ) )
-					
-					for i,v in ipairs(self.DB.profile.actionLists[listIdx].Actions) do
-						if val == v.Name then
-							Hekili:Print("That name is already in use.")
-							return "That name is already in use."
-						end
-					end
-					
-					return true
-				end,
-				width		= 'full'
-			},
-			impHeader = {
-				type	= 'header',
-				name	= 'Import/Export',
-				order	= 30
-			},
-			['Copy To'] = {
-				type	= 'input',
-				name	= 'Copy To',
-				desc	= 'Enter a name for the new action list.  All settings, except for the list name, will be duplicated into the new list.',
-				order	= 32,
-				validate = function(info, val)
-					if val == '' then return true end
-					if val:sub(1, 1) == "@" then
-						Hekili:Print("The @ character is reserved for default action lists.")
-						return "The @ character is reserved for default action lists."
-					else
-						for k,v in ipairs(self.DB.profile.actionLists) do
-							if val == v.Name then
-								Hekili:Print("That name is already in use.")
-								return "That name is already in use."
+				desc		= "Adds a new action entry, where you can set the ability and conditions required for that ability to be shown.",
+				order		= 4,
+				func		= function( info )
+					local listKey, listIdx = info[2], tonumber( info[2]:match("^L(%d+)") )
+
+					local clear, suffix, name, result = 0, 1, "New Action", "New Action"
+					while clear < #self.DB.profile.actionLists[ listIdx ].Actions do
+						for i, action in ipairs( self.DB.profile.actionLists[ listIdx ].Actions ) do
+							if action.Name == result then
+								result = name .. ' (' .. suffix .. ')'
+								suffix = suffix + 1
+							else
+								clear = clear + 1
 							end
 						end
 					end
-					return true
-				end,
-				width	= 'full',
-			},
-			['Import Action List'] = {
-				type	= 'input',
-				name	= 'Import Action List',
-				desc	= "Paste the export string from another action list to copy it here.  All settings, except for the list name, will be duplicated into this list.",
-				order	= 33,
-				width	= 'full',
-			},
-			['Export Action List'] = {
-				type	= 'input',
-				name	= 'Export Action List',
-				desc	= "Copy this export string and paste it into another action list to overwrite the other action list.",
-				get		= function(info)
-					local listKey = info[2]
-					local listIdx = tonumber( listKey:match("^L(%d+)") )
 					
-					return Hekili:SerializeActionList( listIdx )
-				end,
-				set		= function(...)
-					return
-				end,
-				order	= 34,
-				width	= 'full',
-				multiline = 6,
-				dialogControl = 'HekiliCustomEditor'
+					local key, index = self:NewAction( listIdx, result )
+					if key then
+						self.Options.args.actionLists.args[ listKey ].args[ key ] = self:NewActionOption( listIdx, index )
+						self:CacheDurableDisplayCriteria()
+						self:LoadScripts()
+					end
+				end
 			},
-			['SimulationCraft'] = {
-				type	= 'input',
-				name	= 'Import SimulationCraft List',
-				desc	= "Copy a SimulationCraft action list and paste it here to import.  If any lines cannot be parsed, the action list will not be imported.",
-				order	= 35,
-				multiline = 6,
-				dialogControl = 'HekiliCustomEditor',
-				-- validate = 'ImportSimulationCraftActionList',
-				width	= 'full',
-				confirm = true,
+			['Import/Export'] = {
+				type	= "group",
+				name	= 'Import/Export',
+				order	= 5,
+				args	= {
+					['Copy To'] = {
+						type	= 'input',
+						name	= 'Copy To',
+						desc	= 'Enter a name for the new action list.  All settings, except for the list name, will be duplicated into the new list.',
+						order	= 32,
+						validate = function(info, val)
+							if val == '' then return true end
+							if val:sub(1, 1) == "@" then
+								Hekili:Print("The @ character is reserved for default action lists.")
+								return "The @ character is reserved for default action lists."
+							else
+								for k,v in ipairs(self.DB.profile.actionLists) do
+									if val == v.Name then
+										Hekili:Print("That name is already in use.")
+										return "That name is already in use."
+									end
+								end
+							end
+							return true
+						end,
+						width	= 'full',
+					},
+					['Import Action List'] = {
+						type	= 'input',
+						name	= 'Import Action List',
+						desc	= "Paste the export string from another action list to copy it here.  All settings, except for the list name, will be duplicated into this list.",
+						order	= 33,
+						width	= 'full',
+					},
+					['Export Action List'] = {
+						type	= 'input',
+						name	= 'Export Action List',
+						desc	= "Copy this export string and paste it into another action list to overwrite the other action list.",
+						get		= function(info)
+							local listKey = info[2]
+							local listIdx = tonumber( listKey:match("^L(%d+)") )
+							
+							return Hekili:SerializeActionList( listIdx )
+						end,
+						set		= function(...)
+							return
+						end,
+						order	= 34,
+						width	= 'full',
+						multiline = 6,
+						dialogControl = 'HekiliCustomEditor'
+					},
+					['SimulationCraft'] = {
+						type	= 'input',
+						name	= 'Import SimulationCraft List',
+						desc	= "Copy a SimulationCraft action list and paste it here to import.  If any lines cannot be parsed, the action list will not be imported.",
+						order	= 35,
+						multiline = 6,
+						dialogControl = 'HekiliCustomEditor',
+						-- validate = 'ImportSimulationCraftActionList',
+						width	= 'full',
+						confirm = true,
+					},
+				}
 			},
 			delHeader = {
 				type	= 'header',
@@ -1135,7 +1166,7 @@ function Hekili:GetOptions()
 				args		= {
 					header	= {
 						type		= "description",
-						name		= "A display is a group of 1 to 10 icons.  Each display can multiple priority lists, with customized criteria and actions for display.",
+						name		= "A display is a group of 1 to 10 icons.  Each display can multiple hooks for action lists, with customized criteria and actions for display.",
 						order		= 0
 					},
 					['New Display'] = {
@@ -1172,7 +1203,37 @@ function Hekili:GetOptions()
 						type		= "description",
 						name		= "If you login or /reloadui with no displays loaded, the addon will reload the default displays for your class.",
 						order		= 3
-					}
+					},
+					Reload = {
+						type		= "execute",
+						name		= "Reload Defaults",
+						desc		= "Reloads all missing default displays.",
+						confirm		= true,
+						confirmText	= "Restore any deleted default displays?",
+						order		= 4,
+						func		= function( info, ... )
+							local exists = {}
+							
+							for i, display in ipairs( self.DB.profile.displays ) do
+								exists[ display.Name ] = true
+							end
+
+							for i, default in ipairs( self.Defaults ) do
+								if not exists[ i ] and default.type == 'displays' then
+									local import = self:DeserializeDisplay( default.import )
+									
+									if import then
+										self.DB.profile.displays[ #self.DB.profile.displays+1 ] = import
+										C_Timer.After( 2 / self.DB.profile['Updates Per Second'], function() Hekili:ProcessHooks( #self.DB.profile.displays ) end )
+									end
+								end
+							end
+							
+							self:RefreshOptions()
+							self:LoadScripts()
+							self:BuildUI()
+						end,
+					},
 				}
 			},
 			actionLists = {
@@ -1515,7 +1576,7 @@ function Hekili:GetOptions()
 		
 		if v.Queues then
 			for key, value in ipairs( v.Queues ) do
-				Options.args.displays.args[ dispKey ].args[ 'P' .. key ] = self:NewPriorityQueueOption( i, key )
+				Options.args.displays.args[ dispKey ].args[ 'P' .. key ] = self:NewHookOption( i, key )
 			end
 		end
 		
@@ -1540,7 +1601,7 @@ end
 
 function Hekili:TotalRefresh()
 
-	if self.CheckForActionLists then self:CheckForActionLists() end
+	if self.RestoreDefaults then self:RestoreDefaults() end
 
 	for i, queue in ipairs( self.Queue ) do
 		for j, _ in pairs( queue ) do
@@ -1558,7 +1619,7 @@ function Hekili:RefreshOptions()
 
 	-- Remove existing displays from Options and rebuild the options table.
 	for k,_ in pairs(self.Options.args.displays.args) do
-		if strmatch(k, "D(%d+)") then
+		if strmatch(k, "^D(%d+)") then
 			self.Options.args.displays.args[k] = nil
 		end
 	end
@@ -1569,16 +1630,15 @@ function Hekili:RefreshOptions()
 		
 		if v.Queues then
 			for p, value in ipairs( v.Queues ) do
-				local prioKey = 'P' .. p
-				self.Options.args.displays.args[ dispKey ].args[ prioKey ]  = self:NewPriorityQueueOption( i, p )
+				local hookKey = 'P' .. p
+				self.Options.args.displays.args[ dispKey ].args[ hookKey ]  = self:NewHookOption( i, p )
 			end
 		end
-		
 	end
 	
 	for k,_ in pairs(self.Options.args.actionLists.args) do
 		if strmatch(k, "^L(%d+)") then
-			self.Options.args.actionLists.args[ k ] = nil
+			self.Options.args.actionLists.args[k] = nil
 		end
 	end
 	
@@ -1587,114 +1647,151 @@ function Hekili:RefreshOptions()
 		self.Options.args.actionLists.args[ listKey ] = self:NewActionListOption( i )
 		
 		if v.Actions then
-			for a, action in ipairs( v.Actions ) do
+			for a,_ in ipairs( v.Actions ) do
 				local actKey = 'A' .. a
---				self.Options.args.actionLists.args[ listKey ].args['Actions'].args[ actKey ] = self:NewActionOption( i, a )
 				self.Options.args.actionLists.args[ listKey ].args[ actKey ] = self:NewActionOption( i, a )
 			end
 		end
 	end
 	
-	self:LoadScripts()
+	-- Until I feel like making this better at managing memory.
+	collectgarbage()
 	
 end
 
 
-function Hekili:GetOption(info)
-	local depth	= #info
-	local category = info[1]
-	local option	= info[depth]
+function Hekili:GetOption( info, input )
+	local category, depth, option = info[1], #info, info[#info]
+	local profile = self.DB.profile
 	
 	if category == 'general' then
-		return self.DB.profile[option]
-		
+		return profile[option]
+	
 	elseif category == 'bindings' then
-		if option:match("TOGGLE") then
-			return select(1, GetBindingKey(option))
+	
+		if option:match( "TOGGLE" ) then
+			return select( 1, GetBindingKey( option ) )
+		
 		elseif option == 'Pause' then
 			return self.Pause
+			
 		else
-			return self.DB.profile[option]
-		end
-		
-	elseif category == 'displays' then
-		local display = tonumber( strmatch( info[2], "^D(%d+)" ) )
+			return profile[ option ]
 
-		if depth == 4 then
-			if strmatch(info[3], "^P(%d+)") then -- Priority Queue
-				local prio = tonumber( strmatch( info[3], "^P(%d+)" ) )
+		end
+
+	elseif category == 'displays' then
+
+		-- This is a generic display option/function.
+		if depth == 2 then
+			return nil
+			
+		-- This is a display (or a hook).
+		else
+			local dispKey, dispID = info[2], tonumber( strmatch( info[2], "^D(%d+)" ) )
+			local hookKey, hookID = info[3], tonumber( strmatch( info[3] or "", "^P(%d+)" ) )
+			local display = profile.displays[ dispID ]
+
+			-- This is a specific display's settings.
+			if depth == 3 or not hookID then
+				
+				if option == 'x' or option == 'y' then
+					return tostring( display[ option ] )
+				
+				elseif option == 'Copy To' or option == 'Import' then
+					return nil
+					
+				else
+					return display[ option ]
+					
+				end
+			
+			-- This is a priority hook.
+			else
+				local hook = display.Queues[ hookID ]
 				
 				if option == 'Move' then
-					return prio
+					return hookID
+				
+				else
+					return hook[ option ]
+				
 				end
-				
-				return self.DB.profile.displays[ display ].Queues[ prio ][ option ]
-
+			
 			end
 			
-			-- Criteria / UI and Style
-			if option == 'x' or option == 'y' then
-				return tostring( self.DB.profile.displays[ display ][ option ] )
-			end
-			
-			return self.DB.profile.displays[ display ][ option ]
-			
-		else -- Display Options
-			if option == 'Add Priority List' or option == 'New Display' or option == 'Import Display' then
-				return nil
-			end
-			
-			return self.DB.profile.displays[ display ][ option ] or nil
-
 		end
-		
+	
 	elseif category == 'actionLists' then
-		local list = tonumber( strmatch( info[2], "^L(%d+)" ) )
+	
+		-- This is a general action list option.
+		if depth == 2 then
+			return nil
+			
+		else
+			local listKey, listID	= info[2], tonumber( strmatch( info[2], "^L(%d+)" ) )
+			local actKey, actID	= info[3], tonumber( strmatch( info[3], "^A(%d+)" ) )
+			local list = listID and profile.actionLists[ listID ]
 		
-		if depth == 4 then -- Specific Action Options
-			local act = tonumber( strmatch( info[3], "^A(%d+)" ) )
+			-- This is a specific action list.
+			if depth == 3 or not actID then
+				return list[ option ]
 			
-			if option == 'Move' then
-				return act
-			end
-			
-			return self.DB.profile.actionLists[ list ].Actions[ act ][ option ] or nil
-		
-		else -- Action List Options
-			if option == 'Add Action' or option == 'New Action List' or option == 'Import Action List' then
-				return nil
-			
-			elseif option == 'SimulationCraft' then
-				return nil
+			-- This is a specific action.
+			elseif listID and actID then
+				local action = list.Actions[ actID ]
 				
+				if option == 'Move' then
+					return actID
+				
+				else
+					return action[ option ]
+				
+				end
+			
 			end
-			return self.DB.profile.actionLists[ list ][ option ] or nil
 		
 		end
 		
-	else
-		self:Error("Unknown option category '" .. category .. "' in GetOption().")
-		return nil
 	end
-		
+
+	Hekili:Error( "GetOption() - should never see." )
+
 end
 
 
--- CLEANUP
-function Hekili:SetOption(info, input)
-	local depth	= #info
-	local category	= info[1]
-	local option	= info[depth]
-	local output 	= tostring(input)
-	local assign	= true
-	
-	if category == 'general' or category == 'bindings' then
-		local revert = self.DB.profile[option]
-		self.DB.profile[option] = input
 
+local function GetUniqueName( category, name )
+	local numChecked, suffix, original = 0, 1, name
+	
+	while numChecked < #category do
+		for i, instance in ipairs( category ) do
+			if name == instance.Name then
+				name = original .. ' (' .. suffix .. ')'
+				suffix = suffix + 1
+				clear = 0
+			else
+				clear = clear + 1
+			end
+		end
+	end
+	
+	return name
+end
+
+
+function Hekili:SetOption( info, input )
+	local category, depth, option, subcategory = info[1], #info, info[#info], nil
+	local Rebuild, RebuildUI, RebuiltScripts, RebuildOptions, RebuildCache, Select
+	local profile = self.DB.profile
+	
+	if category == 'general' then
+		-- We'll preset the option here; works for most options.
+		profile[ option ] = input
+		
 		if option == 'Enabled' then
-			for i, buttons in ipairs(self.UI.Buttons) do
-				for j,_ in ipairs(buttons) do
+			for i, buttons in ipairs( self.UI.Buttons ) do
+				for j, _ in ipairs( buttons ) do
 					if input == false then
 						buttons[j]:Hide()
 					else
@@ -1702,350 +1799,305 @@ function Hekili:SetOption(info, input)
 					end
 				end
 			end
-			if input == true then print("Enable!"); self:Enable()
+			
+			if input == true then self:Enable()
 			else self:Disable() end
 
-		elseif	option == 'Locked' then
+			return
+			
+		elseif option == 'Locked' then
 			if not self.Config and not self.Pause then
-				for i,v in ipairs(self.UI.Buttons) do
+				for i, v in ipairs( self.UI.Buttons ) do
 					self.UI.Buttons[i][1]:EnableMouse( not input )
 				end
 			end
 		
+		elseif option == 'Audit Targets' or option == 'Updates Per Second' then
+			return
+			
+		end
+		
+		-- General options do not need add'l handling.
+		return 
+	
+	elseif category == 'bindings' then
+
+		local revert = profile[ option ]
+		profile[ option ] = input
+	
+		if option:match( "TOGGLE" ) then
+			if GetBindingKey( option ) then
+				SetBinding( GetBindingKey( option ) )
+			end
+			SetBinding( input, option )
+			SaveBindings( GetCurrentBindingSet() )
+
 		elseif option == 'Pause' then
-			self.DB.profile[option] = nil
+			profile[option] = revert
 			self:TogglePause()
 			return
 			
-		elseif option == "Mode" then
-			self.DB.profile[option] = revert
+		elseif option == 'Mode' then
+			profile[option] = revert
 			self:ToggleMode()
 			return
-		
-		elseif option == "Cooldowns" then
-			self.DB.profile[option] = revert
+
+		elseif option == 'Cooldowns' then
+			profile[option] = revert
 			self:ToggleCooldowns()
 			return
 		
-		elseif option == "Hardcasts" then
-			self.DB.profile[option] = revert
+		elseif option == 'Hardcasts' then
+			profile[option] = revert
 			self:ToggleHardcasts()
 			return
-		
-		elseif option == "Interrupts" then
-			self.DB.profile[option] = revert
+			
+		elseif option == 'Interrupts' then
+			profile[option] = revert
 			self:ToggleInterrupts()
 			return
-			
-		elseif option == 'Audit Targets' then
-			-- Do nothing, the Auditor will update itself.
 		
-		elseif option == 'Updates Per Second' then
-			-- Do nothing, next heartbeat will handle it.
-		
-		elseif option:match('TOGGLE') then
-			-- Clear the old binding.
-			if GetBindingKey(option) then
-				SetBinding(GetBindingKey(option)) -- clears the previous binding
+		else -- Toggle Names.
+			if strtrim( input ) == "" then
+				profile[ option ] = nil
 			end
-			SetBinding(input, option)
-			SaveBindings(GetCurrentBindingSet())
-		
+			
 		end
-		
-	elseif category == 'displays' then
-		local dispKey = info[2]
-		local display = tonumber( strmatch( dispKey, "^D(%d+)" ) )
 
-		if depth == 4 then
-			if strmatch( info[3], "^P(%d+)" ) then -- Specific Priority List Options
-				local pKey = info[3]
-				local prio = tonumber( strmatch( pKey, "^P(%d+)" ) )
+		-- Bindings do not need add'l handling.
+		return
+
+	elseif category == 'displays' then
+
+		-- This is a generic display option/function.
+		if depth == 2 then
+		
+			if option == 'New Display' then
+				local key, index = self:NewDisplay( input )
+				
+				if not key then return end
+				
+				C_Timer.After( 1 / profile['Updates Per Second'], function () Hekili:ProcessHooks( index ) end )
+			
+			elseif option == 'Import Display' then
+				local import = self:DeserializeDisplay( input )
+				
+				if not import then return end
+				
+				import.Name = GetUniqueName( profile.displays, import.Name )
+				profile.displays[ #profile.displays + 1 ] = import
+				
+			end
+
+			Rebuild = true
+			
+		-- This is a display (or a hook).
+		else
+			local dispKey, dispID = info[2], info[2] and tonumber( strmatch( info[2], "^D(%d+)" ) )
+			local hookKey, hookID = info[3], info[3] and tonumber( strmatch( info[3], "^P(%d+)" ) )
+			local display = dispID and profile.displays[ dispID ]
+
+			-- This is a specific display's settings.
+			if depth == 3 or not hookID then
+				local revert = display[option]
+				display[option] = input
+				
+				if option == 'x' or option == 'y' then
+					display[option] = tonumber( input )
+					RebuildUI = true
+				
+				elseif option == 'Name' then
+					self.Options.args.displays.args[ dispKey ].name = input
+				
+				elseif option == 'Enabled' then
+					-- Might want to replace this with RebuildUI = true
+					for i, button in ipairs( self.UI.Buttons[ dispID ] ) do
+						if not input then
+							button:Hide()
+						else
+							button:Show()
+						end
+					end
+				
+				elseif option == 'Copy To' then
+					local index = #profile.displays + 1
+					
+					profile.displays[ index ] = tblCopy( display )
+					profile.displays[ index ].Name = input
+					
+					Rebuild = true
+				
+				elseif option == 'Import' then
+					local import = self:DeserializeDisplay( input )
+					if not import then return end
+					
+					local name	= display.Name
+					display		= import
+					display.Name = name
+					
+					Rebuild = true
+				
+				end
+				
+				RebuildUI = true
+			
+			-- This is a priority hook.
+			else
+				local hook = display.Queues[ hookID ]
+				
+				if option == 'Move' then
+					local placeholder = table.remove( display.Queues, hookID )
+					table.insert( display.Queues, input, placeholder )
+					RebuildOptions, RebuildCache, RebuildScripts, Select = true, true, true, 'P'..input
+				
+				else
+					hook[ option ] = input
+					RebuildCache = ( option == 'Enabled' )
+				
+				end
+			
+			end
+		end
+	
+	elseif category == 'actionLists' then
+	
+		if depth == 2 then 
+	
+			if option == 'New Action List' then
+				local key = self:NewActionList( input )
+				if key then
+					RebuildOptions, RebuildCache = true, true
+				end
+				
+			elseif option == 'Import Action List' then
+				local import = self:DeserializeDisplay( input )
+				if not import then return end
+				
+				import.Name = GetUniqueName( profile.actionLists, import.Name )
+				profile.actionLists[ #profile.actionLists + 1 ] = import
+				
+				Rebuild = true
+				
+			end
+		
+		else
+			local listKey, listID	= info[2], info[2] and tonumber( strmatch( info[2], "^L(%d+)" ) )
+			local actKey, actID	= info[3], info[3] and tonumber( strmatch( info[3], "^A(%d+)" ) )
+			local list = profile.actionLists[ listID ]
+			
+			if depth == 3 or not actID then
+
+				local revert = list[ option ]
+				list[option] = input
 				
 				if option == 'Name' then
-					self.Options.args.displays.args[ dispKey ].args[ pKey ].name =  '|cFFFFD100' .. prio .. '.|r ' .. input
+					self.Options.args.actionLists.args[ listKey ].name = input
 				
-				elseif option == 'Script' then
-					input = strtrim(input)
-					self.DB.profile.displays[ display ].Queues[ prio ][ option ] = input
-					self:LoadScripts()
-					return
+				elseif option == 'Enabled' or option == 'Specialization' then
+					RebuildCache = true
+				
+				-- Import/Exports
+				elseif option == 'Copy To' then
+					list[option] = nil
+
+					local index = #profile.actionLists + 1
+					
+					profile.actionLists[ index ] = tblCopy( list )
+					profile.actionLists[ index ].Name = input
+					
+					Rebuild = true
+					
+				elseif option == 'Import Action List' then
+					list[option] = nil
+
+					local import = self:DeserializeActionList( input )
+					if not import then return end
+					
+					import.Name = GetUniqueName( profile.actionLists, import.Name )
+					
+					profile.actionLists[ #profile.actionLists + 1 ] = import
+					Rebuild = true
+				
+				elseif option == 'SimulationCraft' then
+					list[option] = nil
+
+					local import, error = self:ImportSimulationCraftActionList( input )
+					
+					if error then
+						Hekili:Print( "SimulationCraft import failed.  The following lines threw errors:" )
+						for i = 1, #error do
+							Hekili:Print( bad[i] )
+						end
+						return
+					end
+					
+					if not import then
+						Hekili:Print( "No actions were successfully imported." )
+						return
+					end
+					
+					table.wipe( list.Actions )
+				
+					for i = 1, #import do
+						local key = self:NewAction( listID, self.Abilities[ import[ i ].ability ].name )
+						
+						list.Actions[ i ].Ability	= import[ i ].ability
+						list.Actions[ i ].Args		= import[ i ].modifiers
+						list.Actions[ i ].Script	= import[ i ].conditions
+						list.Actions[ i ].Enabled	= true
+					end
+					
+					Rebuild = true
+				
+				end
+		
+			-- This is a specific action.
+			else
+				local list = profile.actionLists[ listID ]
+				local action = list.Actions[ actID ]
+				
+				action[ option ] = input
+				
+				if option == 'Name' then
+					self.Options.args.actionLists.args[ listKey ].args[ actKey ].name = '|cFFFFD100' .. actID .. '|r ' .. input
+				
+				elseif option == 'Enabled' then
+					RebuildCache = true
 					
 				elseif option == 'Move' then
-					local placeholder = table.remove( self.DB.profile.displays[ display ].Queues, prio )
-					table.insert( self.DB.profile.displays[ display ].Queues, input, placeholder )
-					self.ACD:SelectGroup("Hekili", 'displays', dispKey, 'P' .. input )
-					self:LoadScripts()
-					self:RefreshOptions()
-					return
+					action[ option ] = nil
+					local placeholder = table.remove( list.Actions, actID )
+					table.insert( list.Actions, input, placeholder )
+					RebuildScripts, RebuildOptions, Select = true, true, 'A'..input
+				
+				elseif option == 'Script' or option == 'Args' then
+					input = input:strtrim()
+					action[ option ] = input
+					RebuildScripts = true
 				
 				end
-				
-				self.DB.profile.displays[ display ].Queues[ prio ][ option ] = input
 			
-			else -- Criteria / UI and Style
-				if option == 'Script' then
-					input = strtrim(input)
-					self.DB.profile.displays[ display ][ option ] = input
-					self:LoadScripts()
-					return
-				elseif option == 'x' or option == 'y' then
-					input = tonumber(input)
-				end
-				
-				self.DB.profile.displays[ display ][ option ] = input
-				self:BuildUI()
 			end
-			self:CacheDurableDisplayCriteria()
-			
-		elseif option == 'New Display' then
-			local key, index = self:NewDisplay( input )
-			if key then self.Options.args.displays.args[ key ] = self:NewDisplayOption( index ) end
-			self:CacheDurableDisplayCriteria()
-			self:LoadScripts()
-			self:BuildUI()
-			return
-			
-		elseif option == 'Import Display' then
-			local import = self:DeserializeDisplay( input )
-		
-			if not import then return false end
-		
-			-- Check for duplicate names.
-			local clear, suffix, name = 0, 1, import.Name
-			while clear < #self.DB.profile.displays do
-				clear = 0
-				for i, disp in ipairs(self.DB.profile.displays) do
-					if disp.Name == import.Name then
-						import.Name = name .. ' (' .. suffix .. ')'
-						suffix = suffix + 1
-					else
-						clear = clear + 1
-					end
-				end
-			end
-			self.DB.profile.displays[ #self.DB.profile.displays + 1 ] = import
-			self:RefreshOptions()
-			self:CacheDurableDisplayCriteria()
-			self:LoadScripts()
-			self:BuildUI()
-			return
-				
-		else
-			if option == 'Name' then
-				self.Options.args.displays.args[ dispKey ].name = input
-				
-			elseif option == 'Enabled' then
-				for i, button in ipairs(self.UI.Buttons[display]) do
-					if input == false then
-						button:Hide()
-					else
-						button:Show()
-					end
-				end
-				
-			elseif option == 'Add Priority List' then
-				local key, index = self:NewPriorityQueue( display, input )
-				if key then
-					self.Options.args.displays.args[ dispKey ].args[ key ] = self:NewPriorityQueueOption( display, index )
-					self:RefreshOptions()
-				end
-				self:CacheDurableDisplayCriteria()
-				self:LoadScripts()
-				return true
-				
-			elseif option == 'Copy To' then
-				local index = #self.DB.profile.displays + 1
-				local key = 'D'..index
-				
-				self.DB.profile.displays[index] = tblCopy( self.DB.profile.displays[ display ] )
-				self.DB.profile.displays[index].Name = input
-				
-				self.Options.args.displays.args[ key ] = self:NewDisplayOption( index )
-				self:CacheDurableDisplayCriteria()
-				self:LoadScripts()
-				self:BuildUI()
-				return
-				
-			elseif option == 'Import' then
-				local import = self:DeserializeDisplay( input )
-			
-				if not import then return false end
-			
-				self.DB.profile.displays[ display ] = import
-				self:RefreshOptions()
-				self:CacheDurableDisplayCriteria()
-				self:LoadScripts()
-				self:BuildUI()
-				return true
-				
-			end
-
-			self.DB.profile.displays[ display ][ option ] = input
-			self:CacheDurableDisplayCriteria()
-			
 		end
-		
-	elseif category == 'actionLists' then
-		local listKey = info[2]
-		local listIdx = tonumber( strmatch( listKey, "^L(%d+)" ) )
-
-		if depth == 4 then -- Specific Action Options
-			local aKey = info[3]
-			local act = tonumber( strmatch( aKey, "^A(%d+)" ) )
-			
-			if option == 'Name' then
-				self.Options.args.actionLists.args[ listKey ].args[ aKey ].name =  '|cFFFFD100' .. act .. '.|r ' .. input
-
-			elseif option == 'Move' then
-				local placeholder = table.remove( self.DB.profile.actionLists[ listIdx ].Actions, act )
-				table.insert( self.DB.profile.actionLists[ listIdx ].Actions, input, placeholder )
-				self.ACD:SelectGroup("Hekili", 'actionLists', listKey, 'A' .. input )
-				self:LoadScripts()
-				self:RefreshOptions()
-				return
-				
-			elseif option == 'Script' or option == 'Args' then
-				input = strtrim(input)
-				self.DB.profile.actionLists[ listIdx ].Actions[ act ][ option ] = input
-				self:LoadScripts()
-				return true
-				
-			end
-			
-			self.DB.profile.actionLists[ listIdx ].Actions[ act ][ option ] = input
-			self:CacheDurableDisplayCriteria()
-			return
-			
-		elseif option == 'New Action List' then
-			local key, index = self:NewActionList( input )
-			if key then
-				self.Options.args.actionLists.args[ key ] = self:NewActionListOption( index )
-			end
-			return true
-
-		elseif option == 'Copy To' then
-			local index = #self.DB.profile.actionLists + 1
-			local key = 'L'..index
-				
-			self.DB.profile.actionLists[index] = tblCopy( self.DB.profile.actionLists[ listIdx ] )
-			self.DB.profile.actionLists[index].Name = input
-			
-			self.Options.args.actionLists.args[ key ] = self:NewActionListOption( index )
-			self:RefreshOptions()
-			self:LoadScripts()
-			self:BuildUI()
-			return
-			
-		elseif option == 'Import Action List' then
-			local import = self:DeserializeActionList( input )
-		
-			if not import then return false end
-		
-			import.Name = self.DB.profile.actionLists[ listIdx ].Name
-			self.DB.profile.actionLists[ listIdx ] = import
-			self:RefreshOptions()
-			self:LoadScripts()
-			return true
-		
-		elseif option == 'Name' then
-			self.Options.args.actionLists.args[ listKey ].name = input
-			
-		elseif option == 'Script' then
-			input = strtrim(input)
-			self.DB.profile.actionLists[ listIdx ][ option ] = input
-			self:LoadScripts()
-			return true
-				
-		elseif option == 'Add Action' then
-			local key, index = self:NewAction( listIdx, input )
-			if key then
---					self.Options.args.actionLists.args[ listKey ].args['Actions'].args[ key ] = self:NewActionOption( listIdx, index )
-				self.Options.args.actionLists.args[ listKey ].args[ key ] = self:NewActionOption( listIdx, index )
-				self:CacheDurableDisplayCriteria()
-				self:LoadScripts()
-			end
-			return true
-			
-		elseif option == 'SimulationCraft' then
-			local good, bad = self:ImportSimulationCraftActionList( input )
-			
-			if bad then
-				Hekili:Print("The following lines threw errors:")
-				for i = 1, #bad do
-					Hekili:Print("["..i.."] "..bad[i])
-				end
-				table.wipe(good)
-				table.wipe(bad)
-				return
-			end
-			
-			if not good then
-				Hekili:Print("No actions were successfully imported.")
-				return
-			end
-			
-			-- Remove all existing actions.
-			for i = 1, #self.DB.profile.actionLists[ listIdx ].Actions do
-				table.remove( self.DB.profile.actionLists[ listIdx ].Actions, 1 )
-				self.Options.args.actionLists.args[ listKey ].args[ 'A'..i ] = nil
-			end
-
-			for i = 1, #good do
-				local key, index = self:NewAction( listIdx, self.Abilities[ good[i].ability ].name )
-				self.Options.args.actionLists.args[ listKey ].args[ key ] = self:NewActionOption( listIdx, index )
-				
-				self.DB.profile.actionLists[ listIdx ].Actions[ i ].Ability	= good[i].ability
-				self.DB.profile.actionLists[ listIdx ].Actions[ i ].Args		= good[i].modifiers
-				self.DB.profile.actionLists[ listIdx ].Actions[ i ].Script		= good[i].conditions
-				self.DB.profile.actionLists[ listIdx ].Actions[ i ].Enabled	= true
-
-			end
-			for i = 1, #good do table.wipe(good[i]) end
-			self:RefreshOptions()
-			self:CacheDurableDisplayCriteria()
-			self:LoadScripts()
-			return				
-		
-		elseif option == 'Import Action List' then
-			local import = self:DeserializeDisplay( input )
-		
-			if not import then return false end
-		
-			-- Check for duplicate names.
-			local clear, suffix, name = 0, 1, import.Name
-			while clear < #self.DB.profile.actionLists do
-				clear = 0
-				for i, list in ipairs(self.DB.profile.actionLists) do
-					if list.Name == import.Name then
-						import.Name = name .. ' (' .. suffix .. ')'
-						suffix = suffix + 1
-					else
-						clear = clear + 1
-					end
-				end
-			end
-			self.DB.profile.actionLists[ #self.DB.profile.actionLists + 1 ] = import
-			self:RefreshOptions()
-			self:CacheDurableDisplayCriteria()
-			self:LoadScripts()
-			return true			
-		
-		elseif option == 'Export' then
-			return
-		end
-			
-		self.DB.profile.actionLists[ listIdx ][ option ] = input
-		self:CacheDurableDisplayCriteria()
-		
-	else
-		self:Error("Unknown option category '" .. category .. "' in SetOption().")
-		return false
-		
 	end
 	
-	return true
-end
+	if Rebuild then
+		self:RefreshOptions()
+		self:LoadScripts()
+		self:BuildUI()
+		
+	else
+		if RebuildOptions then self:RefreshOptions() end
+		if RebuildScripts then self:LoadScripts() end
+		if RebuildUI then self:BuildUI() end
+		if RebuildCache and not RebuildUI then self:CacheDurableDisplayCriteria() end
+	end
+	
+	if Select then
+		self.ACD:SelectGroup( "Hekili", category, info[2], Select )
+	end
+
+end	
 
 
 Hekili.TrackFunctions = {
@@ -2097,11 +2149,11 @@ function Hekili:CmdLine( input )
 		ResetCPUUsage()
 		C_Timer.After( 60, function ()
 			UpdateAddOnCPUUsage()
-			print("Hekili Function CPU Usage:  " .. GetAddOnCPUUsage("Hekili") )
+			Hekili:Print("Hekili Function CPU Usage:  " .. GetAddOnCPUUsage("Hekili") )
 			for i,v in ipairs( self.TrackFunctions ) do
 				local usage, calls = GetFunctionCPUUsage( Hekili[v], false )
 				local subs = select( 2, GetFunctionCPUUsage( Hekili[v], true) ) - usage
-				print( strformat("%5s %10s %10s %10s : %s", strformat( "%5d", calls ), strformat( "%5.2f", usage), strformat( "%5.2f", subs), calls > 0 and strformat( "%5.2f", ( usage / calls ) )  or 0 , v ) )
+				Hekili:Print( strformat("%5s %10s %10s %10s : %s", strformat( "%5d", calls ), strformat( "%5.2f", usage), strformat( "%5.2f", subs), calls > 0 and strformat( "%5.2f", ( usage / calls ) )  or 0 , v ) )
 			end
 		end )
 

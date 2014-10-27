@@ -628,7 +628,7 @@ local mt_cooldowns	= {
 			return
 		end
 		
-		local ability = H.Abilities[ k ].name
+		local ability = H.Abilities[ k ].id
 		
 		local success, start, duration = pcall( GetSpellCooldown, ability )
 		if not success then

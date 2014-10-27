@@ -41,14 +41,14 @@ function H:OnInitialize()
 	self.Hardcasts	= true
 	
 	self:RefreshBindings()
-	self:BuildUI()
 
 	if not Hekili.DB.profile.Version or Hekili.DB.profile.Version < 2 then
 		Hekili.DB:ResetDB()
 	end
 	
-	self:CheckForActionLists()
+	self:RestoreDefaults()
 	self:LoadScripts()
+	self:BuildUI()
 	self:UnregisterAllEvents()
 end
 
@@ -156,15 +156,15 @@ end
 function Hekili:LoadScripts()
 	self.Scripts	= self.Scripts or { D = {}, P = {}, A = {} }
 
-	local Displays, Priorities, Actions = self.Scripts.D, self.Scripts.P, self.Scripts.A
+	local Displays, Hookrities, Actions = self.Scripts.D, self.Scripts.P, self.Scripts.A
 	local Profile = self.DB.profile
 	
 	for i, _ in ipairs( Displays ) do
 		Displays[i] = nil
 	end
 	
-	for k, _ in pairs( Priorities ) do
-		Priorities[k] = nil
+	for k, _ in pairs( Hookrities ) do
+		Hookrities[k] = nil
 	end
 	
 	for k, _ in pairs( Actions ) do
@@ -176,7 +176,7 @@ function Hekili:LoadScripts()
 		
 		for j, priority in ipairs( display.Queues ) do
 			local pKey = i..':'..j
-			Priorities[ pKey ] = self:ConvertScript( priority )
+			Hookrities[ pKey ] = self:ConvertScript( priority )
 		end
 	end
 	
@@ -241,8 +241,12 @@ function Hekili:CheckScript( cat, key, action, override )
 
 	local tblScript = self.Scripts[ cat ][ key ]
 	
-	if not tblScript.Conditions then
+	if not tblScript then
+		return false
+	
+	elseif not tblScript.Conditions then
 		return true
+
 	else
 		local success, value = pcall( tblScript.Conditions )
 	
@@ -323,7 +327,9 @@ function H:OnEnable()
 			self.msqGroup:ReSkin()
 		end
 		
-		C_Timer.After( 1 / self.DB.profile['Updates Per Second'], Hekili.ProcessActionLists )
+		for i = 1, #self.DB.profile.displays do
+			Hekili:ProcessHooks( i )
+		end
 		C_Timer.After( 1 / self.DB.profile['Updates Per Second'], Hekili.UpdateDisplays )
 		C_Timer.After( 1, Hekili.Audit )
 	
@@ -337,15 +343,6 @@ end
 
 function H:OnDisable()
 	self.DB.profile.Enabled = false
-end
-
-
-function H.HeartBeat()
-	-- Should probably check this in the pulse tool rather than here.
-	H:ProcessActionLists()
-	H:UpdateDisplays()
-
-	C_Timer.After( 1 / Hekili.DB.profile['Updates Per Second'], Hekili.HeartBeat )
 end
 
 
@@ -594,6 +591,9 @@ local function IsKnown( sID )
 		elseif sID == 17364 then
 			return ( not s.buff.ascendance.up )
 			
+		elseif sID == 165341 or sID == 165339 then
+			return IsSpellKnown(114049)
+			
 		end
 
 	elseif H.Specialization == 262 then
@@ -669,17 +669,11 @@ end
 
 
 Hekili.Queue = {}
-function H:ProcessActionLists()
+function Hekili:ProcessHooks( dispID )
 
-	local self = Hekili
-
-	if not self.DB.profile.Enabled or self.Pause then
-		return
-	end
-
-	local s = self.State
-	
-	for dispID, display in ipairs(self.DB.profile.displays) do
+	if self.DB.profile.Enabled and not self.Pause then
+		local s = self.State
+		local display = self.DB.profile.displays[ dispID ]
 	
 		self.Queue[ dispID ] = self.Queue[ dispID ] or {}
 		local Queue = self.Queue[ dispID ]
@@ -688,7 +682,7 @@ function H:ProcessActionLists()
 			Queue[i] = nil
 		end
 		
-		if self.DisplayVisible[ dispID ] then
+		if display and self.DisplayVisible[ dispID ] then
 		
 			self:ResetState()
 			
@@ -699,15 +693,15 @@ function H:ProcessActionLists()
 					local chosen_action, chosen_caption
 					local chosen_wait   = 999
 					
-					for prioID, priority in ipairs( display.Queues ) do
+					for hookID, hook in ipairs( display.Queues ) do
 
-						if self.PriorityVisible[ dispID..':'..prioID ] then
+						if self.HookVisible[ dispID..':'..hookID ] then
 							
-							local PrioPassed, PrioCriteria, PrioElements = self:CheckScript( 'P', dispID..':'..prioID )
+							local HookPassed = self:CheckScript( 'P', dispID..':'..hookID )
 							
-							if PrioPassed then
+							if HookPassed then
 
-								local listID = priority['Action List']
+								local listID = hook['Action List']
 								local list = self.DB.profile.actionLists[ listID ]
 								
 								-- Only action list criteria is whether it matches the spec.
@@ -721,13 +715,12 @@ function H:ProcessActionLists()
 										
 										local entry	= list.Actions[ actID ]
 										s.this_action	= entry.Ability
+										local wait_time = WaitTime( s.this_action )
 										
 										if self.ActionVisible[ listID..':'..actID ] then
-											local CriteriaPassed, Criteria, Elements = self:CheckScript( 'A', listID..':'..actID )
-										
 											-- Check for commands before checking actual actions.
 											if entry.Ability == 'wait' then
-												if CriteriaPassed then
+												if self:CheckScript( 'A', listID..':'..actID ) then
 													local args = self:GetModifiers( listID, actID )
 													if not args.sec then args.sec = 1 end
 													if args.sec > 0 then
@@ -737,30 +730,26 @@ function H:ProcessActionLists()
 
 												end
 											
-											elseif IsKnown( s.this_action ) and IsUsable( s.this_action ) and HasRequiredResources( s.this_action ) and ( self.Abilities[ s.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and CriteriaPassed then
-												local wait_time = WaitTime( s.this_action )
-												
-												if wait_time < chosen_wait then
-													chosen_action	= s.this_action
-													chosen_caption	= entry.Caption
-													chosen_wait		= wait_time
+											elseif IsKnown( s.this_action ) and IsUsable( s.this_action ) and wait_time < chosen_wait and HasRequiredResources( s.this_action ) and ( self.Abilities[ s.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and self:CheckScript( 'A', listID..':'..actID ) then
+												chosen_action	= s.this_action
+												chosen_caption	= entry.Caption
+												chosen_wait		= wait_time
 
-													Queue[i] = {
-														display		= dispID,
-														button		= i,
-														
-														priority	= prioID,
-														
-														actionlist	= listID,
-														action		= actID,
-														
-														alName		= list.Name,
-														actName		= s.this_action,
-														
-														caption		= chosen_caption,
-														wait		= wait_time,
-													}
-												end
+												Queue[i] = {
+													display		= dispID,
+													button		= i,
+													
+													hook		= hookID,
+													
+													actionlist	= listID,
+													action		= actID,
+													
+													alName		= list.Name,
+													actName		= s.this_action,
+													
+													caption		= chosen_caption,
+													wait		= wait_time,
+												}
 												
 											end
 										
@@ -776,26 +765,26 @@ function H:ProcessActionLists()
 							
 						end 
 						
-					end -- end Priority Queue
+					end -- end Hookrity Queue
 					
-					-- We have our actual action, so let's get the script values if we're debugging.
-					if self.DB.profile.Debug then
-						local scrPriority = self.Scripts.P[ Queue[i].display..':'..Queue[i].priority ]
-						Queue[i].PrioScript = scrPriority.SimC
-						Queue[i].PrioElements = self:GatherValues( scrPriority )
-						
-						local scrAction = self.Scripts.A[ Queue[i].actionlist..':'..Queue[i].action ]
-						Queue[i].ActScript = scrAction.SimC
-						Queue[i].ActElements = self:GatherValues( scrAction )
-					end
-				
-					-- Advance through the wait time.
-					self:Advance( chosen_wait )
-						
-					Queue[i].time	= s.offset
-					Queue[i].since = i > 1 and ( s.offset - Queue[i - 1].time ) or 0
+					if Queue[i] then
+						-- We have our actual action, so let's get the script values if we're debugging.
+						if self.DB.profile.Debug then
+							local scrHook = self.Scripts.P[ Queue[i].display..':'..Queue[i].hook ]
+							Queue[i].HookScript = scrHook.SimC
+							Queue[i].HookElements = self:GatherValues( scrHook )
+							
+							local scrAction = self.Scripts.A[ Queue[i].actionlist..':'..Queue[i].action ]
+							Queue[i].ActScript = scrAction.SimC
+							Queue[i].ActElements = self:GatherValues( scrAction )
+						end
 					
-					if chosen_action then
+						-- Advance through the wait time.
+						self:Advance( chosen_wait )
+							
+						Queue[i].time	= s.offset
+						Queue[i].since = i > 1 and ( s.offset - Queue[i - 1].time ) or 0
+					
 						local action = self.Abilities[ chosen_action ]
 
 						-- We really need to make the timing more sophisticated.
@@ -847,7 +836,9 @@ function H:ProcessActionLists()
 		
 	end
 
-	C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self.ProcessActionLists )
+	if self.DB.profile.Enabled and self.DB.profile.displays[ dispID ] then
+		C_Timer.After( 1 / self.DB.profile['Updates Per Second'], function() Hekili:ProcessHooks( dispID ) end )
+	end
 	
 end
 
@@ -862,13 +853,7 @@ function CheckDisplayCriteria( dispID )
 		pvp		= true
 	}
 	
-	if not display['Enabled'] then
-		return false
-		
-	elseif display['Talent Group'] ~= 0 and display['Talent Group'] ~= GetActiveSpecGroup() then
-		return false
-		
-	elseif display['Specialization'] ~= 0 and display['Specialization'] ~= GetSpecializationID() then
+	if not Hekili.DisplayVisible[ dispID ] then
 		return false
 		
 	elseif not pvpZones[ zoneType ] and display['PvE Visibility'] ~= 'always' then
@@ -895,7 +880,7 @@ function CheckDisplayCriteria( dispID )
 			
 		end
 		
-	elseif not Hekili.Queue[ dispID ] then
+	elseif not Hekili.Config and not Hekili.Queue[ dispID ] then
 		return false
 		
 	end
@@ -927,10 +912,10 @@ function H:UpdateDisplays()
 			if CheckDisplayCriteria( dispID ) then
 				local Queue = self.Queue[ dispID ]
 
-				local gcd_start, gcd_duration = GetSpellCooldown( self.Abilities[ self.GCD ].name )
+				local gcd_start, gcd_duration = GetSpellCooldown( self.Abilities[ self.GCD ].id )
 				
 				for i, button in ipairs( self.UI.Buttons[dispID] ) do
-					if not Queue[i] and ( self.DB.profile.Enabled or self.Config ) then
+					if not Queue or not Queue[i] and ( self.DB.profile.Enabled or self.Config ) then
 						for n = i, display['Icons Shown'] do
 							self.UI.Buttons[dispID][n].Texture:SetTexture('Interface\\ICONS\\Spell_Nature_BloodLust')
 							self.UI.Buttons[dispID][n].Texture:SetVertexColor(1, 1, 1)
@@ -1004,7 +989,7 @@ function H:UpdateDisplays()
 
 						end
 						
-						local start, duration = GetSpellCooldown( self.Abilities[ aKey ].name )
+						local start, duration = GetSpellCooldown( self.Abilities[ aKey ].id )
 						
 						if not start or start == 0 or duration < gcd_duration then
 							start		= gcd_start
@@ -1053,7 +1038,9 @@ function H:UpdateDisplays()
 		end
 	end
 	
-	C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self.UpdateDisplays )
+	if self.DB.profile.Enabled then
+		C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self.UpdateDisplays )
+	end
 	
 end
 

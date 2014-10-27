@@ -350,31 +350,33 @@ function Hekili.Default( name, category, import )
 end
 
 
--- Loads the default action lists if they're not present.
-function Hekili:CheckForActionLists()
+-- Restores the defaults if they're not present.
+function Hekili:RestoreDefaults( category )
 
-	for i = 1, #self.Defaults do
-		local proto = self.Defaults[i]
-		
-		if proto.type == 'actionLists' then
-			local found = false
-			for j = 1, #self.DB.profile.actionLists do
-				if self.DB.profile.actionLists[j].Name == proto.name then
-					found = true
-					break
+	if not category or category == 'actionLists' then
+		for i = 1, #self.Defaults do
+			local proto = self.Defaults[i]
+			
+			if proto.type == 'actionLists' then
+				local found = false
+				for j = 1, #self.DB.profile.actionLists do
+					if self.DB.profile.actionLists[j].Name == proto.name then
+						found = true
+						break
+					end
+				end
+				
+				if not found then
+					_, self.DB.profile.actionLists[ #self.DB.profile.actionLists + 1 ] = Hekili:Deserialize( proto.import )
+					self.DB.profile.actionLists[ #self.DB.profile.actionLists ].Name = proto.name
 				end
 			end
-			
-			if not found then
-				_, self.DB.profile.actionLists[ #self.DB.profile.actionLists + 1 ] = Hekili:Deserialize( proto.import )
-				self.DB.profile.actionLists[ #self.DB.profile.actionLists ].Name = proto.name
-			end
+		
 		end
-	
 	end
 	
 	-- Only rebuild displays if there are 0.
-	if #self.DB.profile.displays == 0 then
+	if ( #self.DB.profile.displays == 0 and not category ) or category == 'displays' then
 		for i = 1, #self.Defaults do
 			local proto = self.Defaults[i]
 			
@@ -407,7 +409,6 @@ function Hekili:CheckForActionLists()
 					end
 				end
 			end
-		
 		end
 	end
 	
@@ -417,3 +418,18 @@ function Hekili:CheckForActionLists()
 end
 
 
+-- Loads the default action lists if they're not present.
+function Hekili:IsDefault( name, category )
+
+	if not name or not category then
+		return nil
+	end
+	
+	for i, default in ipairs( self.Defaults ) do
+		if default.type == category and default.name == name then
+			return true, i
+		end
+	end
+	
+	return false
+end

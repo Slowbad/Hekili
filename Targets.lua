@@ -168,6 +168,8 @@ function H.Audit()
 		end
 	end
 	
-	C_Timer.After( 1, Hekili.Audit )
+	if Hekili.DB.profile.Enabled then
+		C_Timer.After( 1, Hekili.Audit )
+	end
 	
 end

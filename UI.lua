@@ -16,6 +16,8 @@ local invert_direction = {
 -- Buttons (as frames) are never deleted, but should get reused effectively.
 function Hekili:BuildUI()
 
+	self:CacheDurableDisplayCriteria()
+	
 	if not self.UI.Engine then
 		self.UI.Engine = CreateFrame("Frame", "Hekili_Engine_Frame", UIParent)
 		self.UI.Engine:SetFrameStrata("BACKGROUND")
@@ -33,10 +35,11 @@ function Hekili:BuildUI()
 		for i = 1, max( #self.UI.Buttons[dispID], display['Icons Shown'] ) do
 			self.UI.Buttons[dispID][i] = self:CreateButton( dispID, i )
 			
-			--[[ if self.DB.profile.Enabled and i <= display['Icons Shown'] then
+			if i > display['Icons Shown'] then
+				self.UI.Buttons[dispID][i]:Hide()
+			elseif self.DisplayVisible[ dispID ] and ( self.Config or ( self.Queue[ dispID ] and self.Queue[ dispID ][ i ] ) ) then
 				self.UI.Buttons[dispID][i]:Show()
-			else ]]
-			self.UI.Buttons[dispID][i]:Hide()
+			end
 			
 			if self.MSQ then self.msqGroup:AddButton( self.UI.Buttons[dispID][i], { Icon = self.UI.Buttons[dispID][i].Texture, Cooldown = self.UI.Buttons[dispID][i].Cooldown } ) end	
 		end
@@ -130,15 +133,15 @@ function Hekili:ShowDiagnosticTooltip( q )
 	self.Tooltip:SetText( self.Abilities[ q.actName ].name )
 	self.Tooltip:AddDoubleLine( q.alName.." #"..q.action, "+"..round( q.time, 2).."s", 1, 1, 1, 1, 1, 1 )
 
-	if q.PrioScript then
-		self.Tooltip:AddLine( "\nPriority List Criteria" )
+	if q.HookScript and q.HookScript ~= "" then
+		self.Tooltip:AddLine( "\nHook Criteria" )
 		
-		local Text = fmt( q.PrioScript )
+		local Text = fmt( q.HookScript )
 		self.Tooltip:AddLine( self.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
 		
-		if q.PrioElements then
+		if q.HookElements then
 			self.Tooltip:AddLine( "Values" )
-			for k, v in pairs( q.PrioElements ) do
+			for k, v in pairs( q.HookElements ) do
 				self.Tooltip:AddDoubleLine( k, self.Utils.FormatValue( v ) , 1, 1, 1, 1, 1, 1 )
 			end
 		end
