@@ -1919,6 +1919,10 @@ function Hekili:SetOption( info, input )
 						end
 					end
 				
+				elseif option == 'Script' then
+					display[option] = input:trim()
+					RebuildScripts = true
+				
 				elseif option == 'Copy To' then
 					local index = #profile.displays + 1
 					
@@ -1949,6 +1953,10 @@ function Hekili:SetOption( info, input )
 					local placeholder = table.remove( display.Queues, hookID )
 					table.insert( display.Queues, input, placeholder )
 					RebuildOptions, RebuildCache, RebuildScripts, Select = true, true, true, 'P'..input
+				
+				elseif option == 'Script' then
+					hook[ option ] = input:trim()
+					RebuildScripts = true
 				
 				else
 					hook[ option ] = input
@@ -1995,6 +2003,10 @@ function Hekili:SetOption( info, input )
 				
 				elseif option == 'Enabled' or option == 'Specialization' then
 					RebuildCache = true
+					
+				elseif option == 'Script' then
+					list[ option ] = input:trim()
+					RebuildScripts = true
 				
 				-- Import/Exports
 				elseif option == 'Copy To' then
