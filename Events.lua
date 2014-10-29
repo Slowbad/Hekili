@@ -40,6 +40,7 @@ end
 
 
 function Hekili:PLAYER_ENTERING_WORLD()
+	self.Class = select(2, UnitClass( 'player' ) )
 	self.Specialization = GetSpecializationInfo( GetSpecialization() )
 	self.GUID = UnitGUID("player")
 
@@ -217,11 +218,20 @@ function H:UpdateGear()
 	
 	if MH then
 		Hekili.Tooltip:SetInventoryItem( "player", 16 )
-		
-		local WS = _G["HekiliTooltipTextRight5"]:GetText()
-		if WS then
-			self.State.mainhand_speed = tonumber( WS:match("%d[.,]%d+") )
-		end
+		local lines = Hekili.Tooltip:NumLines()
+
+		for i = 2, lines do
+			line = _G["HekiliTooltipTextRight"..i]:GetText()
+
+			if line then
+				local speed = tonumber( line:match("%d[.,]%d+") )
+				
+				if speed then
+					self.State.mainhand_speed = speed
+					break
+				end
+			end
+		end	
 		
 		InitialGearUpdate = true
 	else
@@ -233,11 +243,20 @@ function H:UpdateGear()
 	
 	if OffhandHasWeapon() then
 		Hekili.Tooltip:SetInventoryItem( "player", 17 )
-		
-		local WS = _G["HekiliTooltipTextRight5"]:GetText()
-		if WS then
-			self.State.offhand_speed = tonumber( WS:match("%d[.,]%d+") )
-		end
+		local lines = Hekili.Tooltip:NumLines()
+
+		for i = 2, lines do
+			line = _G["HekiliTooltipTextRight"..i]:GetText()
+
+			if line then
+				local speed = tonumber( line:match("%d[.,]%d+") )
+				
+				if speed then
+					self.State.offhand_speed = speed
+					break
+				end
+			end
+		end		
 	else
 		self.State.offhand_speed = 0
 	end
@@ -283,22 +302,26 @@ function H:UNIT_SPELLCAST_SUCCEEDED( _, UID, spell )
 end
 
 
-local swing = {}
-
-Hekili.SwingInfo = {
-	['MH'] = 0,
-	['next_MH'] = 4,
-	['OH'] = 0,
-	['next_OH'] = 4
+Hekili.Swing = {
+	MH = 0,
+	nextMH = 0,
+	OH = 0,
+	nextOH = 0
 }
 
 -- Use dots/debuffs to count active targets.
 -- Track dot power (until 6.0) for snapshotting.
 -- Note that this was ported from an unreleased version of Hekili, and is currently only counting damaged enemies.
-function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName, _, _, interrupt)
+function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName, _, _, interrupt, _, _, _, _, offhand, multistrike )
 
 	if subtype == 'UNIT_DIED' or subtype == 'UNIT_DESTROYED' and self:KnownTarget( destGUID ) then
 		self:Eliminate( destGUID )
+		return
+	end
+
+	-- Hekili: v1 Tracking System
+	if subtype == 'SPELL_SUMMON' and sourceGUID == self.GUID then
+		self:UpdateMinion( destGUID, time )
 		return
 	end
 
@@ -310,48 +333,23 @@ function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, so
 
 	local time = GetTime()
 	
-	-- Hekili: v1 Tracking System
-	if subtype == 'SPELL_SUMMON' and sourceGUID == self.GUID then
-		self:UpdateMinion( destGUID, time )
+	if self.Class == 'WARRIOR' and subtype:sub(1, 5) == 'SWING' and not multistrike then
+		local mainhandSpeed, offhandSpeed = UnitAttackSpeed( 'player' )
+		local Swing = self.Swing
+		
+		if offhand == false or self.State.offhand_speed == 0 then
+			Swing.MH		= time
+			Swing.nextMH	= time + mainhandSpeed
+			Swing.last		= 'MH'
+		else
+			Swing.OH		= time
+			Swing.nextOH	= time + offhandSpeed
+			Swing.last		= 'OH'
+		end
+		
 		return
 	end
-
-	--[[  DW Swing Logic, save for warrior implementation.
-	if sourceGUID == self.GUID and subtype:sub(1, 5) == "SWING" then
-		local speed = {}
-		speed.MH, speed.OH = UnitAttackSpeed("player")
-		if (#swing == 5) then
-			table.remove(swing, 1)
-		end
-
-		-- Figure out if this was MH or OH, if possible.
-		local closest, difference, hand = 0, 10, nil
-		for i,v in ipairs(swing) do
-			local MH_diff, OH_diff = abs(time - (v.MH or 0)), abs(time - (v.OH or 0))
-			
-			if MH_diff < OH_diff and MH_diff < difference then
-				closest = i
-				difference = MH_diff
-				hand = "MH"
-			elseif OH_diff < MH_diff and OH_diff < difference then
-				closest = i
-				difference = OH_diff
-				hand = "OH"
-			end
-		end
-		
-		swing[ #swing + 1 ] = {}
-		swing[ #swing ].time = time
-		swing[ #swing ].MH, swing[ #swing ].OH = UnitAttackSpeed("player")
-		swing[ #swing ].MH = time + swing[ #swing ].MH
-		if swing[#swing].OH then swing[ #swing ].OH = time + swing[ #swing ].OH end
-		
-		if difference < 0.100 then
-			SwingInfo[hand] = time
-			SwingInfo['next_'..hand] = speed[hand]
-		end
-		
-	end ]]
+	
 	
 	-- Player/Minion Event
 	if hostile and sourceGUID ~= destGUID then

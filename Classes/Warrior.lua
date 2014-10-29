@@ -2,147 +2,131 @@
 -- August 2014
 
 
+local AbilityMods, AddHandler = Hekili.Utils.AbilityMods, Hekili.Utils.AddHandler
+
 -- This table gets loaded only if there's a supported class/specialization.
 if (select(2, UnitClass("player")) == "WARRIOR") then
+
+	Hekili.Class = "WARRIOR"
 
 	-- AddResource( SPELL_POWER_HEALTH )
 	AddResource( SPELL_POWER_RAGE )
 	
-	AddTalent( 152278,	"anger_management" )
-	AddTalent( 152276,	"gladiators_resolve" )
-	AddTalent( 152277,	"ravager" )
-	AddTalent( 176289,	"siegebreaker" )
-	AddTalent( 107574,	"avatar" )
-	AddTalent( 46294,	"bladestorm" )
-	AddTalent( 12292,	"bloodbath" )
-	AddTalent( 114028,	"mass_spell_reflection" )
-	AddTalent( 114029,	"safeguard" )
-	AddTalent( 114030,	"vigilance" )
-	AddTalent( 118000,	"dragon_roar" )
-	AddTalent( 46968,	"shockwave" )
-	AddTalent( 107570,	"storm_bolt" )
-	AddTalent( 169679,	"furious_strikes" )
-	AddTalent( 169680,	"heavy_repercussions" )
-	AddTalent( 1464,	"slam" )
-	AddTalent( 29725,	"sudden_death" )
-	AddTalent( 56636,	"taste_for_blood" )
-	AddTalent( 169683,	"unquenchable_thirst" )
-	AddTalent( 169685,	"unyielding_strikes" )
-	AddTalent( 55694,	"enraged_regeneration" )
-	AddTalent( 103840,	"impending_victory" )
-	AddTalent( 29838,	"second_wind" )
-	AddTalent( 103827,	"double_time" )
-	AddTalent( 103826,	"juggernaut" )
-	AddTalent( 103828,	"warbringer" )
+	AddTalent( "anger_management"     , 152278 )
+	AddTalent( "avatar"               , 107574 )
+	AddTalent( "bladestorm"           , 46294 )
+	AddTalent( "bloodbath"            , 12292 )
+	AddTalent( "double_time"          , 103827 )
+	AddTalent( "dragon_roar"          , 118000 )
+	AddTalent( "enraged_regeneration" , 55694 )
+	AddTalent( "furious_strikes"      , 169679 )
+	AddTalent( "gladiators_resolve"   , 152276 )
+	AddTalent( "heavy_repercussions"  , 169680 )
+	AddTalent( "impending_victory"    , 103840 )
+	AddTalent( "juggernaut"           , 103826 )
+	AddTalent( "mass_spell_reflection", 114028 )
+	AddTalent( "ravager"              , 152277 )
+	AddTalent( "safeguard"            , 114029 )
+	AddTalent( "second_wind"          , 29838 )
+	AddTalent( "shockwave"            , 46968 )
+	AddTalent( "siegebreaker"         , 176289 )
+	AddTalent( "slam"                 , 1464 )
+	AddTalent( "storm_bolt"           , 107570 )
+	AddTalent( "sudden_death"         , 29725 )
+	AddTalent( "taste_for_blood"      , 56636 )
+	AddTalent( "unquenchable_thirst"  , 169683 )
+	AddTalent( "unyielding_strikes"   , 169685 )
+	AddTalent( "vigilance"            , 114030 )
+	AddTalent( "warbringer"           , 103828 )
 
 	-- Glyphs.
-	AddGlyph( 58377,	"blitz" )
-	AddGlyph( 58096,	"bloodcurdling_shout" )
-	AddGlyph( 58367,	"bloodthirst" )
-	AddGlyph( 58369,	"bloody_healing" )
-	AddGlyph( 94372,	"bull_rush" )
-	AddGlyph( 115946,	"burning_anger" )
-	AddGlyph( 159701,	"cleave" )
-	AddGlyph( 89003,	"colossus_smash" )
-	AddGlyph( 115943,	"crow_feast" )
-	AddGlyph( 63325,	"death_from_above" )
-	AddGlyph( 58386,	"die_by_the_sword" )
-	AddGlyph( 58355,	"enraged_speed" )
-	AddGlyph( 159761,	"flawless_defense" )
-	AddGlyph( 58357,	"gag_order" )
-	AddGlyph( 58099,	"gushing_wound" )
-	AddGlyph( 58385,	"hamstring" )
-	AddGlyph( 58388,	"heavy_repercussions" )
-	AddGlyph( 159708,	"heroic_leap" )
-	AddGlyph( 58366,	"hindering_strikes" )
-	AddGlyph( 58364,	"hold_the_line" )
-	AddGlyph( 146970,	"impaling_throws" )
-	AddGlyph( 63327,	"intimidation_shout" )
-	AddGlyph( 58097,	"long_charge" )
-	AddGlyph( 58104,	"mighty_victory" )
-	AddGlyph( 159738,	"mocking_banner" )
-	AddGlyph( 58368,	"mortal_strike" )
-	AddGlyph( 58095,	"mystic_shout" )
-	AddGlyph( 159740,	"raging_blow" )
-	AddGlyph( 58370,	"raging_wind" )
-	AddGlyph( 159754,	"rallying_cry" )
-	AddGlyph( 94374,	"recklessness" )
-	AddGlyph( 58356,	"resonating_power" )
-	AddGlyph( 58372,	"rude_interruption" )
-	AddGlyph( 159759,	"shattering_throw" )
-	AddGlyph( 58375,	"shield_slam" )
-	AddGlyph( 63329,	"shield_wall" )
-	AddGlyph( 63328,	"spell_reflection" )
-	AddGlyph( 58384,	"sweeping_strikes" )
-	AddGlyph( 123779,	"blazing_trail" )
-	AddGlyph( 159703,	"drawn_sword" )
-	AddGlyph( 146971,	"executor" )
-	AddGlyph( 146968,	"raging_whirlwind" )
-	AddGlyph( 146969,	"subtle_defender" )
-	AddGlyph( 146973,	"watchful_eye" )
-	AddGlyph( 146974,	"weaponmaster" )
-	AddGlyph( 68164,	"thunder_strike" )
-	AddGlyph( 58098,	"unending_rage" )
-	AddGlyph( 146965,	"victorious_throw" )
-	AddGlyph( 58382,	"victory_rush" )
-	AddGlyph( 63324,	"wind_and_thunder" )
+	AddGlyph( "blitz"              , 58377 )
+	AddGlyph( "bloodcurdling_shout", 58096 )
+	AddGlyph( "bloodthirst"        , 58367 )
+	AddGlyph( "bloody_healing"     , 58369 )
+	AddGlyph( "bull_rush"          , 94372 )
+	AddGlyph( "burning_anger"      , 115946 )
+	AddGlyph( "cleave"             , 159701 )
+	AddGlyph( "colossus_smash"     , 89003 )
+	AddGlyph( "crow_feast"         , 115943 )
+	AddGlyph( "death_from_above"   , 63325 )
+	AddGlyph( "die_by_the_sword"   , 58386 )
+	AddGlyph( "enraged_speed"      , 58355 )
+	AddGlyph( "flawless_defense"   , 159761 )
+	AddGlyph( "gag_order"          , 58357 )
+	AddGlyph( "gushing_wound"      , 58099 )
+	AddGlyph( "hamstring"          , 58385 )
+	AddGlyph( "heavy_repercussions", 58388 )
+	AddGlyph( "heroic_leap"        , 159708 )
+	AddGlyph( "hindering_strikes"  , 58366 )
+	AddGlyph( "hold_the_line"      , 58364 )
+	AddGlyph( "impaling_throws"    , 146970 )
+	AddGlyph( "intimidation_shout" , 63327 )
+	AddGlyph( "long_charge"        , 58097 )
+	AddGlyph( "mighty_victory"     , 58104 )
+	AddGlyph( "mocking_banner"     , 159738 )
+	AddGlyph( "mortal_strike"      , 58368 )
+	AddGlyph( "mystic_shout"       , 58095 )
+	AddGlyph( "raging_blow"        , 159740 )
+	AddGlyph( "raging_wind"        , 58370 )
+	AddGlyph( "rallying_cry"       , 159754 )
+	AddGlyph( "recklessness"       , 94374 )
+	AddGlyph( "resonating_power"   , 58356 )
+	AddGlyph( "rude_interruption"  , 58372 )
+	AddGlyph( "shattering_throw"   , 159759 )
+	AddGlyph( "shield_slam"        , 58375 )
+	AddGlyph( "shield_wall"        , 63329 )
+	AddGlyph( "spell_reflection"   , 63328 )
+	AddGlyph( "sweeping_strikes"   , 58384 )
+	AddGlyph( "blazing_trail"      , 123779 )
+	AddGlyph( "drawn_sword"        , 159703 )
+	AddGlyph( "executor"           , 146971 )
+	AddGlyph( "raging_whirlwind"   , 146968 )
+	AddGlyph( "subtle_defender"    , 146969 )
+	AddGlyph( "watchful_eye"       , 146973 )
+	AddGlyph( "weaponmaster"       , 146974 )
+	AddGlyph( "thunder_strike"     , 68164 )
+	AddGlyph( "unending_rage"      , 58098 )
+	AddGlyph( "victorious_throw"   , 146965 )
+	AddGlyph( "victory_rush"       , 58382 )
+	AddGlyph( "wind_and_thunder"   , 63324 )
 	
-	-- Player Buffs.
-	
+	-- Player Buffs / Debuffs
+	AddAura( 'bloodbath'         , 12292 , 'duration', 12 )
+	AddAura( 'bloodsurge'        , 46915 , 'duration', 15 )
+	AddAura( 'colossus_smash'    , 167105, 'duration', 6 )
+	AddAura( 'demoralizing_shout', 1160  , 'duration', 8 )
+	AddAura( 'die_by_the_sword'  , 118038, 'duration', 8 )
+	AddAura( 'enrage'            , 13046 , 'duration', 8 )
+	AddAura( 'last_stand'        , 12975 , 'duration', 15 )
+	AddAura( 'meat_cleaver'      , 85739 , 'duration', 10, 'max_stacks', 3 )
+	AddAura( 'mortal_strike'     , 12294 , 'duration', 10 )
+	AddAura( 'piercing_howl'     , 12323 , 'duration', 15 )
+	AddAura( 'raging_blow'       , 131116, 'duration', 12, 'max_stacks', 2 )
+	AddAura( 'rallying_cry'      , 96462 , 'duration', 10 )
+	AddAura( 'recklessness'      , 1719  , 'duration', 10 )
+	AddAura( 'rend'              , 772   , 'duration', 18 )
+	AddAura( 'shield_barrier'    , 174926, 'duration', 6 )
+	AddAura( 'shield_block'      , 132404, 'duration', 6 )
+	AddAura( 'shield_wall'       , 871   , 'duration', 8 )
+	AddAura( 'sudden_death'      , 52437 , 'duration', 10 )
+	AddAura( 'sweeping_strikes'  , 12328 , 'duration', 10 )
+	AddAura( 'thunder_clap'      , 6343  , 'duration', 6 )
+	AddAura( 'ultimatum'         , 122510, 'duration', 10 )
 
-	-- Abilities.
-	AddSpell( 6673,		"battle_shout" )
-	AddSpell( 2457,		"battle_stance" )
-	AddSpell( 18499,	"berserker_rage" )
-	AddSpell( 100,		"charge" )
-	AddSpell( 469,		"commanding_shout" )
-	AddSpell( 115767,	"deep_wounds" )
-	AddSpell( 71,		"defensive_stance" )
-	AddSpell( 174894,	"devastate" ) -- 20243
-	AddSpell( 1715,		"hamstring" )
-	AddSpell( 158836,	"headlong_rush" )
-	AddSpell( 6544,		"heroic_leap" )
-	AddSpell( 78,		"heroic_strike" )
-	AddSpell( 57755,	"heroic_throw" )
-	AddSpell( 3411,		"intervene" )
-	AddSpell( 5246,		"intimidating_shout" )
-	AddSpell( 6552,		"pummel" )
-	AddSpell( 112048,	"shield_barrier" )
-	AddSpell( 23920,	"spell_reflection" )
-	AddSpell( 355,		"taunt" )
-	AddSpell( 34428,	"victory_rush" )
-	AddSpell( 84608,	"bastion_of_defense" )
-	AddSpell( 46915,	"bloodsurge" )
-	AddSpell( 23881,	"bloodthirst" )
-	AddSpell( 167105,	"colossus_smash" )
-	-- AddSpell( 86346,	"colossus_smash" )	-- Fury: Catch this in IsKnown()
-	AddSpell( 1160,		"demoralizing_shout" )
-	AddSpell( 174892,	"devastate" )
-	-- AddSpell( 174893,	"devastate" )	-- Fury: Catch this in IsKnown()
-	AddSpell( 118038,	"die_by_the_sword" )
-	AddSpell( 13046, 	"enrage" )
-	AddSpell( 5308,		"execute" )
-	-- AddSpell( 163201,	"execute" )		-- Arms: Catch this in IsKnown()
-	AddSpell( 12975,	"last_stand" )
-	AddSpell( 114192,	"mocking_banner" )
-	AddSpell( 12294,	"mortal_strike" )
-	AddSpell( 12323,	"piercing_howl" )
-	AddSpell( 85288,	"raging_blow" )
-	AddSpell( 97462,	"rallying_cry" )
-	AddSpell( 1719,		"recklessness" )
-	AddSpell( 772,		"rend" )
-	AddSpell( 6572,		"revenge" )
-	AddSpell( 174926,	"shield_barrier" )
-	AddSpell( 2565,		"shield_block" )
-	AddSpell( 23922,	"shield_slam" )
-	AddSpell( 871,		"shield_wall" )
-	AddSpell( 12328,	"sweeping_strikes" )
-	AddSpell( 6343,		"thunder_clap" )
-	AddSpell( 1680,		"whirlwind" )
-	AddSpell( 100130,	"wild_strike" )
-	
 
-	-- DoT abilities that we will want to track power.
+	AddPerk( "empowered_execute"        , 157454 )
+	AddPerk( "enhanced_rend"            , 174737 )
+	AddPerk( "enhanced_sweeping_strikes", 157461 )
+	AddPerk( "enhanced_whirlwind"       , 157473 )
+	AddPerk( "improved_block"           , 157497 )
+	AddPerk( "improved_defensive_stance", 157494 )
+	AddPerk( "improved_die_by_the_sword", 157452 )
+	AddPerk( "improved_heroic_leap"     , 157449 )
+	AddPerk( "improved_heroic_throw"    , 157479 )
+	AddPerk( "improved_recklessness"    , 176051 )
+	
+	
 	SetGCD( "battle_shout" )
 
 	-- Gear Sets
@@ -150,103 +134,145 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 	-- AddItemSet( "tier15_melee", 96689, 96690, 96691, 96692, 96693 )
 	-- AddItemSet( "tier14_melee", 87138, 87137, 87136, 87135, 87134 )
 
-	-- AddAction( name,
-	-- { resource = delta },
-	-- base cast time, GCD type, cooldown )
-
-	AddAction( "battle_stance",
-	0, nil,
-	0, 'melee', 1.5 )
 	
+	-- Abilities.
+	AddAbility( 'avatar'            , 107574, 0  , 0  , 'spell', 180, 'passive', true)
+	AddAbility( 'battle_shout'      , 6673  , 0  , 0  , 'spell', 0  , 'passive', true)
+	AddAbility( 'battle_stance'     , 2457  , 0  , 0  , 'melee', 1.5, 'passive', true)
+	AddAbility( 'berserker_rage'    , 18499 , 0  , 0  , 'spell', 30 , 'passive', true)
+	AddAbility( 'bloodbath'         , 12292 , 0  , 0  , 'spell', 60 , 'passive', true)
+	AddAbility( 'bloodthirst'       , 23881 , 0  , 0  , 'melee', 4.5                 )
+	AddAbility( 'charge'            , 100   , -20, 0  , 'spell', 20                  )
+	AddAbility( 'colossus_smash'    , 167105, 0  , 0  , 'melee', 20                  )
+	AddAbility( 'commanding_shout'  , 469   , 0  , 0  , 'spell', 469, 'passive', true)
+	AddAbility( 'defensive_stance'  , 71    , 0  , 0  , 'melee', 1.5, 'passive', true)
+	AddAbility( 'demoralizing_shout', 1160  , 0  , 0  , 'spell', 60 , 'passive', true)
+	AddAbility( 'devastate'         , 20243 , 0  , 0  , 'melee', 0                   )
+	AddAbility( 'die_by_the_sword'  , 118038, 0  , 0  , 'spell', 120, 'passive', true)
+	AddAbility( 'dragon_roar'       , 118000, 0  , 0  , 'spell', 60                  )
+	AddAbility( 'execute'           , 163201, 30 , 0  , 'melee', 0                   )
+	AddAbility( 'hamstring'         , 1715  , 0  , 0  , 'off'  , 1                   )
+	AddAbility( 'heroic_leap'       , 6544  , 0  , 0  , 'spell', 45 , 'passive', true)
+	AddAbility( 'heroic_strike'     , 78    , 30 , 0  , 'off'  , 1.5                 )
+	AddAbility( 'heroic_throw'      , 57755 , 0  , 0  , 'melee', 6                   )
+	AddAbility( 'intervene'         , 3411  , 0  , 0  , 'spell', 30 , 'passive', true)
+	AddAbility( 'intimidating_shout', 5246  , 0  , 0  , 'spell', 90 , 'passive', true)
+	AddAbility( 'impending_victory' , 103840, 0  , 0  , 'spell', 30                  )
+	AddAbility( 'last_stand'        , 12975 , 0  , 0  , 'spell', 180, 'passive', true)
+	AddAbility( 'mocking_banner'    , 114192, 0  , 0  , 'spell', 180, 'passive', true)
+	AddAbility( 'mortal_strike'     , 12294 , 20 , 0  , 'melee', 6                   )
+	AddAbility( 'piercing_howl'     , 12323 , 10 , 0  , 'spell', 0  , 'passive', true)
+	AddAbility( 'pummel'            , 6552  , 0  , 0  , 'off'  , 15                  )
+	AddAbility( 'raging_blow'       , 85288 , 10 , 0  , 'melee', 0                   )
+	AddAbility( 'rallying_cry'      , 97462 , 0  , 0  , 'spell', 180, 'passive', true)
+	AddAbility( 'ravager'           , 152277, 0  , 0  , 'melee', 60 , 'passive', true)
+	AddAbility( 'recklessness'      , 1719  , 0  , 0  , 'spell', 180, 'passive', true)
+	AddAbility( 'rend'              , 772   , 5  , 0  , 'melee', 0                   )
+	AddAbility( 'revenge'           , 6572  , 0  , 0  , 'melee', 9                   )
+	AddAbility( 'shattering_throw'  , 64382 , 0  , 1.5, 'spell', 300                 )
+	AddAbility( 'shield_barrier'    , 174926, 20 , 0  , 'spell', 1.5, 'passive', true)
+	AddAbility( 'shield_block'      , 2565  , 60 , 0  , 'melee', 12 , 'passive', true)
+	AddAbility( 'shield_charge'     , 156321, 20 , 0  , 'melee', 15                  )
+	AddAbility( 'shield_slam'       , 23922 , 0  , 0  , 'melee', 6                   )
+	AddAbility( 'shield_wall'       , 871   , 0  , 0  , 'spell', 300, 'passive', true)
+	AddAbility( 'shockwave'         , 46968 , 0  , 0  , 'spell', 40 , 'passive', true)
+	AddAbility( 'siegebreaker'      , 176289, 0  , 0  , 'melee', 45                  )
+	AddAbility( 'spell_reflection'  , 23920 , 0  , 0  , 'spell', 25 , 'passive', true)
+	AddAbility( 'storm_bolt'        , 107570, 0  , 0  , 'spell', 30                  )
+	AddAbility( 'sweeping_strikes'  , 12328 , 10 , 0  , 'spell', 10 , 'passive', true)
+	AddAbility( 'taunt'             , 355   , 0  , 0  , 'melee', 8  , 'passive', true)
+	AddAbility( 'thunder_clap'      , 6343  , 10 , 0  , 'spell', 6  , 'passive', true)
+	AddAbility( 'victory_rush'      , 34428 , 200, 0  , 'melee', 0                   )
+	AddAbility( 'whirlwind'         , 1680  , 20 , 0  , 'melee', 0                   )
+	AddAbility( 'wild_strike'       , 100130, 45 , 0  , 'melee', 0                   )
+	
+	
+	function Hekili:SetClassModifiers()
+	
+		for k,v in pairs( self.Abilities ) do
+			for key, mod in pairs( v.mods ) do
+				self.Abilities[ k ].mods[ key ] = nil
+			end
+		end
+		
+		local cd_death_from_above = "if glyph.heroic_leap.enabled then x = x - 15 end"
+		local cd_unquenchable_thirst = "if talent.unquenchable_thirst.enabled then return 0 end"
+		local cost_charge = "if glyph.bull_rush.enabled then x = x - 15 end"
+		local cost_execute = "x = max(10, min( rage.current, 40 ) )"
+		local cost_sudden_death = "if buff.sudden_death.up then return 0 end"
+		local cost_shockwave = "if active_enemies >= 3 then return 20 end"
+		local cost_bloodsurge = "if buff.bloodsurge.up then return 0 end"
+		
+		AbilityMods( 'charge', 'cost', cost_charge )
+		
+		AbilityMods( 'heroic_leap', 'cooldown', cd_death_from_above )
+		
+		if self.Specialization == 71 then
+			AbilityMods( 'execute', 'cost', cost_execute )
+			
+		elseif self.Specialization == 72 then
+			AbilityElements( 'execute', 'id', 5308 )
+			AbilityMods( 'execute', 'cost', cost_sudden_death )
+			
+			AbilityMods( 'bloodthirst', 'cooldown', cd_unquenchable_thirst )
+			
+			AbilityMods( 'wild_strike', 'cost', cost_bloodsurge )
+			
+		end
+		
+	end
+	
+	
+	AddHandler( 'battle_shout', function ()
+		H:RemoveBuff( 'commanding_shout' ) -- need to confirm it's ours.
+		H:Buff( 'battle_shout', 3600 )
+	end )
+
+
 	AddHandler( "battle_stance", function ()
 		H:RemoveBuff( 'defensive_stance' )
 		H:RemoveBuff( 'gladiator_stance' )
 		H:Buff( "battle_stance", 3600 )
 	end )
-	
-	
-	AddAction( "charge",
-	{ SPELL_POWER_RAGE	= function()
-		if glyph.bull_rush.enabled then
-			return -35
-		end
-		return -20
-	end },
-	0, 'melee',	20 )
-	
+
+
 	AddHandler( "charge", function ()
 		H:Debuff( "target", "charge", 1.5 )
 	end )
 	
 	
-	AddAction( "recklessness",
-	0, nil,
-	0, 'melee', 180 )
-	
 	AddHandler( "recklessness", function ()
-		H:Buff( "recklessness", 10 )
+		H:Buff( "recklessness", glyph.recklessness.enabled and 15 or 10 )
 		H:RemoveBuff( "defensive_stance" )
 		H:Buff( "battle_stance", 3600 )
 	end )
 	
 	
-	AddAction( "avatar",
-	0, nil,
-	0, 'melee', 180 )
-	
 	AddHandler( "avatar", function ()
 		H:Buff( "avatar", 24 )
 	end )
-	-- NYI: No current way to 'remove all roots and snares'
 	
-	
-	AddAction( "bloodbath",
-	0, nil,
-	0, 'melee', 60 )
 	
 	AddHandler( "bloodbath", function ()
 		H:Buff( "bloodbath", 12 )
 	end )
 	
+
+	AddHandler( "heroic_leap", function ()
+		if glyph.heroic_leap.enabled then H:Buff( 'heroic_leap', 3 ) end
+	end )
 	
-	AddAction( "heroic_leap",
-	0, nil,
-	0, 'melee', 45 )
-	
-	
-	AddAction( "rend",
-	{ SPELL_POWER_RAGE	= 5 },
-	0, 'melee', 0 )
 	
 	AddHandler( "rend", function ()
 		H:Debuff( 'target', "rend", 18 )
 	end )
 	
 	
-	AddAction( "mortal_strike",
-	{ SPELL_POWER_RAGE	= 20 },
-	0, 'melee', function()
-		return 6 * haste
-	end )
-	
 	AddHandler( "mortal_strike", function ()
 		H:Debuff( 'target', 'mortal_strike', 10 )
 	end )
-	
-	
-	-- This is the 'leap out and charge back' mechanic to generate rage.
-	-- AddAction( "heroic_charge", ...
 
-	
-	AddAction( "ravager",
-	0, nil,
-	0, 'melee', 60 )
-	
-	
-	AddAction( "colossus_smash",
-	0, nil,
-	0, 'melee', 20 )
-	
+
 	AddHandler( "colossus_smash", function ()
 		H:Debuff( 'target', 'colossus_smash', 6 )
 		H:RemoveBuff( 'defensive_stance' )
@@ -254,73 +280,30 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 	end )
 	
 	
-	AddAction( "storm_bolt",
-	0, nil,
-	0, 'melee', 30 )
-	
 	AddHandler( "storm_bolt", function ()
 		H:Debuff( 'target', 'storm_bolt', 4 )
 	end )
 	
-	
-	AddAction( "dragon_roar",
-	0, nil,
-	0, 'melee', 60 )
 	
 	AddHandler( "dragon_roar", function ()
 		H:Debuff( 'target', 'dragon_roar', 0.5 )
 	end )
 	
 	
-	AddAction( "execute",
-	{ SPELL_POWER_RAGE = function ()
-		if player.specialization == 71 then
-			return max(10, min(rage.current, 40))
-		end
-		return 10
-	end },
-	0, 'melee', 0 )
-	
-	
-	AddAction( "impending_victory",
-	{ SPELL_POWER_RAGE	= 10 },
-	0, melee, 30 )
-	
-	
-	AddAction( "siegebreaker",
-	0, nil,
-	0, 'melee', 45 )
-	
 	AddHandler( "siegebreaker", function ()
 		H:Debuff( 'target', 'siegebreaker', 1 )
 	end )
 	
 	
-	AddAction( "slam",
-	{ SPELL_POWER_RAGE	= function ()
-		return 10 * (1 + buff.slam.count)
-	end },
-	0, 'melee', 0 )
-	
 	AddHandler( "slam", function ()
-		if buff.slam.count < 2 then
+		if buff.slam.stack < 2 then
 			H:AddStack( "slam", 2, 1 )
 		end
 	end )
 	
 	
-	AddAction( "whirlwind",
-	{ SPELL_POWER_RAGE	= 20 },
-	0, 'melee', 0 )
-	
-	
-	AddAction( "shockwave",
-	0, nil,
-	0, 'melee', function ()
-		if active_enemies >= 3 then
-			return 20
-		end
-		return 40
+	AddHandler( "whirlwind", function ()
+		H:AddStack( "meat_cleaver", 10, 1 )
 	end )
 	
 	AddHandler( "shockwave", function ()
@@ -328,12 +311,26 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 	end )
 	
 	
-	AddAction( "pummel",
-	0, nil,
-	0, 'melee', 15 )
-	
 	AddHandler( "pummel", function ()
 		H:Interrupt( 'target' )
 	end )
+	
+	
+	AddHandler( 'raging_blow', function ()
+		H:ConsumeStack( 'raging_blow' )
+	end )
+	
+	
+	AddHandler( 'execute', function ()
+		H:RemoveBuff( 'sudden_death' )
+	end )
+	
+	AddHandler( 'wild_strike', function ()
+		H:ConsumeStack( 'bloodsurge' )
+	end )
+	
+	function Hekili:RestoreDefaults()
+	
+	end
 
 end

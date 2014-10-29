@@ -131,7 +131,7 @@ function Hekili:ShowDiagnosticTooltip( q )
 	self.Tooltip:SetOwner( UIParent, "ANCHOR_CURSOR" )
 	self.Tooltip:SetBackdropColor( 0, 0, 0, 1 )
 	self.Tooltip:SetText( self.Abilities[ q.actName ].name )
-	self.Tooltip:AddDoubleLine( q.alName.." #"..q.action, "+"..round( q.time, 2).."s", 1, 1, 1, 1, 1, 1 )
+	self.Tooltip:AddDoubleLine( q.alName.." #"..q.action, "+" .. round( q.time, 2 ) .."s", 1, 1, 1, 1, 1, 1 )
 
 	if q.HookScript and q.HookScript ~= "" then
 		self.Tooltip:AddLine( "\nHook Criteria" )

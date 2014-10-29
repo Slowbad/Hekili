@@ -55,6 +55,7 @@ state.set_bonus = {}
 
 -- Some target info.
 state.target	= {}
+state.target.health = {}
 
 -- (Your) debuffs applied to the target.
 state.debuff	= {}
@@ -109,6 +110,16 @@ function H:AddStack( aura, duration, stacks, value )
 		self:Buff( aura, duration, stacks, value )
 	end
 
+end
+
+
+function H:ConsumeStack( aura )
+
+	if self.State.buff[ aura ].count > 1 then
+		self.State.buff[ aura ].count = self.State.buff[ aura ].count - 1
+	else
+		H:RemoveBuff( aura )
+	end
 end
 
 
@@ -221,7 +232,7 @@ local mt_state		= {
 			local gcdType = H.Abilities[ t.this_action ].gcdType
 
 			if gcdType == 'spell' then return max( 1.0, 1.5 * t.haste )
-			elseif gcdType == 'melee' then return max( H.minGCD, 1.5 * t.haste )
+			elseif gcdType == 'melee' then return max( H.minGCD and H.minGCD or 1.0, 1.5 * t.haste )
 			elseif gcdType == 'totem' then return 1.0
 			end
 			
@@ -567,7 +578,7 @@ local mt_target = {
 			-- TBD: should health_pct use our time offset and TTD calculation to predict health?
 			-- Currently deciding not to, as predicting that you can use something that you can't is
 			-- probably worse than saying you can't use something that you can.  Right?
-			return 100 * ( t.health / t.health_max )
+			return t.health_max ~= 0 and ( 100 * ( t.health / t.health_max ) ) or 0
 		
 		elseif k == 'adds' then
 			-- Need to return # of active targets minus 1.
@@ -577,6 +588,9 @@ local mt_target = {
 			-- Need to identify a couple of spells to roughly get the distance to an enemy.
 			-- We'd probably use IsSpellInRange() on an individual action instead, so maybe not.
 			return 5
+		
+		elseif k == 'moving' then
+			return GetUnitSpeed( 'target' ) > 0
 		
 		elseif k == 'casting' then
 			if UnitName("target") and UnitCanAttack("player", "target") and UnitHealth("target") > 0 then

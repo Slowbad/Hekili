@@ -376,8 +376,13 @@ function H:ResetState()
 
 	self.State.now		= GetTime()
 	self.State.offset	= 0
-
-		
+	
+	-- A decent start, but assumes our first ability is always aggressive.  Not necessarily true...
+	if self.Class == 'WARRIOR' then
+		self.State.nextMH	= ( self.combat ~= 0 and self.Swing.nextMH > self.State.now ) and self.Swing.nextMH or -1
+		self.State.nextOH	= ( self.combat ~= 0 and self.Swing.nextOH > self.State.now ) and self.Swing.nextOH or -1
+	end
+	
 	self.State.active_dot	= setmetatable( {}, MT.mt_active_dot )
 	self.State.buff			= setmetatable( { __fullscan = false }, MT.mt_buffs )
 	self.State.cooldown		= setmetatable( {}, MT.mt_cooldowns )
@@ -410,7 +415,7 @@ function H:ResetState()
 	end
 
 	-- Special case spells that suck.
-	if self.State.buff.ascendance.up then
+	if Hekili.Abilities[ 'ascendance' ] and self.State.buff.ascendance.up then
 		H:SetCooldown( 'ascendance', self.State.buff.ascendance.remains + 165 )
 	end
 	
@@ -458,7 +463,27 @@ function H:Advance( time )
 		local resKey = GetResourceName( k )
 		local resource = self.State[ resKey ]
 
-		if resource.regen ~= 0 then
+		if resKey == 'rage' and SpellRange.IsSpellInRange( self.Abilities[ 'heroic_strike' ].id ) then
+			local MH, OH = UnitAttackSpeed( 'player' )
+
+			while ( s.nextMH > 0 and s.nextMH < s.now + s.offset ) do
+				local gain = floor( 35 * s.mainhand_speed ) / 10
+				if self.Specialization == 71 then gain = gain * 2 end
+				
+				resource.current = min( resource.max, resource.current + gain )
+				
+				s.nextMH = s.nextMH + MH
+			end
+			
+			while ( s.nextOH > 0 and s.nextOH < s.now + s.offset ) do
+				local gain = floor( 35 * s.offhand_speed * 0.5 ) / 10
+				
+				resource.current = min( resource.max, resource.current + gain )
+
+				s.nextOH = s.nextOH + OH
+			end
+		
+		elseif resource.regen ~= 0 then
 			resource.current = min( resource.max, resource.current + ( resource.regen * time ) )
 		end
 	end
@@ -479,6 +504,9 @@ function HasRequiredResources( ability )
 	
 	elseif type( action.cost ) == 'number' then
 		local resource = action.resource or SPELL_POWER_MANA
+		
+		if Hekili.Class == 'WARRIOR' then resource = SPELL_POWER_RAGE end
+		
 		local resKey = GetResourceName( resource )
 		local cost = action.cost
 		
@@ -539,6 +567,9 @@ function H:UpdateResources( ability )
 	elseif type(action.cost) == 'number' then
 		-- This class module is using an early version of AddAbility().
 		local resource = action.resource or SPELL_POWER_MANA
+		
+		if Hekili.Class == 'WARRIOR' then resource = SPELL_POWER_RAGE end
+		
 		local resKey = GetResourceName( resource )
 		local cost = action.cost
 		
@@ -591,19 +622,40 @@ local function IsKnown( sID )
 		elseif sID == 17364 then
 			return ( not s.buff.ascendance.up )
 			
-		elseif sID == 165341 or sID == 165339 then
-			return IsSpellKnown(114049)
+		elseif sID == 165341 then
+			return IsSpellKnown( 114049 )
 			
 		end
 
 	elseif H.Specialization == 262 then
 		-- Check 'Chain Lightning' for 'Lava Beam'.
 		if sID == 114074 then
-			return ( IsSpellKnown(421) and s.buff.ascendance.up )
+			return ( IsSpellKnown( 421 ) and s.buff.ascendance.up )
+		
+		elseif sID == 165339 then
+			return ( IsSpellKnown( 114049 ) )
 		
 		elseif sID == 51505 then
 			return true
 			
+		end
+	
+	elseif H.Specialization == 72 then -- Fury
+		if sID == 23881 then
+			return IsSpellKnown( 78 )
+
+		elseif sID == 12292 then
+			return s.talent.bloodbath.enabled
+		
+		end
+	
+	elseif H.Specialization == 71 then -- Arms
+		if sID == 12294 then
+			return IsSpellKnown( 78 )
+
+		elseif sID == 12292 then
+			return s.talent.bloodbath.enabled
+		
 		end
 
 	-- Check 'Spinning Crane Kick' for 'Rushing Jade Wind'.
@@ -615,9 +667,6 @@ local function IsKnown( sID )
 	elseif sID == 114158 and s.talent.lights_hammer.enabled then return true
 	
 	elseif sID == 114157 and s.talent.execution_sentence.enabled then return true
-	
-	-- Warrior
-	elseif sID == 12294 then return ( IsSpellKnown( 78 ) and H.Specialization == 71 )
 	
 	end
 
@@ -643,7 +692,10 @@ local function IsUsable( spell )
 		end
 	
 	elseif spell == 'execute' then
-		return ( s.target.health_pct <= 20 )
+		return ( s.buff.sudden_death.up or s.target.health_pct <= 20 )
+	
+	elseif spell == 'raging_blow' then
+		return ( s.buff.raging_blow.up )
 	
 	end
 	
@@ -687,20 +739,20 @@ function Hekili:ProcessHooks( dispID )
 			self:ResetState()
 			
 			if ( self.Config or self:CheckScript( 'D', dispID )  ) then 
-			
+
 				for i = 1, display['Icons Shown'] do
 
 					local chosen_action, chosen_caption
 					local chosen_wait   = 999
 					
 					for hookID, hook in ipairs( display.Queues ) do
-
+					
 						if self.HookVisible[ dispID..':'..hookID ] then
-							
+						
 							local HookPassed = self:CheckScript( 'P', dispID..':'..hookID )
 							
 							if HookPassed then
-
+							
 								local listID = hook['Action List']
 								local list = self.DB.profile.actionLists[ listID ]
 								
@@ -719,6 +771,7 @@ function Hekili:ProcessHooks( dispID )
 										
 										if self.ActionVisible[ listID..':'..actID ] then
 											-- Check for commands before checking actual actions.
+											
 											if entry.Ability == 'wait' then
 												if self:CheckScript( 'A', listID..':'..actID ) then
 													local args = self:GetModifiers( listID, actID )
@@ -765,7 +818,7 @@ function Hekili:ProcessHooks( dispID )
 							
 						end 
 						
-					end -- end Hookrity Queue
+					end -- end Hook
 					
 					if Queue[i] then
 						-- We have our actual action, so let's get the script values if we're debugging.
@@ -818,6 +871,7 @@ function Hekili:ProcessHooks( dispID )
 						if s.cooldown[ self.GCD ].expires > s.now + s.offset then
 							self:Advance( s.cooldown[ self.GCD ].expires - ( s.now + s.offset ) )
 						end
+
 						
 					else
 						for n = i, display['Icons Shown'] do
@@ -901,7 +955,7 @@ function H:UpdateDisplays()
 	end
 
 	for dispID, display in pairs(self.DB.profile.displays) do
-	
+
 		if self.Pause then
 			self.UI.Buttons[ dispID ][1].Overlay:SetTexture('Interface\\Addons\\Hekili\\Textures\\Pause.blp')
 			self.UI.Buttons[ dispID ][1].Overlay:Show()

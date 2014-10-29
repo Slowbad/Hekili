@@ -214,6 +214,8 @@ H.Resources		= {}
 function AddResource( resource )
 
 	H.Resources[ resource ] = true
+	
+	if not Hekili.ClassResource then Hekili.ClassResource = resource end
 
 	H.Keys = H.Keys or {}
 	H.Keys[ #H.Keys+1 ] = key
@@ -267,7 +269,17 @@ H.Utils.AddHandler = AddHandler
 
 function RunHandler( ability )
 	local ab = H.Abilities[ ability ]
-	if ab and ab.elem[ 'handler' ] then ab.elem[ 'handler' ] () end
+	local s = Hekili.State
+	
+	if ab and ab.elem[ 'handler' ] then
+		ab.elem[ 'handler' ] ()
+	end
+	
+	if select(2, UnitClass( 'PLAYER' ) ) == 'WARRIOR' and ( not ab.elem.passive ) and s.nextMH < 0 then
+		s.nextMH = s.now + s.offset - 0.01
+		s.nextOH = s.now + s.offset + 0.99
+	end
+	
 end
 H.Utils.RunHandler = RunHandler
 

@@ -7,6 +7,8 @@ local AbilityMods, AddHandler = Hekili.Utils.AbilityMods, Hekili.Utils.AddHandle
 -- This table gets loaded only if there's a supported class/specialization.
 if (select(2, UnitClass("player")) == "SHAMAN") then
 
+	Hekili.Class = "SHAMAN"
+
 	AddResource( SPELL_POWER_MANA )
 
 	AddTalent( "natures_guardian"     , 30884  )
@@ -231,8 +233,6 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 			end
 		end
 		
-		AuraElements( 'lightning_shield', 'max_stack', 1 )
-		
 		-- Enhancement
 		if self.Specialization == 263 then
 			Hekili.minGCD = 1.0
@@ -266,6 +266,8 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 			AbilityMods( 'lightning_bolt', 'cast', cast_ancestral_swiftness, cast_maelstrom_weapon )
 			AbilityMods( 'lightning_bolt', 'cost', cast_maelstrom_weapon )
 
+			AuraElements( 'lightning_shield', 'max_stack', 1 )
+		
 			AbilityMods( 'stormstrike', 'cooldown', cd_echo_of_the_elements, cd_flurry )
 			
 			AbilityMods( 'unleash_elements', 'cooldown', cd_flurry )
@@ -304,6 +306,7 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 			
 			AbilityMods( 'thunderstorm', 'cooldown', cd_thunder )
 			
+			AuraElements( 'lightning_shield', 'max_stack', 15 )
 			AuraMods( 'lightning_shield', 'max_stack', perk_lightning_shield )
 		
 		end

@@ -2038,7 +2038,7 @@ function Hekili:SetOption( info, input )
 					if error then
 						Hekili:Print( "SimulationCraft import failed.  The following lines threw errors:" )
 						for i = 1, #error do
-							Hekili:Print( bad[i] )
+							Hekili:Print( error[i] )
 						end
 						return
 					end
@@ -2114,7 +2114,7 @@ end
 
 Hekili.TrackFunctions = {
 	"ResetState",
-	"ProcessActionLists",
+	"ProcessHooks",
 	"UpdateDisplays",
 	"CheckScript",
 	"COMBAT_LOG_EVENT_UNFILTERED"
@@ -2151,13 +2151,6 @@ function Hekili:CmdLine( input )
 		self:SaveCoordinates()
 	
 	elseif input:trim() == 'times' then
-		Hekili.TrackFunctions = {
-			"ResetState",
-			"ProcessActionLists",
-			"UpdateDisplays",
-			"CheckScript",
-			"COMBAT_LOG_EVENT_UNFILTERED"
-		}
 		ResetCPUUsage()
 		C_Timer.After( 60, function ()
 			UpdateAddOnCPUUsage()
@@ -2237,7 +2230,7 @@ end
 
 
 function Hekili:ImportSimulationCraftActionList( str )
-	local import = str or Hekili.ImportString
+	local import = str and str or Hekili.ImportString
 	local output, errors = {}, {}
 
 	str = str:gsub("|", "||"):gsub("|||", "||")
