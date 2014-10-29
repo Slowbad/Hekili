@@ -3,7 +3,7 @@ package-as: Hekili
 enable-nolib-creation: no
 
 ignore:
- - .pkgmeta
+    - .pkgmeta
 
 externals:
     Libs/LibStub:
