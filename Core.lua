@@ -390,7 +390,8 @@ function H:ResetState()
 	self.State.dot			= setmetatable( {}, MT.mt_dots )
 	self.State.pet			= setmetatable( {}, MT.mt_pets )
 	self.State.stat			= setmetatable( {}, MT.mt_stat )
-	self.State.target		= setmetatable( {}, MT.mt_target )
+	self.State.target.minR	= nil
+	self.State.target.maxR	= nil
 	self.State.toggle 		= setmetatable( {}, MT.mt_toggle )
 	self.State.totem		= setmetatable( {}, MT.mt_totem )
 	
@@ -413,7 +414,7 @@ function H:ResetState()
 			end
 		end
 	end
-
+	
 	-- Special case spells that suck.
 	if Hekili.Abilities[ 'ascendance' ] and self.State.buff.ascendance.up then
 		H:SetCooldown( 'ascendance', self.State.buff.ascendance.remains + 165 )
@@ -466,7 +467,7 @@ function H:Advance( time )
 		if resKey == 'rage' and SpellRange.IsSpellInRange( self.Abilities[ 'heroic_strike' ].id ) then
 			local MH, OH = UnitAttackSpeed( 'player' )
 
-			while ( s.nextMH > 0 and s.nextMH < s.now + s.offset ) do
+			while ( MH and s.nextMH > 0 and s.nextMH < s.now + s.offset ) do
 				local gain = floor( 35 * s.mainhand_speed ) / 10
 				if self.Specialization == 71 then gain = gain * 2 end
 				
@@ -475,7 +476,7 @@ function H:Advance( time )
 				s.nextMH = s.nextMH + MH
 			end
 			
-			while ( s.nextOH > 0 and s.nextOH < s.now + s.offset ) do
+			while ( OH and s.nextOH > 0 and s.nextOH < s.now + s.offset ) do
 				local gain = floor( 35 * s.offhand_speed * 0.5 ) / 10
 				
 				resource.current = min( resource.max, resource.current + gain )

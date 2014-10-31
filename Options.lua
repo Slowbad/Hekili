@@ -1958,6 +1958,10 @@ function Hekili:SetOption( info, input )
 					hook[ option ] = input:trim()
 					RebuildScripts = true
 				
+				elseif option == 'Name' then
+					self.Options.args.displays.args[ dispKey ].args[ hookKey ].name = '|cFFFFD100' .. hookID .. '.|r ' .. input
+					hook[ option ] = input
+					
 				else
 					hook[ option ] = input
 					RebuildCache = ( option == 'Enabled' )
@@ -2071,7 +2075,7 @@ function Hekili:SetOption( info, input )
 				action[ option ] = input
 				
 				if option == 'Name' then
-					self.Options.args.actionLists.args[ listKey ].args[ actKey ].name = '|cFFFFD100' .. actID .. '|r ' .. input
+					self.Options.args.actionLists.args[ listKey ].args[ actKey ].name = '|cFFFFD100' .. actID .. '.|r ' .. input
 				
 				elseif option == 'Enabled' then
 					RebuildCache = true
@@ -2232,10 +2236,23 @@ end
 function Hekili:ImportSimulationCraftActionList( str )
 	local import = str and str or Hekili.ImportString
 	local output, errors = {}, {}
+	local times = 0
 
-	str = str:gsub("|", "||"):gsub("|||", "||")
+	import = import:gsub("(|)([^|])", "%1|%2"):gsub("|||", "||")
 	
-	for i in import:gmatch("action.-=[/]?([^\n^$]*)") do
+	for _, v in ipairs( Hekili.Utils.Resources ) do
+		import, times = import:gsub( '('..v..')([^.])', "%1.current%2" )
+		if times > 0 then
+			Hekili:Print("Converted '" .. v .. "' to '" .. v .. ".current' (" .. times .. "x)." )
+		end
+	end
+	
+	import, times = import:gsub( "(react)([^><=~])", "up%2" )
+	if times > 0 then
+		Hekili:Print("Converted unconditional 'buff.react' to 'buff.up' (" .. times .. "x)." )
+	end
+	
+	for i in import:gmatch("action.-=/?([^\n^$]*)") do
 		local _, commas = i:gsub(",", "")
 		local _, condis = i:gsub(",if=", "")
 		

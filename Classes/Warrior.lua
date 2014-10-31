@@ -126,67 +126,68 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 	AddPerk( "improved_heroic_throw"    , 157479 )
 	AddPerk( "improved_recklessness"    , 176051 )
 	
+
+	
+	-- Abilities.
+	AddAbility( 'avatar'            , 107574, 0                         , 0  , 'spell', 180, 'passive', true)
+	AddAbility( 'battle_shout'      , 6673  , 0                         , 0  , 'spell', 0  , 'passive', true)
+	AddAbility( 'battle_stance'     , 2457  , 0                         , 0  , 'melee', 1.5, 'passive', true)
+	AddAbility( 'berserker_rage'    , 18499 , 0                         , 0  , 'spell', 30 , 'passive', true)
+	AddAbility( 'bladestorm'        , 46924 , 0                         , 0  , 'spell', 60                  )
+	AddAbility( 'bloodbath'         , 12292 , 0                         , 0  , 'spell', 60 , 'passive', true)
+	AddAbility( 'bloodthirst'       , 23881 , { SPELL_POWER_RAGE = -10 }, 0  , 'melee', 4.5                 )
+	AddAbility( 'charge'            , 100   , { SPELL_POWER_RAGE = -20 }, 0  , 'spell', 20                  )
+	AddAbility( 'colossus_smash'    , 167105, 0                         , 0  , 'melee', 20                  )
+	AddAbility( 'commanding_shout'  , 469   , 0                         , 0  , 'spell', 469, 'passive', true)
+	AddAbility( 'defensive_stance'  , 71    , 0                         , 0  , 'melee', 1.5, 'passive', true)
+	AddAbility( 'demoralizing_shout', 1160  , 0                         , 0  , 'spell', 60 , 'passive', true)
+	AddAbility( 'devastate'         , 20243 , 0                         , 0  , 'melee', 0                   )
+	AddAbility( 'die_by_the_sword'  , 118038, 0                         , 0  , 'spell', 120, 'passive', true)
+	AddAbility( 'dragon_roar'       , 118000, 0                         , 0  , 'spell', 60                  )
+	AddAbility( 'execute'           , 163201, 30                        , 0  , 'melee', 0                   )
+	AddAbility( 'hamstring'         , 1715  , 0                         , 0  , 'off'  , 1                   )
+	AddAbility( 'heroic_leap'       , 6544  , 0                         , 0  , 'spell', 45 , 'passive', true)
+	AddAbility( 'heroic_strike'     , 78    , 30                        , 0  , 'off'  , 1.5                 )
+	AddAbility( 'heroic_throw'      , 57755 , 0                         , 0  , 'melee', 6                   )
+	AddAbility( 'intervene'         , 3411  , 0                         , 0  , 'spell', 30 , 'passive', true)
+	AddAbility( 'intimidating_shout', 5246  , 0                         , 0  , 'spell', 90 , 'passive', true)
+	AddAbility( 'impending_victory' , 103840, 0                         , 0  , 'spell', 30                  )
+	AddAbility( 'last_stand'        , 12975 , 0                         , 0  , 'spell', 180, 'passive', true)
+	AddAbility( 'mocking_banner'    , 114192, 0                         , 0  , 'spell', 180, 'passive', true)
+	AddAbility( 'mortal_strike'     , 12294 , 20                        , 0  , 'melee', 6                   )
+	AddAbility( 'piercing_howl'     , 12323 , 10                        , 0  , 'spell', 0  , 'passive', true)
+	AddAbility( 'pummel'            , 6552  , 0                         , 0  , 'off'  , 15                  )
+	AddAbility( 'raging_blow'       , 85288 , 10                        , 0  , 'melee', 0                   )
+	AddAbility( 'rallying_cry'      , 97462 , 0                         , 0  , 'spell', 180, 'passive', true)
+	AddAbility( 'ravager'           , 152277, 0                         , 0  , 'melee', 60 , 'passive', true)
+	AddAbility( 'recklessness'      , 1719  , 0                         , 0  , 'spell', 180, 'passive', true)
+	AddAbility( 'rend'              , 772   , 5                         , 0  , 'melee', 0                   )
+	AddAbility( 'revenge'           , 6572  , 0                         , 0  , 'melee', 9                   )
+	AddAbility( 'shattering_throw'  , 64382 , 0                         , 1.5, 'spell', 300                 )
+	AddAbility( 'shield_barrier'    , 174926, 20                        , 0  , 'spell', 1.5, 'passive', true)
+	AddAbility( 'shield_block'      , 2565  , 60                        , 0  , 'melee', 12 , 'passive', true)
+	AddAbility( 'shield_charge'     , 156321, 20                        , 0  , 'melee', 15                  )
+	AddAbility( 'shield_slam'       , 23922 , 0                         , 0  , 'melee', 6                   )
+	AddAbility( 'shield_wall'       , 871   , 0                         , 0  , 'spell', 300, 'passive', true)
+	AddAbility( 'shockwave'         , 46968 , 0                         , 0  , 'spell', 40 , 'passive', true)
+	AddAbility( 'siegebreaker'      , 176289, 0                         , 0  , 'melee', 45                  )
+	AddAbility( 'spell_reflection'  , 23920 , 0                         , 0  , 'spell', 25 , 'passive', true)
+	AddAbility( 'storm_bolt'        , 107570, 0                         , 0  , 'spell', 30                  )
+	AddAbility( 'sweeping_strikes'  , 12328 , 10                        , 0  , 'spell', 10 , 'passive', true)
+	AddAbility( 'taunt'             , 355   , 0                         , 0  , 'melee', 8  , 'passive', true)
+	AddAbility( 'thunder_clap'      , 6343  , 10                        , 0  , 'spell', 6  , 'passive', true)
+	AddAbility( 'victory_rush'      , 34428 , 200                       , 0  , 'melee', 0                   )
+	AddAbility( 'whirlwind'         , 1680  , 20                        , 0  , 'melee', 0                   )
+	AddAbility( 'wild_strike'       , 100130, 45                        , 0  , 'melee', 0                   )
+	
 	
 	SetGCD( "battle_shout" )
+
 
 	-- Gear Sets
 	-- AddItemSet( "tier16_melee", 99347, 99340, 99341, 99342, 99343 )
 	-- AddItemSet( "tier15_melee", 96689, 96690, 96691, 96692, 96693 )
 	-- AddItemSet( "tier14_melee", 87138, 87137, 87136, 87135, 87134 )
-
-	
-	-- Abilities.
-	AddAbility( 'avatar'            , 107574, 0  , 0  , 'spell', 180, 'passive', true)
-	AddAbility( 'battle_shout'      , 6673  , 0  , 0  , 'spell', 0  , 'passive', true)
-	AddAbility( 'battle_stance'     , 2457  , 0  , 0  , 'melee', 1.5, 'passive', true)
-	AddAbility( 'berserker_rage'    , 18499 , 0  , 0  , 'spell', 30 , 'passive', true)
-	AddAbility( 'bloodbath'         , 12292 , 0  , 0  , 'spell', 60 , 'passive', true)
-	AddAbility( 'bloodthirst'       , 23881 , 0  , 0  , 'melee', 4.5                 )
-	AddAbility( 'charge'            , 100   , -20, 0  , 'spell', 20                  )
-	AddAbility( 'colossus_smash'    , 167105, 0  , 0  , 'melee', 20                  )
-	AddAbility( 'commanding_shout'  , 469   , 0  , 0  , 'spell', 469, 'passive', true)
-	AddAbility( 'defensive_stance'  , 71    , 0  , 0  , 'melee', 1.5, 'passive', true)
-	AddAbility( 'demoralizing_shout', 1160  , 0  , 0  , 'spell', 60 , 'passive', true)
-	AddAbility( 'devastate'         , 20243 , 0  , 0  , 'melee', 0                   )
-	AddAbility( 'die_by_the_sword'  , 118038, 0  , 0  , 'spell', 120, 'passive', true)
-	AddAbility( 'dragon_roar'       , 118000, 0  , 0  , 'spell', 60                  )
-	AddAbility( 'execute'           , 163201, 30 , 0  , 'melee', 0                   )
-	AddAbility( 'hamstring'         , 1715  , 0  , 0  , 'off'  , 1                   )
-	AddAbility( 'heroic_leap'       , 6544  , 0  , 0  , 'spell', 45 , 'passive', true)
-	AddAbility( 'heroic_strike'     , 78    , 30 , 0  , 'off'  , 1.5                 )
-	AddAbility( 'heroic_throw'      , 57755 , 0  , 0  , 'melee', 6                   )
-	AddAbility( 'intervene'         , 3411  , 0  , 0  , 'spell', 30 , 'passive', true)
-	AddAbility( 'intimidating_shout', 5246  , 0  , 0  , 'spell', 90 , 'passive', true)
-	AddAbility( 'impending_victory' , 103840, 0  , 0  , 'spell', 30                  )
-	AddAbility( 'last_stand'        , 12975 , 0  , 0  , 'spell', 180, 'passive', true)
-	AddAbility( 'mocking_banner'    , 114192, 0  , 0  , 'spell', 180, 'passive', true)
-	AddAbility( 'mortal_strike'     , 12294 , 20 , 0  , 'melee', 6                   )
-	AddAbility( 'piercing_howl'     , 12323 , 10 , 0  , 'spell', 0  , 'passive', true)
-	AddAbility( 'pummel'            , 6552  , 0  , 0  , 'off'  , 15                  )
-	AddAbility( 'raging_blow'       , 85288 , 10 , 0  , 'melee', 0                   )
-	AddAbility( 'rallying_cry'      , 97462 , 0  , 0  , 'spell', 180, 'passive', true)
-	AddAbility( 'ravager'           , 152277, 0  , 0  , 'melee', 60 , 'passive', true)
-	AddAbility( 'recklessness'      , 1719  , 0  , 0  , 'spell', 180, 'passive', true)
-	AddAbility( 'rend'              , 772   , 5  , 0  , 'melee', 0                   )
-	AddAbility( 'revenge'           , 6572  , 0  , 0  , 'melee', 9                   )
-	AddAbility( 'shattering_throw'  , 64382 , 0  , 1.5, 'spell', 300                 )
-	AddAbility( 'shield_barrier'    , 174926, 20 , 0  , 'spell', 1.5, 'passive', true)
-	AddAbility( 'shield_block'      , 2565  , 60 , 0  , 'melee', 12 , 'passive', true)
-	AddAbility( 'shield_charge'     , 156321, 20 , 0  , 'melee', 15                  )
-	AddAbility( 'shield_slam'       , 23922 , 0  , 0  , 'melee', 6                   )
-	AddAbility( 'shield_wall'       , 871   , 0  , 0  , 'spell', 300, 'passive', true)
-	AddAbility( 'shockwave'         , 46968 , 0  , 0  , 'spell', 40 , 'passive', true)
-	AddAbility( 'siegebreaker'      , 176289, 0  , 0  , 'melee', 45                  )
-	AddAbility( 'spell_reflection'  , 23920 , 0  , 0  , 'spell', 25 , 'passive', true)
-	AddAbility( 'storm_bolt'        , 107570, 0  , 0  , 'spell', 30                  )
-	AddAbility( 'sweeping_strikes'  , 12328 , 10 , 0  , 'spell', 10 , 'passive', true)
-	AddAbility( 'taunt'             , 355   , 0  , 0  , 'melee', 8  , 'passive', true)
-	AddAbility( 'thunder_clap'      , 6343  , 10 , 0  , 'spell', 6  , 'passive', true)
-	AddAbility( 'victory_rush'      , 34428 , 200, 0  , 'melee', 0                   )
-	AddAbility( 'whirlwind'         , 1680  , 20 , 0  , 'melee', 0                   )
-	AddAbility( 'wild_strike'       , 100130, 45 , 0  , 'melee', 0                   )
-	
-	
 	function Hekili:SetClassModifiers()
 	
 		for k,v in pairs( self.Abilities ) do
@@ -197,7 +198,7 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 		
 		local cd_death_from_above = "if glyph.heroic_leap.enabled then x = x - 15 end"
 		local cd_unquenchable_thirst = "if talent.unquenchable_thirst.enabled then return 0 end"
-		local cost_charge = "if glyph.bull_rush.enabled then x = x - 15 end"
+		local cost_charge = "if glyph.bull_rush.enabled then return { SPELL_POWER_RAGE = -35 } end"
 		local cost_execute = "x = max(10, min( rage.current, 40 ) )"
 		local cost_sudden_death = "if buff.sudden_death.up then return 0 end"
 		local cost_shockwave = "if active_enemies >= 3 then return 20 end"
@@ -223,6 +224,11 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 	end
 	
 	
+	AddHandler( "avatar", function ()
+		H:Buff( "avatar", 24 )
+	end )
+	
+	
 	AddHandler( 'battle_shout', function ()
 		H:RemoveBuff( 'commanding_shout' ) -- need to confirm it's ours.
 		H:Buff( 'battle_shout', 3600 )
@@ -235,21 +241,14 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 		H:Buff( "battle_stance", 3600 )
 	end )
 
+	
+	AddHandler( "bloodthirst", function ()
+		rage.current = min( rage.max, rage.current + 10 )
+	end )
 
 	AddHandler( "charge", function ()
 		H:Debuff( "target", "charge", 1.5 )
-	end )
-	
-	
-	AddHandler( "recklessness", function ()
-		H:Buff( "recklessness", glyph.recklessness.enabled and 15 or 10 )
-		H:RemoveBuff( "defensive_stance" )
-		H:Buff( "battle_stance", 3600 )
-	end )
-	
-	
-	AddHandler( "avatar", function ()
-		H:Buff( "avatar", 24 )
+		H:SetDistance( 0, 5 )
 	end )
 	
 	
@@ -257,9 +256,15 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 		H:Buff( "bloodbath", 12 )
 	end )
 	
-
+	
+	AddHandler( "charge", function ()
+		H:SetDistance( 0, 5 )
+	end )
+	
+	
 	AddHandler( "heroic_leap", function ()
 		if glyph.heroic_leap.enabled then H:Buff( 'heroic_leap', 3 ) end
+		H:SetDistance( 0, 5 )
 	end )
 	
 	
@@ -287,6 +292,13 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 	
 	AddHandler( "dragon_roar", function ()
 		H:Debuff( 'target', 'dragon_roar', 0.5 )
+	end )
+	
+	
+	AddHandler( "recklessness", function ()
+		H:Buff( "recklessness", glyph.recklessness.enabled and 15 or 10 )
+		H:RemoveBuff( "defensive_stance" )
+		H:Buff( "battle_stance", 3600 )
 	end )
 	
 	
@@ -322,7 +334,7 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 	
 	
 	AddHandler( 'execute', function ()
-		H:RemoveBuff( 'sudden_death' )
+		H:ConsumeStack( 'sudden_death' )
 	end )
 	
 	AddHandler( 'wild_strike', function ()

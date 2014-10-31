@@ -11,6 +11,7 @@ local resource_t = {
 	[SPELL_POWER_HEALTH]			= "health",
 	[SPELL_POWER_MANA]				= "mana",
 	[SPELL_POWER_RAGE]				= "rage",
+	[4]								= "combo_points", -- 4
 	[SPELL_POWER_FOCUS]				= "focus",
 	[SPELL_POWER_ENERGY]			= "energy",
 	[SPELL_POWER_RUNES]				= "runes",
@@ -24,6 +25,8 @@ local resource_t = {
 	[SPELL_POWER_BURNING_EMBERS]	= "burning_embers",
 	[SPELL_POWER_DEMONIC_FURY]		= "demonic_fury"
 }
+HU.Resources = resource_t
+
 
 function HU.GetResourceName( key )
 	return resource_t[key]

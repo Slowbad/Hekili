@@ -11,6 +11,8 @@
 local H, FormatKey, GetSpecializationID = Hekili, Hekili.Utils.FormatKey, Hekili.Utils.GetSpecializationID
 local tblCopy = Hekili.Utils.tblCopy
 
+local RangeCheck = LibStub("LibRangeCheck-2.0")
+
 
 -- This will be our environment table for local functions.
 local state	= {}
@@ -147,6 +149,7 @@ function H:Interrupt( target )
 	self.State[target].casting = false
 end
 
+
 -- Add a totem to the simulated game state.
 function H:AddTotem( name, elem, duration )
 
@@ -164,6 +167,11 @@ function H:AddTotem( name, elem, duration )
 
 end
 
+
+function H:SetDistance( minimum, maximum )
+	self.State.target.minR = minimum
+	self.State.target.maxR = maximum
+end 
 
 
 --------------------------------------
@@ -568,7 +576,7 @@ local mt_target = {
 		elseif k == 'time_to_die' then
 			return H.GetTTD()
 
-		elseif k == 'health' then
+		elseif k == 'health_current' then
 			return ( UnitHealth('target') > 0 and UnitHealth('target') or 50000 )
 		
 		elseif k == 'health_max' then
@@ -578,7 +586,7 @@ local mt_target = {
 			-- TBD: should health_pct use our time offset and TTD calculation to predict health?
 			-- Currently deciding not to, as predicting that you can use something that you can't is
 			-- probably worse than saying you can't use something that you can.  Right?
-			return t.health_max ~= 0 and ( 100 * ( t.health / t.health_max ) ) or 0
+			return t.health_max ~= 0 and ( 100 * ( t.health_current / t.health_max ) ) or 0
 		
 		elseif k == 'adds' then
 			-- Need to return # of active targets minus 1.
@@ -608,13 +616,68 @@ local mt_target = {
 			end
 			return false
 			
+		elseif k:sub(1, 6) == 'within' then
+			local maxR = k:match( "^within(%d+)$" )
+			
+			if not maxR then return false end
+			
+			return ( t.maxR <= tonumber( maxR ) )
+			
+		elseif k:sub(1, 7) == 'outside' then
+			local minR = k:match( "^outside(%d+)$" )
+			
+			if not minR then return false end
+			
+			return ( t.minR >= tonumber( minR ) )
+			
+		elseif k:sub(1, 5) == 'range' then
+			local minR, maxR = k:match( "^range(%d+)to(%d+)$" )
+
+			if not minR or not maxR then return false end
+			
+			return ( t.minR >= tonumber( minR ) and t.maxR <= tonumber( maxR ) )
+		
+		elseif k == 'minR' then
+			local minR = RangeCheck:GetRange( 'target' )
+			if minR then
+				rawset( t, k, minR )
+				return t[k]
+			end
+			return -1
+		
+		elseif k == 'maxR' then
+			local maxR = select( 2, RangeCheck:GetRange( 'target' ) )
+			if maxR then
+				rawset( t, k, maxR )
+				return t[k]
+			end
+			return -1
+		
 		else
+			
 			return error("UNK: " .. k)
 		
 		end
 	end
 }
 Hekili.MT.mt_target = mt_target
+
+
+local mt_target_health = {
+	__index = function(t, k)
+		if k == 'current' then
+			return UnitCanAttack('player', 'target') and UnitHealth('target') or 0
+		
+		elseif k == 'max' then
+			return UnitCanAttack('player', 'target') and UnitHealthMax('target') or 0
+			
+		elseif k == 'pct' then
+			return t.max ~= 0 and ( 100 * t.current / t.max ) or 100
+			
+		end
+	end
+}
+Hekili.MT.mt_target_health = mt_target_health
 
 
 -- Table of default handlers for specific ability cooldowns.
@@ -742,7 +805,7 @@ local mt_default_aura = {
 			if t.up then return ( t.count ) else return 0 end
 			
 		elseif k == 'stack_pct' then
-			if t.up then return ( 100 * t.count / t.count ) else return 0 end
+			if t.up then return ( 100 * t.count / t.max_stack ) else return 0 end
 			
 		end
 		
@@ -1208,23 +1271,24 @@ Hekili.MT.mt_actions = mt_actions
 
 
 setmetatable( state,				mt_state )
-setmetatable( state.pet,			mt_pets )
-setmetatable( state.stat,		mt_stat )
-setmetatable( state.toggle,		mt_toggle )
-setmetatable( state.buff,		mt_buffs )
-setmetatable( state.race,		mt_false )
-setmetatable( state.spec,		mt_spec )
-setmetatable( state.perk,		mt_perks )
-setmetatable( state.glyph,		mt_glyphs )
-setmetatable( state.talent,		mt_talents )
-setmetatable( state.totem,		mt_totem )
-setmetatable( state.set_bonus,	mt_set_bonuses )
-setmetatable( state.target,		mt_target )
-setmetatable( state.debuff,		mt_debuffs )
-setmetatable( state.dot,			mt_dots )
-setmetatable( state.cooldown,	mt_cooldowns )
 setmetatable( state.action,		mt_actions )
 setmetatable( state.active_dot,	mt_active_dot )
+setmetatable( state.buff,		mt_buffs )
+setmetatable( state.cooldown,	mt_cooldowns )
+setmetatable( state.debuff,		mt_debuffs )
+setmetatable( state.dot,			mt_dots )
+setmetatable( state.glyph,		mt_glyphs )
+setmetatable( state.perk,		mt_perks )
+setmetatable( state.pet,			mt_pets )
+setmetatable( state.race,		mt_false )
+setmetatable( state.set_bonus,	mt_set_bonuses )
+setmetatable( state.spec,		mt_spec )
+setmetatable( state.stat,		mt_stat )
+setmetatable( state.talent,		mt_talents )
+setmetatable( state.target,		mt_target )
+setmetatable( state.target.health, mt_target_health )
+setmetatable( state.toggle,		mt_toggle )
+setmetatable( state.totem,		mt_totem )
 
 
 Hekili.Tables = { "pet", "stat", "toggle", "buff", "race", "spec", "glyph", "talent", "totem", "set_bonus", "target", "debuff", "dot", "cooldown", "action", "active_dot", "perk" }
