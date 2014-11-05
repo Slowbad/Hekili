@@ -50,6 +50,16 @@ function H:OnInitialize()
 	self:LoadScripts()
 	self:BuildUI()
 	self:UnregisterAllEvents()
+	
+	if not Hekili.Class then
+		self.DB.profile.Enabled = false
+		for i, buttons in ipairs( self.UI.Buttons ) do
+			for j, _ in ipairs( buttons ) do
+				buttons[j]:Hide()
+			end
+		end
+	end
+	
 end
 
 
@@ -97,17 +107,24 @@ end
 
 
 function Hekili:ConvertScript( node, hasModifiers )
-	local Translated		= SimToLua( node.Script )
-	local sFunction, Error	= Translated and loadstring( 'return ' .. Translated ) or nil, nil
-	local sElements		= Translated and self:ScriptElements( Translated ) or nil
+	local Translated = SimToLua( node.Script )
+	local sFunction, Error
 	
-	local Output			= {}
-	
+	if Translated then
+		sFunction, Error = loadstring( 'return ' .. Translated )
+	end
+
 	if sFunction then
 		setfenv( sFunction, self.State )
 	end
 
-	Output = {
+	if Error then
+		Error = Error:match( ":%d+: (.*)" )
+	end
+
+	local sElements = Translated and self:ScriptElements( Translated )
+	
+	local Output = {
 		Conditions	= sFunction,
 		Error		= Error,
 		Elements	= sElements,
@@ -147,6 +164,9 @@ function Hekili:GatherValues( node )
 	
 	for k, v in pairs( node.Elements ) do
 		_, Output[k] = pcall( v )
+		if type( Output[k] ) == 'string' then
+			Output[k] = Output[k]:match("lua:%d+: (.*)") or Output[k]
+		end
 	end
 	
 	return Output
@@ -156,15 +176,15 @@ end
 function Hekili:LoadScripts()
 	self.Scripts	= self.Scripts or { D = {}, P = {}, A = {} }
 
-	local Displays, Hookrities, Actions = self.Scripts.D, self.Scripts.P, self.Scripts.A
+	local Displays, Hooks, Actions = self.Scripts.D, self.Scripts.P, self.Scripts.A
 	local Profile = self.DB.profile
 	
 	for i, _ in ipairs( Displays ) do
 		Displays[i] = nil
 	end
 	
-	for k, _ in pairs( Hookrities ) do
-		Hookrities[k] = nil
+	for k, _ in pairs( Hooks ) do
+		Hooks[k] = nil
 	end
 	
 	for k, _ in pairs( Actions ) do
@@ -176,7 +196,7 @@ function Hekili:LoadScripts()
 		
 		for j, priority in ipairs( display.Queues ) do
 			local pKey = i..':'..j
-			Hookrities[ pKey ] = self:ConvertScript( priority )
+			Hooks[ pKey ] = self:ConvertScript( priority )
 		end
 	end
 	
@@ -244,7 +264,10 @@ function Hekili:CheckScript( cat, key, action, override )
 	if not tblScript then
 		return false
 	
-	elseif not tblScript.Conditions then
+	elseif tblScript.Error then
+		return false, tblScript.Error
+
+	elseif tblScript.Conditions == nil then
 		return true
 
 	else
@@ -328,10 +351,11 @@ function H:OnEnable()
 		end
 		
 		for i = 1, #self.DB.profile.displays do
-			Hekili:ProcessHooks( i )
+			self:ProcessHooks( i )
 		end
-		C_Timer.After( 1 / self.DB.profile['Updates Per Second'], Hekili.UpdateDisplays )
-		C_Timer.After( 1, Hekili.Audit )
+		
+		self:UpdateDisplays()
+		self:Audit()
 	
 	else
 		self:Disable()
@@ -372,37 +396,58 @@ local z_PVP = {
 }
 
 
-function H:ResetState()
-
-	self.State.now		= GetTime()
-	self.State.offset	= 0
+function Hekili:ResetState()
+	
+	local s = self.State
+	
+	s.now		= GetTime()
+	s.offset	= 0
 	
 	-- A decent start, but assumes our first ability is always aggressive.  Not necessarily true...
 	if self.Class == 'WARRIOR' then
-		self.State.nextMH	= ( self.combat ~= 0 and self.Swing.nextMH > self.State.now ) and self.Swing.nextMH or -1
-		self.State.nextOH	= ( self.combat ~= 0 and self.Swing.nextOH > self.State.now ) and self.Swing.nextOH or -1
+		s.nextMH	= ( self.combat ~= 0 and self.Swing.nextMH > self.State.now ) and self.Swing.nextMH or -1
+		s.nextOH	= ( self.combat ~= 0 and self.Swing.nextOH > self.State.now ) and self.Swing.nextOH or -1
 	end
 	
-	self.State.active_dot	= setmetatable( {}, MT.mt_active_dot )
-	self.State.buff			= setmetatable( { __fullscan = false }, MT.mt_buffs )
-	self.State.cooldown		= setmetatable( {}, MT.mt_cooldowns )
-	self.State.debuff		= setmetatable( {}, MT.mt_debuffs )
-	self.State.dot			= setmetatable( {}, MT.mt_dots )
-	self.State.pet			= setmetatable( {}, MT.mt_pets )
-	self.State.stat			= setmetatable( {}, MT.mt_stat )
-	self.State.target.minR	= nil
-	self.State.target.maxR	= nil
-	self.State.toggle 		= setmetatable( {}, MT.mt_toggle )
-	self.State.totem		= setmetatable( {}, MT.mt_totem )
+	-- broke fullscan for now.  :(
+	for k in pairs( s.buff ) do
+		s.buff[ k ].count		= nil
+		s.buff[ k ].expires	= nil
+	end
+
+	for k in pairs( s.cooldown ) do
+		s.cooldown[ k ].duration	= nil
+		s.cooldown[ k ].expires	= nil
+	end
 	
-	self.State.target.casting = nil
+	for k in pairs( s.debuff ) do
+		s.debuff[ k ].count	= nil
+		s.debuff[ k ].expires	= nil
+	end
+	
+	-- s.dot currently just wraps s.debuff
+
+	for k in pairs( s.pet ) do
+		s.pet[ k ].expires = nil
+	end
+	
+	for k in pairs( s.totem ) do
+		s.totem[ k ].expires = nil
+	end
+	
+	-- range checks
+	s.target.minR		= nil
+	s.target.maxR		= nil
+	
+	-- interrupts
+	s.target.casting	= nil
 	
 	for k,_ in pairs( H.Resources ) do
 		local key = GetResourceName( k )
 		
 		self.State[ key ]			= rawget( self.State, key ) or setmetatable( {}, mt_resource )
-		self.State[ key ].current	= UnitPower('player', k)
-		self.State[ key ].max		= UnitPowerMax('player', k)
+		self.State[ key ].current	= UnitPower( 'player', k )
+		self.State[ key ].max		= UnitPowerMax( 'player', k )
 		
 		if k == UnitPowerType('player') then
 			local active, inactive = GetPowerRegen()
@@ -424,7 +469,7 @@ function H:ResetState()
 
 	local spellcast, _, _, _, _, endCast = UnitCastingInfo('player')
 	if endCast ~= nil then
-		cast_time	= ( endCast / 1000) - GetTime()
+		cast_time	= ( endCast / 1000 ) - GetTime()
 		casting		= FormatKey( spellcast )
 	end
 	
@@ -434,6 +479,7 @@ function H:ResetState()
 		casting		= FormatKey( spellcast )
 	end				
 	
+
 	if cast_time and casting then
 		self:Advance( cast_time )
 		if self.Abilities[ casting ] then
@@ -464,7 +510,7 @@ function H:Advance( time )
 		local resKey = GetResourceName( k )
 		local resource = self.State[ resKey ]
 
-		if resKey == 'rage' and SpellRange.IsSpellInRange( self.Abilities[ 'heroic_strike' ].id ) then
+		if resKey == 'rage' and s.target.within5 then
 			local MH, OH = UnitAttackSpeed( 'player' )
 
 			while ( MH and s.nextMH > 0 and s.nextMH < s.now + s.offset ) do
@@ -722,18 +768,19 @@ end
 
 
 Hekili.Queue = {}
+
 function Hekili:ProcessHooks( dispID )
 
-	if self.DB.profile.Enabled and not self.Pause then
+	if not self.DB.profile.Enabled then
+		return
+	end
+
+	if not self.Pause then
 		local s = self.State
 		local display = self.DB.profile.displays[ dispID ]
-	
+
 		self.Queue[ dispID ] = self.Queue[ dispID ] or {}
 		local Queue = self.Queue[ dispID ]
-
-		for i = 1, #Queue do
-			Queue[i] = nil
-		end
 		
 		if display and self.DisplayVisible[ dispID ] then
 		
@@ -746,6 +793,14 @@ function Hekili:ProcessHooks( dispID )
 					local chosen_action, chosen_caption
 					local chosen_wait   = 999
 					
+					Queue[i] = Queue[i] or {}
+					
+					for k in pairs( Queue[ i ] ) do
+						Queue[ i ][ k ] = nil
+					end
+					
+					
+					
 					for hookID, hook in ipairs( display.Queues ) do
 					
 						if self.HookVisible[ dispID..':'..hookID ] then
@@ -754,7 +809,7 @@ function Hekili:ProcessHooks( dispID )
 							
 							if HookPassed then
 							
-								local listID = hook['Action List']
+								local listID = hook[ 'Action List' ]
 								local list = self.DB.profile.actionLists[ listID ]
 								
 								-- Only action list criteria is whether it matches the spec.
@@ -789,21 +844,19 @@ function Hekili:ProcessHooks( dispID )
 												chosen_caption	= entry.Caption
 												chosen_wait		= wait_time
 
-												Queue[i] = {
-													display		= dispID,
-													button		= i,
+												Queue[i].display		= dispID
+												Queue[i].button		= i
 													
-													hook		= hookID,
+												Queue[i].hook		= hookID
 													
-													actionlist	= listID,
-													action		= actID,
+												Queue[i].actionlist	= listID
+												Queue[i].action		= actID
 													
-													alName		= list.Name,
-													actName		= s.this_action,
+												Queue[i].alName		= list.Name
+												Queue[i].actName		= s.this_action
 													
-													caption		= chosen_caption,
-													wait		= wait_time,
-												}
+												Queue[i].caption		= chosen_caption
+												Queue[i].wait		= wait_time
 												
 											end
 										
@@ -879,34 +932,34 @@ function Hekili:ProcessHooks( dispID )
 							Queue[n] = nil
 						end
 						break
-					end	
+					end
 					
 				end
-				
+				 
 				self.Queue[ dispID ] = Queue
 				
-			end
-
-		end
+			end			
 		
+		end
+
 	end
 
-	if self.DB.profile.Enabled and self.DB.profile.displays[ dispID ] then
-		C_Timer.After( 1 / self.DB.profile['Updates Per Second'], function() Hekili:ProcessHooks( dispID ) end )
-	end
+	C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self[ 'ProcessDisplay'..dispID ] )
 	
 end
 
 
+
+local pvpZones = {
+	arena	= true,
+	pvp		= true
+}
+
+
 function CheckDisplayCriteria( dispID )
-	
+
 	local display = Hekili.DB.profile.displays[ dispID ]
 	local _, zoneType = IsInInstance()
-	
-	local pvpZones = {
-		arena	= true,
-		pvp		= true
-	}
 	
 	if not Hekili.DisplayVisible[ dispID ] then
 		return false
@@ -941,15 +994,14 @@ function CheckDisplayCriteria( dispID )
 	end
 	
 	return true
+
 end
 
 
 
-local lastDisplay = {}
-
 function H:UpdateDisplays()
 
-	local self = Hekili
+	local self = self or Hekili
 
 	if not self.DB.profile.Enabled then
 		return
@@ -972,7 +1024,7 @@ function H:UpdateDisplays()
 				for i, button in ipairs( self.UI.Buttons[dispID] ) do
 					if not Queue or not Queue[i] and ( self.DB.profile.Enabled or self.Config ) then
 						for n = i, display['Icons Shown'] do
-							self.UI.Buttons[dispID][n].Texture:SetTexture('Interface\\ICONS\\Spell_Nature_BloodLust')
+							self.UI.Buttons[dispID][n].Texture:SetTexture( 'Interface\\ICONS\\Spell_Nature_BloodLust' )
 							self.UI.Buttons[dispID][n].Texture:SetVertexColor(1, 1, 1)
 							self.UI.Buttons[dispID][n].Caption:SetText(nil)
 							if not self.Config then
@@ -1093,9 +1145,7 @@ function H:UpdateDisplays()
 		end
 	end
 	
-	if self.DB.profile.Enabled then
-		C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self.UpdateDisplays )
-	end
+	C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self.UpdateDisplays )
 	
 end
 

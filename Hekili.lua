@@ -4,7 +4,7 @@
 Hekili		= LibStub("AceAddon-3.0"):NewAddon( "Hekili", "AceConsole-3.0", "AceEvent-3.0", "AceSerializer-3.0" )
 Hekili.UI	= {}
 
-local strformat = string.format
+local string = string
 
 -- LibButtonFrame a.k.a. Masque
 Hekili.MSQ = LibStub("Masque", true)
@@ -15,6 +15,10 @@ end
 
 -- LibSharedMedia (fonts, primarily)
 Hekili.LSM	= LibStub("LibSharedMedia-3.0", true)
+
+
+-- RangeCheck
+Hekili.RC = LibStub("LibRangeCheck-2.0")
 
 
 BINDING_HEADER_HEKILI_HEADER = "Hekili |cFF00FF00v2|r"
@@ -43,25 +47,15 @@ function Hekili:RefreshBindings()
 end
 
 
--- Will move to separate file when addon communication gets implemented.
-Hekili.LibC		= LibStub("LibCompress")
-Hekili.LibCE	= Hekili.LibC:GetAddonEncodeTable()
-
-Hekili.OptionsUI = {}
-
-local H = Hekili
-
-
 Hekili.Tooltip = CreateFrame("GameTooltip", "HekiliTooltip", UIParent, "GameTooltipTemplate")
 -- We need our tooltip to use a solid background to make code legible.
-
 local Backdrop = GameTooltip:GetBackdrop()
 Backdrop.bgFile = [[Interface\Buttons\WHITE8X8]]
 Hekili.Tooltip:SetBackdrop( Backdrop )
 
 
 function Hekili:Error(...)
-	local output = strformat( ... )
+	local output = string.format( ... )
 	self:Print(output)
 end
 

@@ -2,7 +2,7 @@
 -- Dynamic UI Elements
 
 
-local Unpacks = Hekili.Utils.Unpacks
+local util = Hekili.Utils
 
 
 local invert_direction = {
@@ -12,6 +12,7 @@ local invert_direction = {
 	BOTTOM = 'TOP'
 }
 
+
 -- Builds and maintains the visible UI elements.
 -- Buttons (as frames) are never deleted, but should get reused effectively.
 function Hekili:BuildUI()
@@ -19,18 +20,23 @@ function Hekili:BuildUI()
 	self:CacheDurableDisplayCriteria()
 	
 	if not self.UI.Engine then
-		self.UI.Engine = CreateFrame("Frame", "Hekili_Engine_Frame", UIParent)
+		self.UI.Engine = CreateFrame( "Frame", "Hekili_Engine_Frame", UIParent)
 		self.UI.Engine:SetFrameStrata("BACKGROUND")
 		self.UI.Engine:SetClampedToScreen(true)
 		self.UI.Engine:SetMovable(false)
 		self.UI.Engine:EnableMouse(false)
-		self.UI.Engine:SetAllPoints(UIParent)
 	end
 	
 	self.UI.Buttons	= self.UI.Buttons or {}
 	
 	for dispID, display in ipairs( self.DB.profile.displays ) do
 		self.UI.Buttons[dispID] = self.UI.Buttons[dispID] or {}
+		
+		if not self[ 'ProcessDisplay'..dispID ] then
+			self[ 'ProcessDisplay'..dispID ] = function()
+				self:ProcessHooks( dispID )
+			end
+		end
 
 		for i = 1, max( #self.UI.Buttons[dispID], display['Icons Shown'] ) do
 			self.UI.Buttons[dispID][i] = self:CreateButton( dispID, i )
@@ -64,6 +70,7 @@ end
 local T
 local SyntaxColors = {};
 
+
 if Hekili.Format then
 	T = Hekili.Format.Tokens;
 	--- Assigns a color to multiple tokens at once.
@@ -82,7 +89,7 @@ if Hekili.Format then
 		T.CONCAT, T.VARARG, T.ASSIGNMENT, T.PERIOD, T.COMMA, T.SEMICOLON, T.COLON, T.SIZE,
 		T.EQUALITY, T.NOTEQUAL, T.LT, T.LTE, T.GT, T.GTE )
 
-	Color( "|cFFB2FF66", Unpacks( Hekili.Tables, Hekili.Keys, Hekili.Values ) )
+	Color( "|cFFB2FF66", util.Unpacks( Hekili.Tables, Hekili.Keys, Hekili.Values ) )
 	
 	Color( "|cffFFFF00", T.NUMBER )
 	Color( "|cff888888", T.STRING, T.STRING_LONG )
@@ -108,7 +115,8 @@ local SpaceLeft = { "(%()" }
 local SpaceRight = { "(%))" }
 local DoubleSpace = { "(!=)", "(~=)", "(>=*)", "(<=*)", "(&)", "(||)" }
 
-local function fmt( Code )
+
+local function Format ( Code )
 	for Index = 1, #SpaceLeft do
 		Code = Code:gsub( "%s-"..SpaceLeft[Index].."%s-", " %1")
 	end
@@ -136,7 +144,7 @@ function Hekili:ShowDiagnosticTooltip( q )
 	if q.HookScript and q.HookScript ~= "" then
 		self.Tooltip:AddLine( "\nHook Criteria" )
 		
-		local Text = fmt( q.HookScript )
+		local Text = Format ( q.HookScript )
 		self.Tooltip:AddLine( self.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
 		
 		if q.HookElements then
@@ -150,7 +158,7 @@ function Hekili:ShowDiagnosticTooltip( q )
 	if q.ActScript and q.ActScript ~= "" then
 		self.Tooltip:AddLine( "\nAction Criteria" )
 		
-		local Text = fmt( q.ActScript )
+		local Text = Format ( q.ActScript )
 		self.Tooltip:AddLine( self.Format:ColorString( Text, SyntaxColors ), 1, 1, 1, 1 )
 		
 		if q.ActElements then
@@ -169,7 +177,7 @@ function Hekili:CreateButton( display, ID )
 	local name = "Hekili_D" .. display .. "_B" .. ID
 	local disp = self.DB.profile.displays[display]
 	
-	local button = self.UI.Buttons[display][ID] or CreateFrame("Button", name, self.UI.Engine)
+	local button = self.UI.Buttons[ display ][ ID ] or CreateFrame( "Button", name, self.UI.Engine )
 	
 	local btnSize
 	if ID == 1 then

@@ -148,28 +148,29 @@ end
 
 
 -- Remove debuffs or 
-function H.Audit()
+function Hekili:Audit()
+	local self = self or Hekili
+	
 	local now			= GetTime()
-	local grace_period	= H.DB.profile['Audit Targets']
-	-- Grace Period was a profile option in v1, need to port it to v2.
+	local grace_period	= self.DB.profile['Audit Targets']
 	
 	for aura, targets in pairs( debuffs ) do
 		for unit, aura_info in pairs( targets ) do
 			-- NYI: Check for dot vs. debuff, since debuffs won't 'tick'
 			if now - aura_info.last_seen > grace_period then
-				H:TrackDebuff( aura, unit )
+				self:TrackDebuff( aura, unit )
 			end
 		end
 	end
 	
 	for whom, when in pairs( targets ) do
 		if now - when > grace_period then
-			H:UpdateTarget( whom )
+			self:UpdateTarget( whom )
 		end
 	end
 	
-	if Hekili.DB.profile.Enabled then
-		C_Timer.After( 1, Hekili.Audit )
+	if self.DB.profile.Enabled then
+		C_Timer.After( 1, self.Audit )
 	end
 	
 end

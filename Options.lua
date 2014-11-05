@@ -13,7 +13,7 @@ function Hekili:GetDefaults()
 	local defaults = {
 		profile = {
 			Version			= 2,
-			Release			= 1,
+			Release			= 5,
 			Enabled			= true,
 			Locked			= false,
 			Debug			= false,
@@ -51,8 +51,15 @@ function Hekili:NewDisplay( name )
 
 	local index = #self.DB.profile.displays + 1
 	
+	if not Hekili[ 'ProcessDisplay'..index ] then
+		Hekili[ 'ProcessDisplay'..index ] = function()
+			Hekili:ProcessHooks( index )
+		end
+	end
+	
 	self.DB.profile.displays[ index ] = {
 		Name				= name,
+		Release				= self.DB.profile.Version + ( self.DB.profile.Release / 100 ),
 
 		Enabled				= true,
 		['PvE Visibility']	= 'always',
@@ -1221,10 +1228,18 @@ function Hekili:GetOptions()
 							for i, default in ipairs( self.Defaults ) do
 								if not exists[ default.name ] and default.type == 'displays' then
 									local import = self:DeserializeDisplay( default.import )
+									local index = #self.DB.profile.displays + 1
 									
 									if import then
-										self.DB.profile.displays[ #self.DB.profile.displays+1 ] = import
-										C_Timer.After( 2 / self.DB.profile['Updates Per Second'], function() Hekili:ProcessHooks( #self.DB.profile.displays ) end )
+										self.DB.profile.displays[ index ] = import
+										
+										if not Hekili[ 'ProcessDisplay' .. index ] then
+											Hekili[ 'ProcessDisplay' .. index ] = function()
+												Hekili:ProcessHooks( index )
+											end
+										end
+										
+										C_Timer.After( 2 / self.DB.profile['Updates Per Second'], Hekili[ 'ProcessDisplay' .. index ] )
 									end
 								end
 							end
@@ -1877,7 +1892,7 @@ function Hekili:SetOption( info, input )
 				
 				if not key then return end
 				
-				C_Timer.After( 1 / profile['Updates Per Second'], function () Hekili:ProcessHooks( index ) end )
+				C_Timer.After( 1 / profile['Updates Per Second'], Hekili[ 'ProcessDisplay'..index ] )
 			
 			elseif option == 'Import Display' then
 				local import = self:DeserializeDisplay( input )

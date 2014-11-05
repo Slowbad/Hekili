@@ -3,6 +3,7 @@
 
 local H = Hekili
 
+local FormatKey = H.Utils.FormatKey
 local GetSpecializationInfo = H.Utils.GetSpecializationInfo
 
 
@@ -41,7 +42,8 @@ end
 
 function Hekili:PLAYER_ENTERING_WORLD()
 	self.Class = select(2, UnitClass( 'player' ) )
-	self.Specialization = GetSpecializationInfo( GetSpecialization() )
+	self.Specialization, self.SpecializationName = GetSpecializationInfo( GetSpecialization() )
+	self.SpecializationKey = FormatKey( self.SpecializationName )
 	self.GUID = UnitGUID("player")
 
 	if self.SetClassModifiers then self:SetClassModifiers() end
@@ -76,7 +78,9 @@ end
 
 function H:ACTIVE_TALENT_GROUP_CHANGED()
 	
-	self.Specialization = GetSpecializationInfo( GetSpecialization() )
+	self.Specialization, self.SpecializationName = GetSpecializationInfo( GetSpecialization() )
+	self.SpecializationKey = FormatKey( self.SpecializationName )
+
 	if self.SetClassModifiers then self:SetClassModifiers() end
 
 	self:UpdateGlyphs()

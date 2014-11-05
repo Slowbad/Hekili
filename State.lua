@@ -8,70 +8,50 @@
 -- This is good enough to get out to test.
 
 
-local H, FormatKey, GetSpecializationID = Hekili, Hekili.Utils.FormatKey, Hekili.Utils.GetSpecializationID
-local tblCopy = Hekili.Utils.tblCopy
+local H	= Hekili
+local hu	= Hekili.Utils
 
-local RangeCheck = LibStub("LibRangeCheck-2.0")
+local FormatKey			= hu.FormatKey
+local GetSpecializationID	= hu.GetSpecializationID
+local tblCopy 				= hu.tblCopy
 
 
 -- This will be our environment table for local functions.
-local state	= {}
+local state = {
+	now				= 0,
+	offset			= 0,
+	mainhand_speed	= 0,
+	offhand_speed	= 0,
+	
+	action			= {},
+	active_dot		= {},
+	buff			= {},
+	cooldown		= {},
+	debuff			= {},
+	dot				= {},
+	glyph			= {},
+	perk			= {},
+	pet				= {},
+	player			= {},
+	race			= {},
+	set_bonus		= {},
+	spec			= {},
+	stat			= {},
+	talent			= {},
+	target			= {
+		health		= {}
+	},
+	toggle			= {},
+	totem			= {},
+	
+	max			= max,
+	min			= min,
+	
+	_G				= {}
 
-state.now			= 0
-state.offset		= 0
+}
 
-state.mainhand_speed	= 0
-state.offhand_speed		= 0
-
--- Some player info.
-state.player	= {}
-state.race		= {}
-state.race[ FormatKey( UnitRace('player') ) ] = 1
-state.stat		= {}
-
-state.perk		= {}
-state.spec		= {}
-
--- Limited to totems for the moment.
-state.pet		= {}
-
--- Toggles (keybinds) for activating/deactivating displays, queues, abilities.
-state.toggle	= {}
-
--- Player buffs, talents, glyphs.
-state.buff		= {}
-state.talent	= {}
-state.glyph		= {}
-
--- Your ability cooldowns.
-state.cooldown	= {}
-
--- Info about a particular action, currently very incomplete.
-state.action	= {}
-
--- Shaman (and presumably Monk, Druid) totems.
-state.totem		= {}
-
--- Set bonuses from gear.
-state.set_bonus = {}
-
--- Some target info.
-state.target	= {}
-state.target.health = {}
-
--- (Your) debuffs applied to the target.
-state.debuff	= {}
-
--- Your dots (subset of debuffs) applied.  Should gather some power info.
-state.dot		= {}
-
--- Count how many of your dots are applied with active_dot.spell_name (wrapper for DebuffCount).
-state.active_dot = {}
-
-
--- Outside commands.
-state.max, state.min = max, min
-state._G = {} -- block access to _G
+state.race[ FormatKey( UnitRace('player') ) ] = true
 
 
 -- Place an ability on cooldown in the simulated game state.
@@ -190,7 +170,7 @@ Hekili.MT.mt_false = mt_false
 
 
 -- Gives calculated values for some state options in order to emulate SimC syntax.
-local mt_state		= {
+local mt_state	= {
 	__index = function(t, k)
 		-- Handling these with metamethods allows us to emulate SimC syntax for the in-game editor.
 		-- It also means if we actually assign a value, the related metamethod gets nuked.
@@ -308,7 +288,7 @@ Hekili.MT.mt_state = mt_state
 
 local mt_spec = {
 	__index = function(t, k)
-		if k == FormatKey( select(2, GetSpecializationID() ) ) then
+		if k == H.SpecializationKey then
 			return 1
 		end
 		return 0
@@ -432,13 +412,23 @@ local mt_stat = {
 	end
 }
 Hekili.MT.mt_stat = mt_stat
-		
 	
 
 -- Table of default handlers for specific pets/totems.
 local mt_default_pet = {
 	__index = function(t, k)
-		if k == 'remains' then
+		if k == 'expires' then
+			local present, name, start, duration = GetTotemInfo( t.totem )
+			
+			if present and name == H.Abilities[ t.key ].name then
+				t.expires = start + duration
+			else
+				t.expires = 0
+			end
+			
+			return t[ k ]
+			
+		elseif k == 'remains' then
 			if t.expires <= ( state.now + state.offset) then return 0 end
 			return ( t.expires - ( state.now + state.offset ) )
 			
@@ -463,10 +453,14 @@ local mt_pets = {
 			
 			if present and name == H.Abilities[ k ].name then
 				t[k] = {
+					key = k,
+					totem = 1,
 					expires = start + duration
 				}
 			else
 				t[k] = {
+					key = k,
+					totem = 1,
 					expires = 0
 				}
 			
@@ -478,10 +472,14 @@ local mt_pets = {
 			
 			if present and name == H.Abilities[ k ].name then
 				t[k] = {
+					key = k,
+					totem = 4,
 					expires = start + duration
 				}
 			else
 				t[k] = {
+					key = k,
+					totem = 4,
 					expires = 0
 				}
 			
@@ -493,10 +491,14 @@ local mt_pets = {
 			
 			if present and name == H.Abilities[ k ].name then
 				t[k] = {
+					key = k,
+					totem = 2,
 					expires = start + duration
 				}
 			else
 				t[k] = {
+					key = k,
+					totem = 2,
 					expires = 0
 				}
 			
@@ -638,7 +640,7 @@ local mt_target = {
 			return ( t.minR >= tonumber( minR ) and t.maxR <= tonumber( maxR ) )
 		
 		elseif k == 'minR' then
-			local minR = RangeCheck:GetRange( 'target' )
+			local minR = H.RC:GetRange( 'target' )
 			if minR then
 				rawset( t, k, minR )
 				return t[k]
@@ -646,7 +648,7 @@ local mt_target = {
 			return -1
 		
 		elseif k == 'maxR' then
-			local maxR = select( 2, RangeCheck:GetRange( 'target' ) )
+			local maxR = select( 2, H.RC:GetRange( 'target' ) )
 			if maxR then
 				rawset( t, k, maxR )
 				return t[k]
@@ -683,7 +685,23 @@ Hekili.MT.mt_target_health = mt_target_health
 -- Table of default handlers for specific ability cooldowns.
 local mt_default_cooldown = {
 	__index = function(t, k)
-		if k == 'remains' then
+		if k == 'duration' or k == 'expires' then
+			-- Refresh the ID in case we changed specs and ability is spec dependent.
+			t.id = H.Abilities[ t.key ].id
+		
+			local start, duration = GetSpellCooldown( t.id )
+			
+			if t.key == 'ascendance' and H.State.buff.ascendance.up then
+				start = H.State.buff.ascendance.expires - H.Auras[ k ].duration
+				duration = H.Abilities[ 'ascendance' ].cooldown
+			end
+			
+			t.duration = duration or 0
+			t.expires = start and ( start + duration ) or 0
+			
+			return t[k]
+		
+		elseif k == 'remains' then
 			if t.expires <= ( state.now + state.offset) then return 0 end
 			return ( t.expires - ( state.now + state.offset ) )
 			
@@ -719,8 +737,6 @@ local mt_cooldowns	= {
 			return nil
 		end
 
-		local start, duration = GetSpellCooldown( ability )
-
 		if k == 'ascendance' and H.State.buff.ascendance.up then
 			start = H.State.buff.ascendance.expires - H.Auras[k].duration
 			duration = H.Abilities[k].cooldown
@@ -728,11 +744,15 @@ local mt_cooldowns	= {
 			
 		if start then
 			t[k] = {
+				key = k,
+				id = ability,
 				duration = duration,
 				expires = (start + duration)
 			}
 		else
 			t[k] = {
+				key = k,
+				id = ability,
 				duration = 0,
 				expires = 0
 			}
@@ -772,12 +792,20 @@ local mt_resource = {
 	end
 }
 Hekili.MT.mt_resource = mt_resource
-			
+
 
 -- Table of default handlers for auras (buffs, debuffs).
 local mt_default_aura = {
 	__index = function(t, k)
-		if k == 'up' then
+		if k == 'count' or k == 'expires' then
+			local _, _, _, count, _, _, expires = UnitBuff( 'player', H.Auras[ t.key ].name )
+
+			t.count = count or 0
+			t.expires = expires or 0
+			
+			return t[k]
+	
+		elseif k == 'up' then
 			return ( t.count > 0 and t.expires > ( state.now + state.offset ) )
 			
 		elseif k == 'down' then
@@ -824,7 +852,7 @@ local mt_buffs	= {
 	-- The action doesn't exist in our table so check the real game state,
 	-- and copy it so we don't have to use the API next time.
 	__index = function(t, k)
-		if not H.Auras[k] then
+		if not H.Auras[ k ] then
 			error( "UNK: " .. k )
 			return
 		end
@@ -947,7 +975,15 @@ Hekili.MT.mt_active_dot = mt_active_dot
 -- Needs review.
 local mt_default_totem = {
 	__index = function(t, k)
-		if k == 'up' or k == 'active' then
+		if k == 'expires' then
+			local _, name, start, duration = GetTotemInfo( t.totem )
+			
+			t.name = name
+			t.expires = ( start or 0 ) + ( duration or 0 )
+			
+			return t[ k ]
+			
+		elseif k == 'up' or k == 'active' then
 			return ( t.expires > ( state.now + state.offset ) )
 
 		elseif k == 'remains' then
@@ -973,7 +1009,9 @@ local mt_totem = {
 			local _, name, start, duration = GetTotemInfo(1)
 			
 			t[k] = {
-				name	= name or nil,
+				key		= k,
+				totem	= 1,
+				name	= name,
 				expires	= (start + duration) or 0,
 			}
 			return t[k]
@@ -982,7 +1020,9 @@ local mt_totem = {
 			local _, name, start, duration = GetTotemInfo(2)
 			
 			t[k] = {
-				name	= name or nil,
+				key		= k,
+				totem	= 2,
+				name	= name,
 				expires	= (start + duration) or 0,
 			}
 			return t[k]
@@ -991,7 +1031,9 @@ local mt_totem = {
 			local _, name, start, duration = GetTotemInfo(3)
 			
 			t[k] = {
-				name	= name or nil,
+				key		= k,
+				totem	= 3,
+				name	= name,
 				expires	= (start + duration) or 0,
 			}
 			return t[k]
@@ -1000,13 +1042,15 @@ local mt_totem = {
 			local _, name, start, duration = GetTotemInfo(4)
 			
 			t[k] = {
-				name	= name or nil,
+				key		= k,
+				totem	= 4,
+				name	= name,
 				expires	= (start + duration) or 0,
 			}
 			return t[k]
 		end
 		
-		error("'" .. k "' is not a supported totem.")
+		error( "UNK: " .. k )
 		
 	end,
 	__newindex = function(t, k, v)
@@ -1063,7 +1107,7 @@ local default_dot = {
 
 
 -- Table of default handlers for dots.
--- Needs review.
+-- Not really used, right?
 local mt_default_dot = {
 	__index = function(t, k)
 		if k == 'remains' then
@@ -1114,7 +1158,15 @@ Hekili.MT.mt_dots = mt_dots
 -- Needs review.
 local mt_default_debuff = {
 	__index = function(t, k)
-		if k == 'up' then
+		if k == 'count' or k == 'expires' then
+			local _, _, _, count, _, _, expires = UnitDebuff( 'target', H.Auras[ t.key ].name, nil, 'PLAYER' )
+			
+			t.count = count or 0
+			t.expires = expires or 0
+			
+			return t[ k ]
+			
+		elseif k == 'up' then
 			return ( t.count > 0 and t.expires > ( state.now + state.offset ) )
 		
 		elseif k == 'down' then
@@ -1163,6 +1215,8 @@ local mt_debuffs	= {
 			local name, _, _, count, _, _, expires = UnitDebuff( 'target', H.Auras[ k ].name, nil, 'PLAYER' )
 			if name then count = max(1, count) end
 			t[k] = {
+				key		= key,
+				id		= H.Auras[ k ].id,
 				count	= count or 0,
 				expires	= expires or 0
 			}

@@ -63,9 +63,6 @@ externals:
     Libs/LibSpellRange-1.0:
         url: svn://svn.curseforge.net/wow/libspellrange-1-0/mainline/trunk
         tag: latest
-    Libs/LibCompress:
-        url: svn://svn.wowace.com/wow/libcompress/mainline/trunk
-        tag: latest
     Libs/LibRangeCheck-2.0:
         url: svn://svn.wowace.com/wow/librangecheck-2-0/mainline/trunk
         tag: latest

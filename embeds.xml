@@ -15,6 +15,5 @@
 	<Include file="Libs\AceGUI-3.0-SharedMediaWidgets\widget.xml"/>
 	<Script file="Libs\LibSpellRange-1.0\LibSpellRange-1.0.lua"/>
 	<Script file="Libs\LibDualSpec-1.0\LibDualSpec-1.0.lua"/>
-	<Include file="Libs\LibCompress\lib.xml"/>
 	<Script file="Libs\LibRangeCheck-2.0\LibRangeCheck-2.0.lua"/>
 </Ui>

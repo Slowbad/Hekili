@@ -238,9 +238,15 @@ local function GenerateDiagnosticTooltip(widget, event)
 		
 		if actID then
 			action = Hekili.DB.profile.actionLists[ listID ].Actions[ actID ].Ability
-			local result = Hekili:CheckScript( 'A', listID..':'..actID, action )
+			
+			local result, warning = Hekili:CheckScript( 'A', listID..':'..actID, action )
 
 			GameTooltip:AddDoubleLine( "Shown", Hekili.Utils.FormatValue( result ), 1, 1, 1, 1, 1, 1 )
+
+			if warning then
+				GameTooltip:AddLine( warning, 1, 1, 1 )
+			end
+
 			tested = true
 		end
 	
@@ -248,14 +254,24 @@ local function GenerateDiagnosticTooltip(widget, event)
 		local dispID = tonumber( path[2]:match( "^D(%d+)" ) )
 		
 		if path[3] == 'Criteria' then
-			local result = Hekili:CheckScript( 'D', dispID )
+			local result, warning = Hekili:CheckScript( 'D', dispID )
 			
 			GameTooltip:AddDoubleLine( "Shown", Hekili.Utils.FormatValue( result ), 1, 1, 1, 1, 1, 1 )
+			
+			if warning then
+				GameTooltip:AddLine( warning, 1, 1, 1 )
+			end
 		else
 			local prioID = tonumber( path[3]:match( "^P(%d+)" ) )
 			
-			local result = Hekili:CheckScript( 'P', dispID..':'..prioID )
+			local result, warning	 = Hekili:CheckScript( 'P', dispID..':'..prioID )
+
 			GameTooltip:AddDoubleLine( "Shown", Hekili.Utils.FormatValue( result ), 1, 1, 1, 1, 1, 1 )
+
+			if warning then
+				GameTooltip:AddLine( warning, 1, 1, 1 )
+			end
+
 		end
 		tested = true
 	
