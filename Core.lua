@@ -461,8 +461,8 @@ function Hekili:ResetState()
 	end
 	
 	-- Special case spells that suck.
-	if Hekili.Abilities[ 'ascendance' ] and self.State.buff.ascendance.up then
-		H:SetCooldown( 'ascendance', self.State.buff.ascendance.remains + 165 )
+	if Hekili.Abilities[ 'ascendance' ] and s.buff.ascendance.up then
+		H:SetCooldown( 'ascendance', s.buff.ascendance.remains + 165 )
 	end
 	
 	local cast_time, casting = 0, nil

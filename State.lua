@@ -798,8 +798,13 @@ Hekili.MT.mt_resource = mt_resource
 local mt_default_aura = {
 	__index = function(t, k)
 		if k == 'count' or k == 'expires' then
-			local _, _, _, count, _, _, expires = UnitBuff( 'player', H.Auras[ t.key ].name )
+			local name, _, _, count, _, _, expires = UnitBuff( 'player', H.Auras[ t.key ].name )
 
+			if name then
+				count = max(1, count)
+				if expires == 0 then expires = state.now + 3600 end
+			end
+			
 			t.count = count or 0
 			t.expires = expires or 0
 			
@@ -864,6 +869,9 @@ local mt_buffs	= {
 				local name, _, _, count, _, _, expires, _, _, _, id = UnitBuff( 'player', i )
 				
 				if not name then break end
+				
+				count = max(1, count)
+				if expires == 0 then expires = state.now + 3600 end
 				
 				local key = H.Auras[ id ].key
 				
@@ -1159,7 +1167,12 @@ Hekili.MT.mt_dots = mt_dots
 local mt_default_debuff = {
 	__index = function(t, k)
 		if k == 'count' or k == 'expires' then
-			local _, _, _, count, _, _, expires = UnitDebuff( 'target', H.Auras[ t.key ].name, nil, 'PLAYER' )
+			local name, _, _, count, _, _, expires = UnitDebuff( 'target', H.Auras[ t.key ].name, nil, 'PLAYER' )
+			
+			if name then
+				count = max(1, count)
+				if expires == 0 then expires = state.now + 3600 end
+			end
 			
 			t.count = count or 0
 			t.expires = expires or 0
@@ -1213,7 +1226,12 @@ local mt_debuffs	= {
 		
 		else
 			local name, _, _, count, _, _, expires = UnitDebuff( 'target', H.Auras[ k ].name, nil, 'PLAYER' )
-			if name then count = max(1, count) end
+
+			if name then
+				count = max(1, count)
+				if expires == 0 then expires = state.now + 3600 end
+			end
+			
 			t[k] = {
 				key		= k,
 				id		= H.Auras[ k ].id,
