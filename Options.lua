@@ -281,7 +281,12 @@ function Hekili:NewDisplayOption( key )
 					local _, defaultID = self:IsDefault( display.Name, 'displays' )
 					
 					local import = self:DeserializeDisplay( self.Defaults[ defaultID ].import )
-					
+		
+					if not import then
+						Hekili:Print("Unable to import " .. self.Defaults[ defaultID ].name .. ".")
+						return
+					end
+		
 					local settings_to_keep = { "Primary Icon Size", "Queued Font Size", "Primary Font Size", "Primary Caption Aura", "rel", "Spacing", "Queue Direction", "Queued Icon Size", "Font", "x", "y", "Icons Shown", "Action Captions", "Primary Caption", "Primary Caption Aura" }
 					
 					for _, k in pairs( settings_to_keep ) do
@@ -926,6 +931,11 @@ function Hekili:NewActionListOption( index )
 					
 					local import = self:DeserializeActionList( self.Defaults[ defaultID ].import )
 					
+					if not import then
+						Hekili:Print("Unable to import " .. self.Defaults[ defaultID ].name .. ".")
+						return
+					end
+					
 					self.DB.profile.actionLists[ listID ] = import
 					self.DB.profile.actionLists[ listID ].Release = self.Defaults[ defaultID ].version
 					self:RefreshOptions()
@@ -1328,7 +1338,8 @@ function Hekili:GetOptions()
 											end
 											C_Timer.After( 2 / self.DB.profile['Updates Per Second'], Hekili[ 'ProcessDisplay' .. index ] )
 										end
-										
+									else
+										Hekili:Print("Unable to import " .. default.name .. ".")
 									end
 								end
 							end
@@ -1375,7 +1386,8 @@ function Hekili:GetOptions()
 											end
 											C_Timer.After( 2 / self.DB.profile['Updates Per Second'], Hekili[ 'ProcessDisplay' .. index ] )
 										end
-										
+									else
+										Hekili:Print("Unable to import " .. default.name .. ".")
 									end
 								end
 							end
@@ -1457,6 +1469,9 @@ function Hekili:GetOptions()
 									if import then
 										self.DB.profile.actionLists[ index ] = import
 										self.DB.profile.actionLists[ index ].Release = default.version
+									else
+										Hekili:Print("Unable to import " .. default.name .. ".")
+										return
 									end
 								end
 							end
@@ -1488,6 +1503,9 @@ function Hekili:GetOptions()
 									if import then
 										self.DB.profile.actionLists[ index ] = import
 										self.DB.profile.actionLists[ index ].Release = default.version
+									else
+										Hekili:Print("Unable to import " .. default.name .. ".")
+										return
 									end
 								end
 							end
@@ -2099,7 +2117,10 @@ function Hekili:SetOption( info, input )
 			elseif option == 'Import Display' then
 				local import = self:DeserializeDisplay( input )
 				
-				if not import then return end
+				if not import then
+					Hekili:Print("Unable to import from given input string.")
+					return
+				end
 				
 				import.Name = GetUniqueName( profile.displays, import.Name )
 				profile.displays[ #profile.displays + 1 ] = import
@@ -2150,11 +2171,15 @@ function Hekili:SetOption( info, input )
 				
 				elseif option == 'Import' then
 					local import = self:DeserializeDisplay( input )
-					if not import then return end
+				
+					if not import then
+						Hekili:Print("Unable to import from given input string.")
+						return
+					end
 					
 					local name	= display.Name
-					display		= import
-					display.Name = name
+					profile.displays[ dispID ] = import
+					profile.displays[ dispID ].Name = name
 					
 					Rebuild = true
 				
@@ -2207,7 +2232,11 @@ function Hekili:SetOption( info, input )
 				
 			elseif option == 'Import Action List' then
 				local import = self:DeserializeActionList( input )
-				if not import then return end
+				
+				if not import then
+					Hekili:Print("Unable to import from given input string.")
+					return
+				end
 				
 				import.Name = GetUniqueName( profile.actionLists, import.Name )
 				profile.actionLists[ #profile.actionLists + 1 ] = import
@@ -2251,7 +2280,11 @@ function Hekili:SetOption( info, input )
 					list[option] = nil
 
 					local import = self:DeserializeActionList( input )
-					if not import then return end
+					
+					if not import then
+						Hekili:Print("Unable to import from given import string.")
+						return
+					end
 					
 					import.Name = list.Name
 					
@@ -2377,6 +2410,12 @@ function Hekili:CmdLine( input )
 			self.UI.Buttons[i][1]:SetPoint("CENTER", 0, (i-1) * 50 )
 		end
 		self:SaveCoordinates()
+	
+	elseif input:trim() == 'recover' then
+		self.DB.profile.displays = {}
+		self.DB.profile.actionLists = {}
+		self:RestoreDefaults()
+		Hekili:Print("Default displays and action lists restored.")
 	
 	elseif input:trim() == 'times' then
 		ResetCPUUsage()

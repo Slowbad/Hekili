@@ -10,6 +10,36 @@ local MT = Hekili.MT
 local tblCopy = Hekili.Utils.tblCopy
 
 
+-- CheckBrokenImports()
+-- Remove any displays or action lists that were unsuccessfully imported.
+function CheckBrokenImports()
+	local self = Hekili
+	
+	-- Check for broken imports from previous versions.
+	for i, display in ipairs( self.DB.profile.displays ) do	
+		if type( display ) ~= 'table' then
+			table.remove( self.DB.profile.displays, i )
+		end
+	end
+	
+	for i, list in ipairs( self.DB.profile.actionLists ) do	
+		if type( list ) ~= 'table' then
+			for d_key, display in ipairs( self.DB.profile.displays ) do
+				for h_key, hook in ipairs ( display.Queues ) do
+					if hook['Action List'] == i then
+						hook['Action List'] = 0
+						hook.Enabled = false
+					elseif hook['Action List'] > i then
+						hook['Action List'] = hook['Action List'] - 1
+					end
+				end
+			end
+			table.remove( self.DB.profile.actionLists, i )
+		end
+	end
+end
+
+
 -- OnInitialize()
 -- Addon has been loaded by the WoW client (1x).
 function H:OnInitialize()
@@ -46,6 +76,7 @@ function H:OnInitialize()
 		Hekili.DB:ResetDB()
 	end
 	
+	CheckBrokenImports()
 	self:RestoreDefaults()
 	self:LoadScripts()
 	self:BuildUI()
@@ -204,7 +235,7 @@ function Hekili:LoadScripts()
 	end
 	
 	for i, list in ipairs( self.DB.profile.actionLists ) do
-		for a, action in ipairs( list.Actions) do
+		for a, action in ipairs( list.Actions ) do
 			local aKey = i..':'..a
 			Actions[ aKey ] = self:ConvertScript( action, true )
 		end
@@ -302,9 +333,12 @@ function Hekili:GetModifiers( list, entry )
 end
 	
 
+	
+
 
 function H:OnEnable()
 
+	CheckBrokenImports()
 	self:RefreshBindings()
 	self:BuildUI()
 

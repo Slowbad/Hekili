@@ -379,8 +379,15 @@ function Hekili:RestoreDefaults( category )
 				end
 				
 				if not found then
-					_, self.DB.profile.actionLists[ #self.DB.profile.actionLists + 1 ] = Hekili:Deserialize( proto.import )
-					self.DB.profile.actionLists[ #self.DB.profile.actionLists ].Name = proto.name
+					local import = Hekili:DeserializeActionList( proto.import )
+					index = #self.DB.profile.actionLists + 1
+					if import and type( import ) == 'table' then
+						self.DB.profile.actionLists[ index ] = import
+						self.DB.profile.actionLists[ index ].Name = proto.name
+						self.DB.profile.actionLists[ index ].Release = proto.version
+					else
+						Hekili:Print("Error importing " .. proto.name .. ".")
+					end
 				end
 			end
 		
@@ -402,30 +409,38 @@ function Hekili:RestoreDefaults( category )
 				end
 				
 				if not found then
-					_, self.DB.profile.displays[ #self.DB.profile.displays + 1 ] = Hekili:Deserialize( proto.import )
-					self.DB.profile.displays[ #self.DB.profile.displays ].Name = proto.name
+					local import = Hekili:DeserializeDisplay( proto.import )
+					index = #self.DB.profile.displays + 1
 					
-					for j, prio in ipairs( self.DB.profile.displays[ #self.DB.profile.displays].Queues ) do
-						if type( prio['Action List'] ) == 'string' then
-							for k, list in ipairs( self.DB.profile.actionLists ) do
-								if list.Name == prio['Action List'] then
-									prio['Action List'] = k
-									break
+					if import and type( import ) == 'table' then
+						self.DB.profile.displays[ index ] = import
+						self.DB.profile.displays[ index ].Name = proto.name
+						self.DB.profile.displays[ index ].Release = proto.version
+					
+						for j, prio in ipairs( self.DB.profile.displays[ index ].Queues ) do
+							if type( prio['Action List'] ) == 'string' then
+								for k, list in ipairs( self.DB.profile.actionLists ) do
+									if list.Name == prio['Action List'] then
+										prio['Action List'] = k
+										break
+									end
+								end
+								if type( prio['Action List'] ) == 'string' then
+									-- The list wasn't found.
+									prio['Action List'] = 0
 								end
 							end
-							if type( prio['Action List'] ) == 'string' then
-								-- The list wasn't found.
-								prio['Action List'] = 0
-							end
 						end
+					else
+						Hekili:Print("Error importing " .. proto.name .. ".")
 					end
 				end
 			end
 		end
 	end
 	
-	self:LoadScripts()
 	self:RefreshOptions()
+	self:LoadScripts()
 	
 end
 
