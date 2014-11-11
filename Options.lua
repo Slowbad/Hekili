@@ -197,10 +197,12 @@ function Hekili:NewDisplayOption( key )
 				arg	= function(info)
 					local dispKey = info[2]
 					local dispIdx = tonumber( dispKey:match("^D(%d+)" ) )
+					local results = {}
 					
 					Hekili:ResetState()
 					Hekili.State.this_action = 'wait'
-					return Hekili:GatherValues( self.Scripts.D[ dispIdx ] )
+					Hekili:StoreValues( results, self.Scripts.D[ dispIdx ] )
+					return results
 				end,
 				multiline = 6,
 				order	= 7,
@@ -666,10 +668,12 @@ function Hekili:NewHookOption( display, key )
 					local dispKey, hookKey = info[2], info[3]
 					local dispIdx, hookID = tonumber( dispKey:match("^D(%d+)" ) ), tonumber( hookKey:match("^P(%d+)") )
 					local prio = self.DB.profile.displays[ dispIdx ].Queues[ hookID ]
+					local results = {}
 					
 					self:ResetState()
 					self.State.this_action = 'wait'
-					return self:GatherValues( self.Scripts.P[ dispIdx..':'..hookID ] )
+					self:StoreValues( results, self.Scripts.P[ dispIdx..':'..hookID ] )
+					return results
 				end,
 				multiline = 6,
 				order	= 12,
@@ -1110,10 +1114,13 @@ function Hekili:NewActionOption( aList, index )
 				arg	= function(info)
 					local listKey, actKey = info[2], info[3]
 					local listIdx, actIdx = tonumber( listKey:match("^L(%d+)" ) ), tonumber( actKey:match("^A(%d+)" ) )
+					local results = {}
 					
 					Hekili:ResetState()
 					Hekili.State.this_action = self.DB.profile.actionLists[ listIdx ].Actions[ actIdx ].Ability
-					return Hekili:GatherValues( self.Scripts.A[ listIdx..':'..actIdx ] )
+					Hekili:StoreValues( results, self.Scripts.A[ listIdx..':'..actIdx ] )
+					
+					return results
 				end,
 				multiline = 6,
 				order	= 10,

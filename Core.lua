@@ -166,38 +166,18 @@ function Hekili:StoreValues( tbl, node )
 	end
 	
 	for k, v in pairs( node.Elements ) do
-		_, tbl[k] = pcall( v )
-		if type( tbl[k] ) == 'string' then
-			tbl[k] = tbl[k]:match("lua:%d+: (.*)") or tbl[k]
-		end
-	end
-end
-
-
-function Hekili:GatherValues( node )
-	if not node.Elements then
-		return nil
-	end
-
-	local Output = {}
-	
-	for k, v in pairs( node.Elements ) do
-		_, Output[k] = pcall( v )
-		-- if not Output[k] then Output[k] = v end
+		local success, result = pcall( v )
 		
-		if type( Output[k] ) == 'string' then
-			Output[k] = Output[k]:match("lua:%d+: (.*)") or Output[k]
-		elseif Output[k] == nil then
-			Output[k] = v
-		end
+		if success then tbl[k] = result
+		elseif type( result ) == 'string' then
+			tbl[k] = result:match("lua:%d+: (.*)") or result
+		else tbl[k] = 'nil' end
 	end
-	
-	return Output
 end
 
 
 function Hekili:LoadScripts()
-	self.Scripts	= self.Scripts or { D = {}, P = {}, A = {} }
+	self.Scripts = self.Scripts or { D = {}, P = {}, A = {} }
 
 	local Displays, Hooks, Actions = self.Scripts.D, self.Scripts.P, self.Scripts.A
 	local Profile = self.DB.profile

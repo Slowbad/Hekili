@@ -621,21 +621,21 @@ local mt_target = {
 		elseif k:sub(1, 6) == 'within' then
 			local maxR = k:match( "^within(%d+)$" )
 			
-			if not maxR then return false end
+			if not maxR then error("UNK: " .. k) end
 			
 			return ( t.maxR <= tonumber( maxR ) )
 			
 		elseif k:sub(1, 7) == 'outside' then
 			local minR = k:match( "^outside(%d+)$" )
 			
-			if not minR then return false end
+			if not minR then error("UNK: " .. k) end
 			
-			return ( t.minR >= tonumber( minR ) )
+			return ( t.minR > tonumber( minR ) )
 			
 		elseif k:sub(1, 5) == 'range' then
 			local minR, maxR = k:match( "^range(%d+)to(%d+)$" )
 
-			if not minR or not maxR then return false end
+			if not minR or not maxR then error("UNK: " .. k) end
 			
 			return ( t.minR >= tonumber( minR ) and t.maxR <= tonumber( maxR ) )
 		
