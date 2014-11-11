@@ -155,6 +155,25 @@ function Hekili:ConvertScript( node, hasModifiers )
 end
 
 
+function Hekili:StoreValues( tbl, node )
+
+	if not node.Elements then
+		return
+	end
+
+	for k in pairs( tbl ) do
+		tbl[k] = nil
+	end
+	
+	for k, v in pairs( node.Elements ) do
+		_, tbl[k] = pcall( v )
+		if type( tbl[k] ) == 'string' then
+			tbl[k] = tbl[k]:match("lua:%d+: (.*)") or tbl[k]
+		end
+	end
+end
+
+
 function Hekili:GatherValues( node )
 	if not node.Elements then
 		return nil
@@ -164,8 +183,12 @@ function Hekili:GatherValues( node )
 	
 	for k, v in pairs( node.Elements ) do
 		_, Output[k] = pcall( v )
+		-- if not Output[k] then Output[k] = v end
+		
 		if type( Output[k] ) == 'string' then
 			Output[k] = Output[k]:match("lua:%d+: (.*)") or Output[k]
+		elseif Output[k] == nil then
+			Output[k] = v
 		end
 	end
 	
@@ -767,6 +790,23 @@ function WaitTime( action )
 end
 
 
+function ImplantDebugData( queue )
+	if queue.display and queue.hook then
+		local scrHook = Hekili.Scripts.P[ queue.display..':'..queue.hook ]
+		queue.HookScript = scrHook.SimC
+		queue.HookElements = queue.HookElements or {}
+		Hekili:StoreValues( queue.HookElements, scrHook )
+	end
+	
+	if queue.actionlist and queue.action then
+		local scrAction = Hekili.Scripts.A[ queue.actionlist..':'..queue.action ]
+		queue.ActScript = scrAction.SimC
+		queue.ActElements = queue.ActElements or {}
+		Hekili:StoreValues( queue.ActElements, scrAction )
+	end
+end							
+
+
 Hekili.Queue = {}
 
 function Hekili:ProcessHooks( dispID )
@@ -796,10 +836,10 @@ function Hekili:ProcessHooks( dispID )
 					Queue[i] = Queue[i] or {}
 					
 					for k in pairs( Queue[ i ] ) do
-						Queue[ i ][ k ] = nil
+						if type( Queue[ i ][ k ] ) ~= 'table' then
+							Queue[ i ][ k ] = nil
+						end
 					end
-					
-					
 					
 					for hookID, hook in ipairs( display.Queues ) do
 					
@@ -847,7 +887,7 @@ function Hekili:ProcessHooks( dispID )
 												Queue[i].display		= dispID
 												Queue[i].button		= i
 													
-												Queue[i].hook		= hookID
+												Queue[i].hook			= hookID
 													
 												Queue[i].actionlist	= listID
 												Queue[i].action		= actID
@@ -856,7 +896,7 @@ function Hekili:ProcessHooks( dispID )
 												Queue[i].actName		= s.this_action
 													
 												Queue[i].caption		= chosen_caption
-												Queue[i].wait		= wait_time
+												Queue[i].wait			= wait_time
 												
 											end
 										
@@ -874,16 +914,10 @@ function Hekili:ProcessHooks( dispID )
 						
 					end -- end Hook
 					
-					if Queue[i] then
+					if chosen_action then
 						-- We have our actual action, so let's get the script values if we're debugging.
 						if self.DB.profile.Debug then
-							local scrHook = self.Scripts.P[ Queue[i].display..':'..Queue[i].hook ]
-							Queue[i].HookScript = scrHook.SimC
-							Queue[i].HookElements = self:GatherValues( scrHook )
-							
-							local scrAction = self.Scripts.A[ Queue[i].actionlist..':'..Queue[i].action ]
-							Queue[i].ActScript = scrAction.SimC
-							Queue[i].ActElements = self:GatherValues( scrAction )
+							ImplantDebugData( Queue[i] )
 						end
 					
 						-- Advance through the wait time.
@@ -935,8 +969,6 @@ function Hekili:ProcessHooks( dispID )
 					end
 					
 				end
-				 
-				self.Queue[ dispID ] = Queue
 				
 			end			
 		

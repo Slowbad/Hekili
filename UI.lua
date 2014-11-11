@@ -41,9 +41,9 @@ function Hekili:BuildUI()
 		for i = 1, max( #self.UI.Buttons[dispID], display['Icons Shown'] ) do
 			self.UI.Buttons[dispID][i] = self:CreateButton( dispID, i )
 			
-			if i > display['Icons Shown'] then
-				self.UI.Buttons[dispID][i]:Hide()
-			elseif self.DisplayVisible[ dispID ] and ( self.Config or ( self.Queue[ dispID ] and self.Queue[ dispID ][ i ] ) ) then
+			self.UI.Buttons[dispID][i]:Hide()
+
+			if self.DisplayVisible[ dispID ] and i <= display[ 'Icons Shown' ] then
 				self.UI.Buttons[dispID][i]:Show()
 			end
 			

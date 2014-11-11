@@ -245,7 +245,20 @@ function Hekili:NewDisplayOption( key )
 			Reload = {
 				type		= "execute",
 				name		= "Reload Display",
-				desc		= "Reloads this display from the default options available. Style settings are left untouched, but hooks and criteria are reset.",
+				desc		= function( info, ... ) 
+					local dispKey, dispID = info[2], tonumber( string.match( info[2], "^D(%d+)" ) )
+					local display = self.DB.profile.displays[ dispID ]
+					
+					local _, defaultID = self:IsDefault( display.Name, 'displays' )
+
+					local output = "Reloads this display from the default options available. Style settings are left untouched, but hooks and criteria are reset."
+					
+					if self.Defaults[ defaultID ].version > ( display.Release or 0 ) then
+						output = output .. "\n|cFF00FF00The default display is newer (" .. self.Defaults[ defaultID ].version .. ") than your existing display (" .. ( display.Release or "2.00" ) .. ").|r"
+					end
+					
+					return output
+				end,
 				confirm		= true,
 				confirmText	= "Reload the default settings for this default display?",
 				order		= 22,
@@ -269,11 +282,12 @@ function Hekili:NewDisplayOption( key )
 					
 					local settings_to_keep = { "Primary Icon Size", "Queued Font Size", "Primary Font Size", "Primary Caption Aura", "rel", "Spacing", "Queue Direction", "Queued Icon Size", "Font", "x", "y", "Icons Shown", "Action Captions", "Primary Caption", "Primary Caption Aura" }
 					
-					for k, _ in pairs( settings_to_keep ) do
+					for _, k in pairs( settings_to_keep ) do
 						import[ k ] = display[ k ]
 					end
 					
 					self.DB.profile.displays[ dispID ] = import
+					self.DB.profile.displays[ dispID ].Release = self.Defaults[ defaultID ].version
 					self:RefreshOptions()
 					self:LoadScripts()
 					self:BuildUI()
@@ -318,7 +332,9 @@ function Hekili:NewDisplayOption( key )
 					
 					-- Will need to be more elaborate later.
 					table.remove( self.DB.profile.displays, dispIdx )
+					table.remove( self.Queue, dispIdx )
 					Hekili:RefreshOptions()
+					self:LoadScripts()
 					self:BuildUI()
 					self.ACD:SelectGroup("Hekili", 'displays' )
 				end
@@ -557,6 +573,7 @@ function Hekili:NewHook( display, name )
 	
 	self.DB.profile.displays[ display ].Queues[ index ] = {
 		Name				= name,
+		Release				= self.DB.profile.Version + ( self.DB.profile.Release / 100 ),
 		Enabled				= false,
 		['Action List']		= 0,
 		Script				= '',
@@ -698,6 +715,7 @@ function Hekili:NewActionList( name )
 	self.DB.profile.actionLists[index] = {
 		Enabled			= false,
 		Name			= name,
+		Release			= self.DB.profile.Version + ( self.DB.profile.Release / 100 ),
 		Specialization	= GetSpecializationID() or 0,
 		Script			= '',
 		Actions			= {}
@@ -767,34 +785,6 @@ function Hekili:NewActionListOption( index )
 				end,
 				width	= 'full'
 			},
-			['Add Action'] = {
-				type		= "execute",
-				name		= "Add Action",
-				desc		= "Adds a new action entry, where you can set the ability and conditions required for that ability to be shown.",
-				order		= 4,
-				func		= function( info )
-					local listKey, listIdx = info[2], tonumber( info[2]:match("^L(%d+)") )
-
-					local clear, suffix, name, result = 0, 1, "New Action", "New Action"
-					while clear < #self.DB.profile.actionLists[ listIdx ].Actions do
-						for i, action in ipairs( self.DB.profile.actionLists[ listIdx ].Actions ) do
-							if action.Name == result then
-								result = name .. ' (' .. suffix .. ')'
-								suffix = suffix + 1
-							else
-								clear = clear + 1
-							end
-						end
-					end
-					
-					local key, index = self:NewAction( listIdx, result )
-					if key then
-						self.Options.args.actionLists.args[ listKey ].args[ key ] = self:NewActionOption( listIdx, index )
-						self:CacheDurableDisplayCriteria()
-						self:LoadScripts()
-					end
-				end
-			},
 			['Import/Export'] = {
 				type	= "group",
 				name	= 'Import/Export',
@@ -860,10 +850,100 @@ function Hekili:NewActionListOption( index )
 					},
 				}
 			},
-			delHeader = {
-				type	= 'header',
-				name	= 'Delete',
-				order	= 998
+			spcHeader = {
+				type	= 'description',
+				name	= "\n",
+				order	= 900,
+				width	= 'full'
+			},
+			['Add Action'] = {
+				type		= "execute",
+				name		= "Add Action",
+				desc		= "Adds a new action entry, where you can set the ability and conditions required for that ability to be shown.",
+				order		= 901,
+				func		= function( info )
+					local listKey, listIdx = info[2], tonumber( info[2]:match("^L(%d+)") )
+
+					local clear, suffix, name, result = 0, 1, "New Action", "New Action"
+					while clear < #self.DB.profile.actionLists[ listIdx ].Actions do
+						for i, action in ipairs( self.DB.profile.actionLists[ listIdx ].Actions ) do
+							if action.Name == result then
+								result = name .. ' (' .. suffix .. ')'
+								suffix = suffix + 1
+							else
+								clear = clear + 1
+							end
+						end
+					end
+					
+					local key, index = self:NewAction( listIdx, result )
+					if key then
+						self.Options.args.actionLists.args[ listKey ].args[ key ] = self:NewActionOption( listIdx, index )
+						self:CacheDurableDisplayCriteria()
+						self:LoadScripts()
+					end
+				end
+			},
+			Reload = {
+				type		= "execute",
+				name		= "Reload Action List",
+				desc		= function( info, ... ) 
+					local listKey, listID = info[2], tonumber( string.match( info[2], "^L(%d+)" ) )
+					local list = self.DB.profile.actionLists[ listID ]
+					
+					local _, defaultID = self:IsDefault( list.Name, 'actionLists' )
+
+					local output = "Reloads this action list from the default options available."
+					
+					if self.Defaults[ defaultID ].version > ( list.Release or 0 ) then
+						output = output .. "\n|cFF00FF00The default action list is newer (" .. self.Defaults[ defaultID ].version .. ") than your existing action list (" .. ( list.Release or "2.00" ) .. ").|r"
+					end
+					
+					return output
+				end,
+				confirm		= true,
+				confirmText	= "Reload the default settings for this default action list?",
+				order		= 902,
+				hidden		= function( info, ... )
+					local listKey, listID = info[2], tonumber( strmatch( info[2], "^L(%d+)" ) )
+					local list = self.DB.profile.actionLists[ listID ]
+					
+					if self:IsDefault( list.Name, 'actionLists' ) then
+						return false
+					end
+					
+					return true
+				end,
+				func = function( info, ... )
+					local listKey, listID = info[2], tonumber( strmatch( info[2], "^L(%d+)" ) )
+					local list = self.DB.profile.actionLists[ listID ]
+					
+					local _, defaultID = self:IsDefault( list.Name, 'actionLists' )
+					
+					local import = self:DeserializeActionList( self.Defaults[ defaultID ].import )
+					
+					self.DB.profile.actionLists[ listID ] = import
+					self.DB.profile.actionLists[ listID ].Release = self.Defaults[ defaultID ].version
+					self:RefreshOptions()
+					self:LoadScripts()
+					-- self:BuildUI()
+				end,
+			},
+			BLANK2 = {
+				type	= "description",
+				name	= " ",
+				order	= 902,
+				hidden	= function( info, ... )
+					local listKey, listID = info[2], tonumber( strmatch( info[2], "^L(%d+)" ) )
+					local list = self.DB.profile.actionLists[ listID ]
+					
+					if self:IsDefault( list.Name, 'actionLists' ) then
+						return true
+					end
+					
+					return false
+				end,
+				width	= "single",
 			},
 			Delete = {
 				type		= "execute",
@@ -930,6 +1010,7 @@ function Hekili:NewAction( aList, name )
 	
 	self.DB.profile.actionLists[ aList ].Actions[ index ] = {
 		Name				= name,
+		Release				= self.DB.profile.Version + ( self.DB.profile.Release / 100 ),
 		Enabled				= false,
 		Ability				= nil,
 		Caption				= nil,
@@ -1208,12 +1289,12 @@ function Hekili:GetOptions()
 					},
 					footer = {
 						type		= "description",
-						name		= "If you login or /reloadui with no displays loaded, the addon will reload the default displays for your class.",
+						name		= "   ",
 						order		= 3
 					},
 					Reload = {
 						type		= "execute",
-						name		= "Reload Defaults",
+						name		= "Reload Missing",
 						desc		= "Reloads all missing default displays.",
 						confirm		= true,
 						confirmText	= "Restore any deleted default displays?",
@@ -1232,14 +1313,62 @@ function Hekili:GetOptions()
 									
 									if import then
 										self.DB.profile.displays[ index ] = import
+										self.DB.profile.displays[ index ].Release = default.version
 										
 										if not Hekili[ 'ProcessDisplay' .. index ] then
 											Hekili[ 'ProcessDisplay' .. index ] = function()
 												Hekili:ProcessHooks( index )
 											end
+											C_Timer.After( 2 / self.DB.profile['Updates Per Second'], Hekili[ 'ProcessDisplay' .. index ] )
 										end
 										
-										C_Timer.After( 2 / self.DB.profile['Updates Per Second'], Hekili[ 'ProcessDisplay' .. index ] )
+									end
+								end
+							end
+							
+							self:RefreshOptions()
+							self:LoadScripts()
+							self:BuildUI()
+						end,
+					},
+					ReloadAll = {
+						type		= "execute",
+						name		= "Reload All",
+						desc		= "Reloads all default displays.",
+						confirm		= true,
+						confirmText	= "Restore all default displays?",
+						order		= 5,
+						func		= function( info, ... )
+							local exists = {}
+							
+							for i, display in ipairs( self.DB.profile.displays ) do
+								exists[ display.Name ] = i
+							end
+
+							for i, default in ipairs( self.Defaults ) do
+								if default.type == 'displays' then
+									local import = self:DeserializeDisplay( default.import )
+									local index = exists[ default.name ] or #self.DB.profile.displays + 1
+									
+									if import then
+										if exists[ default.name ] then
+											local settings_to_keep = { "Primary Icon Size", "Queued Font Size", "Primary Font Size", "Primary Caption Aura", "rel", "Spacing", "Queue Direction", "Queued Icon Size", "Font", "x", "y", "Icons Shown", "Action Captions", "Primary Caption", "Primary Caption Aura" }
+											
+											for _, k in pairs( settings_to_keep ) do
+												import[ k ] = self.DB.profile.displays[ index ][ k ]
+											end
+										end
+									
+										self.DB.profile.displays[ index ] = import
+										self.DB.profile.displays[ index ].Release = default.version
+										
+										if not Hekili[ 'ProcessDisplay' .. index ] then
+											Hekili[ 'ProcessDisplay' .. index ] = function()
+												Hekili:ProcessHooks( index )
+											end
+											C_Timer.After( 2 / self.DB.profile['Updates Per Second'], Hekili[ 'ProcessDisplay' .. index ] )
+										end
+										
 									end
 								end
 							end
@@ -1261,7 +1390,7 @@ function Hekili:GetOptions()
 					header	= {
 						type		= "description",
 						name		= "Each action list is a selection of several abilities and the conditions for using them.",
-						order		= 997
+						order		= 10
 					},
 					['New Action List'] = {
 						type		= "input",
@@ -1284,16 +1413,82 @@ function Hekili:GetOptions()
 										
 										return true
 									end,
-						order		= 998
+						order		= 20
 					},
 					['Import Action List'] = {
 						type		= "input",
 						name		= "Import Action List",
 						desc		= "Paste an action list's export string to import it here.",
 						width		= 'full',
-						order		= 999,
+						order		= 30,
 						multiline	= 6,
-					}
+					},
+					footer = {
+						type		= "description",
+						name		= "   ",
+						order		= 35
+					},
+					Reload = {
+						type		= "execute",
+						name		= "Reload Missing",
+						desc		= "Reloads all missing default action lists.",
+						confirm		= true,
+						confirmText	= "Restore any deleted default action lists?",
+						order		= 40,
+						func		= function( info, ... )
+							local exists = {}
+							
+							for i, list in ipairs( self.DB.profile.actionLists ) do
+								exists[ list.Name ] = true
+							end
+
+							for i, default in ipairs( self.Defaults ) do
+								if not exists[ default.name ] and default.type == 'actionLists' then
+									local import = self:DeserializeActionList( default.import )
+									local index = #self.DB.profile.actionLists + 1
+									
+									if import then
+										self.DB.profile.actionLists[ index ] = import
+										self.DB.profile.actionLists[ index ].Release = default.version
+									end
+								end
+							end
+							
+							self:RefreshOptions()
+							self:LoadScripts()
+						end,
+					},
+					ReloadAll = {
+						type		= "execute",
+						name		= "Reload All",
+						desc		= "Reloads all default action lists.",
+						confirm		= true,
+						confirmText	= "Restore all default action lists?",
+						order		= 41,
+						func		= function( info, ... )
+							local exists = {}
+							
+							for i, list in ipairs( self.DB.profile.actionLists ) do
+								exists[ list.Name ] = i
+							end
+
+							for i, default in ipairs( self.Defaults ) do
+								if default.type == 'actionLists' then
+									local index = exists[ default.name ] or #self.DB.profile.actionLists+1
+
+									local import = self:DeserializeActionList( default.import )
+									
+									if import then
+										self.DB.profile.actionLists[ index ] = import
+										self.DB.profile.actionLists[ index ].Release = default.version
+									end
+								end
+							end
+							
+							self:RefreshOptions()
+							self:LoadScripts()
+						end,
+					},
 				}
 			},
 			bindings = {
@@ -1784,9 +1979,9 @@ local function GetUniqueName( category, name )
 			if name == instance.Name then
 				name = original .. ' (' .. suffix .. ')'
 				suffix = suffix + 1
-				clear = 0
+				numChecked = 0
 			else
-				clear = clear + 1
+				numChecked = numChecked + 1
 			end
 		end
 	end
@@ -1956,6 +2151,13 @@ function Hekili:SetOption( info, input )
 					
 					Rebuild = true
 				
+				elseif option == 'Icons Shown' then
+					if Hekili.Queue[ dispID ] then
+						for i = input + 1, #Hekili.Queue[ dispID ] do
+							Hekili.Queue[ dispID ][ i ] = nil
+						end
+					end
+				
 				end
 				
 				RebuildUI = true
@@ -1997,7 +2199,7 @@ function Hekili:SetOption( info, input )
 				end
 				
 			elseif option == 'Import Action List' then
-				local import = self:DeserializeDisplay( input )
+				local import = self:DeserializeActionList( input )
 				if not import then return end
 				
 				import.Name = GetUniqueName( profile.actionLists, import.Name )
@@ -2044,9 +2246,9 @@ function Hekili:SetOption( info, input )
 					local import = self:DeserializeActionList( input )
 					if not import then return end
 					
-					import.Name = GetUniqueName( profile.actionLists, import.Name )
+					import.Name = list.Name
 					
-					profile.actionLists[ #profile.actionLists + 1 ] = import
+					profile.actionLists[ listID ] = import
 					Rebuild = true
 				
 				elseif option == 'SimulationCraft' then
@@ -2116,7 +2318,6 @@ function Hekili:SetOption( info, input )
 		self:RefreshOptions()
 		self:LoadScripts()
 		self:BuildUI()
-		
 	else
 		if RebuildOptions then self:RefreshOptions() end
 		if RebuildScripts then self:LoadScripts() end
@@ -2160,6 +2361,7 @@ function Hekili:CmdLine( input )
 				Hekili.UI.Buttons[i][1]:SetMovable( not Hekili.DB.profile.Locked )
 			end
 			self:SetScript("OnHide", nil)
+			collectgarbage()
 		end )
 			
 	elseif input:trim() == 'center' then

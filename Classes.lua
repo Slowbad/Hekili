@@ -347,15 +347,16 @@ AbilityElements( 'wait', 'name', 'Wait' )
 
 Hekili.Defaults = {}
 
-function Hekili.Default( name, category, import )
+function Hekili.Default( name, category, version, import )
 	
-	if not ( name and category and import ) then
+	if not ( name and category and version and import ) then
 		return
 	end
 	
 	Hekili.Defaults[ #Hekili.Defaults + 1 ] = {
 		name	= name,
 		type	= category,
+		version = version,
 		import	= import:gsub("([^|])|([^|])", "%1||%2")
 	}
 end
