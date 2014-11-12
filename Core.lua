@@ -82,6 +82,8 @@ function H:OnInitialize()
 	self:BuildUI()
 	self:UnregisterAllEvents()
 	
+	Hekili.DB.profile.Release = 6
+	
 	if not Hekili.Class then
 		self.DB.profile.Enabled = false
 		for i, buttons in ipairs( self.UI.Buttons ) do
@@ -1144,7 +1146,7 @@ function H:UpdateDisplays()
 						
 						local start, duration = GetSpellCooldown( self.Abilities[ aKey ].id )
 						
-						if not start or start == 0 or duration < gcd_duration then
+						if H.Abilities[ aKey ].gcdType ~= 'off' and ( not start or start == 0 or ( start + duration ) < ( gcd_start + gcd_duration ) ) then
 							start		= gcd_start
 							duration	= gcd_duration
 						end

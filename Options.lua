@@ -13,7 +13,7 @@ function Hekili:GetDefaults()
 	local defaults = {
 		profile = {
 			Version			= 2,
-			Release			= 5,
+			Release			= 6,
 			Enabled			= true,
 			Locked			= false,
 			Debug			= false,
