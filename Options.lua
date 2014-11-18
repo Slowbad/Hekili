@@ -2415,6 +2415,7 @@ function Hekili:CmdLine( input )
 		self.DB.profile.displays = {}
 		self.DB.profile.actionLists = {}
 		self:RestoreDefaults()
+		self:BuildUI()
 		Hekili:Print("Default displays and action lists restored.")
 	
 	elseif input:trim() == 'times' then

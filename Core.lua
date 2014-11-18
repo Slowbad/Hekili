@@ -1152,14 +1152,10 @@ function H:UpdateDisplays()
 						end
 						
 						if i == 1 then
-							if H.Abilities[ aKey ].gcdType == 'off' then
-								button.Cooldown:SetCooldown( 0, 0 )
-							else
-								button.Cooldown:SetCooldown( start, duration )
-							end
+							button.Cooldown:SetCooldown( start, duration )
 							
 						else
-							if ( start + duration > gcd_start + gcd_duration ) then
+							if ( start + duration ~= gcd_start + gcd_duration ) then
 								button.Cooldown:SetCooldown( start, duration )
 							else
 								button.Cooldown:SetCooldown( 0, 0 )
