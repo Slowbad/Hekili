@@ -465,9 +465,13 @@ function Hekili:ResetState()
 	end
 	
 	-- s.dot currently just wraps s.debuff
-
+	
 	for k in pairs( s.pet ) do
 		s.pet[ k ].expires = nil
+	end
+
+	for k in pairs( s.seal ) do
+		s.seal[ k ] = nil
 	end
 	
 	for k in pairs( s.totem ) do
@@ -569,7 +573,7 @@ function H:Advance( time )
 				s.nextOH = s.nextOH + OH
 			end
 		
-		elseif resource.regen ~= 0 then
+		elseif resource.regen and resource.regen ~= 0 then
 			resource.current = min( resource.max, resource.current + ( resource.regen * time ) )
 		end
 	end
@@ -581,61 +585,29 @@ function HasRequiredResources( ability )
 
 	local s, action = H.State, H.Abilities[ ability ]
 	
-	if not action then return false end
+	if not action then return end
 	
-	local cost = action.cost
-	
-	if not action.cost then
-		return true
-	
-	elseif type( action.cost ) == 'number' then
-		local resource = action.resource or SPELL_POWER_MANA
+	-- First, spend resources.
+	if action.spend then
+		local spend, resource
 		
-		if Hekili.Class == 'WARRIOR' then resource = SPELL_POWER_RAGE end
-		
-		local resKey = GetResourceName( resource )
-		local cost = action.cost
-		
-		if cost < 0 then
-			cost = ( -1 * cost / 100 ) * s[ resKey ].max
+		if type( action.spend ) == 'number' then
+			spend = action.spend
+			resource = action.spend_type or Hekili.ClassResource
+		elseif type( action.spend ) == 'function' then
+			spend, resource = action.spend()
 		end
-		
-		if cost > 0 and cost > s[ resKey ].current then
-			return false
-		end
-		
-		return true
-		
-	elseif type( action.cost ) == 'table' then
-		for k, aCost in pairs( action.cost ) do
-			local resKey = GetResourceName( _G[k] )
-			local cost
-			
-			if type(aCost) == 'function' then
-				cost = aCost()
-			else
-				cost = aCost
-			end
 
-			-- If cost is negative, it's actually a gain from the ability.  Ignore it.
-			if cost > 0 then
-				if cost < 1 then
-					-- It's a percentage.
-					cost = s[ resKey ].max * cost
-				end
-				
-				if cost > s[ resKey ].current then
-					return false
-				end
-			end
+		local resKey = GetResourceName( resource )
+		
+		if spend > 0 and spend < 1 then
+			spend = ( spend * s[ resKey ].max )
 		end
 		
-		return true
-		
+		return ( s[ resKey ].current >= spend )
 	end
 	
-	-- Should never reach this point.
-	return false
+	return true
 	
 end
 Hekili.HRR = HasRequiredResources
@@ -647,148 +619,83 @@ function H:UpdateResources( ability )
 	
 	if not action then return end
 	
-	if not action.cost then
-		return
-	
-	elseif type(action.cost) == 'number' then
-		-- This class module is using an early version of AddAbility().
-		local resource = action.resource or SPELL_POWER_MANA
+	-- First, spend resources.
+	if action.spend then
+		local spend, resource
 		
-		if Hekili.Class == 'WARRIOR' then resource = SPELL_POWER_RAGE end
-		
+		if type( action.spend ) == 'number' then
+			spend = action.spend
+			resource = action.spend_type or Hekili.ClassResource
+		elseif type( action.spend ) == 'function' then
+			spend, resource = action.spend()
+		end
+
 		local resKey = GetResourceName( resource )
-		local cost = action.cost
 		
-		if action.cost < 0 then
-			-- Number is a percentage.
-			cost = ( -1 * cost / 100 ) * self.State[ resKey ].max
-		end
-
-		self.State[ resKey ].current = min( max(0, self.State[ resKey ].current - cost), self.State[ resKey ].max )
-		
-	elseif type(action.cost) == 'table' then
-		-- Cost is a table of resource types and change deltas.
-		for k, aCost in pairs( action.cost ) do
-			local resKey = GetResourceName( _G[k] )
-			local cost
-			
-			if type(aCost) == 'function' then
-				cost = aCost()
-			else
-				cost = aCost
-			end
-			
-			if cost > 0 and cost < 1 then
-				-- It's a percentage.
-				cost = cost * self.State[ resKey ].max
-				
-			end
-
-			self.State[ resKey ].current = min( max(0, self.State[ resKey ].current - cost), self.State[ resKey ].max )
-			
+		if spend > 0 and spend < 1 then
+			spend = ( spend * self.State[ resKey ].max )
 		end
 		
+		self.State[ resKey ].current = min( max(0, self.State[ resKey ].current - spend ), self.State[ resKey ].max )
+	end
+	
+	-- Now, gain resources.
+	if action.gain then
+		local gain, resource
+		
+		if type( action.gain ) == 'number' then
+			gain = action.gain
+			resource = action.gain_type or Hekili.ClassResource
+		elseif type( action.gain ) == 'function' then
+			gain, resource = action.gain()
+		end
+
+		local resKey = GetResourceName( resource )
+		
+		if gain > 0 and gain < 1 then
+			gain = ( gain * self.State[ resKey ].max )
+		end
+
+		self.State[ resKey ].current = min( max(0, self.State[ resKey ].current + gain ), self.State[ resKey ].max )
 	end
 	
 end
 
 
-local function IsKnown( sID )
+function Hekili.IsKnown( sID )
 
 	if type(sID) ~= 'number' then sID = H.Abilities[ sID ].id end
 	if not sID or sID < 0 then return false end
-
+	
+	local ability = H.Abilities[ sID ]
 	local s = Hekili.State
 	
-	-- Check 'Primal Strike' for 'Stormblast' / 'Stormstrike'.
-	if H.Specialization == 263 then
-		if sID == 115356 then
-			return ( s.buff.ascendance.up )
-		
-		elseif sID == 17364 then
-			return ( not s.buff.ascendance.up )
-			
-		elseif sID == 165341 then
-			return IsSpellKnown( 114049 )
-			
+	if ability.known then
+		if type( ability.known ) == 'number' then
+			return IsSpellKnown( ability.known )
+		else
+			return ability.known( s )
 		end
-
-	elseif H.Specialization == 262 then
-		-- Check 'Chain Lightning' for 'Lava Beam'.
-		if sID == 114074 then
-			return ( IsSpellKnown( 421 ) and s.buff.ascendance.up )
-		
-		elseif sID == 165339 then
-			return ( IsSpellKnown( 114049 ) )
-		
-		elseif sID == 51505 then
-			return true
-			
-		end
-	
-	elseif H.Specialization == 72 then -- Fury
-		if sID == 23881 then
-			return IsSpellKnown( 78 )
-
-		elseif sID == 12292 then
-			return s.talent.bloodbath.enabled
-		
-		end
-	
-	elseif H.Specialization == 71 then -- Arms
-		if sID == 12294 then
-			return IsSpellKnown( 78 )
-
-		elseif sID == 12292 then
-			return s.talent.bloodbath.enabled
-		
-		end
-
-	-- Check 'Spinning Crane Kick' for 'Rushing Jade Wind'.
-	elseif sID == 116847 then return ( IsSpellKnown(101546) and s.talent.rushing_jade_wind.enabled )
-	
-	-- Paladin T90 spells aren't going in the spellbook for some reason.
-	elseif sID == 114165 and s.talent.holy_prism.enabled then return true
-	
-	elseif sID == 114158 and s.talent.lights_hammer.enabled then return true
-	
-	elseif sID == 114157 and s.talent.execution_sentence.enabled then return true
-	
 	end
-
-	-- if sID == 51505 then print( tostring(IsSpellKnown(sID) ) ) end	
 	
 	return ( IsSpellKnown( sID ) or IsSpellKnown( sID, true ) )
 
 end
-Hekili.IsKnown = IsKnown
+local IsKnown = Hekili.IsKnown
 
 
 -- Filter out non-resource driven issues with abilities.
-local function IsUsable( spell )
+function Hekili.IsUsable( spell )
 
+	local ability = H.Abilities[ spell ]
 	local s = Hekili.State
 	
-	-- Hammer of Wrath
-	if spell == 'hammer_of_wrath' then
-		if IsSpellKnown( 157496 ) then
-			return ( s.target.health_pct <= 35 or s.buff.avenging_wrath.up )
-		else
-			return ( s.target.health_pct <= 20 or s.buff.avenging_wrath.up )
-		end
-	
-	elseif spell == 'execute' then
-		return ( s.buff.sudden_death.up or s.target.health_pct <= 20 )
-	
-	elseif spell == 'raging_blow' then
-		return ( s.buff.raging_blow.up )
-	
-	end
+	if ability.usable then return ability.usable( s ) end
 	
 	return true
 	
 end
-Hekili.IsUsable = IsUsable
+local IsUsable = Hekili.IsUsable
 	
 
 -- Needs to be expanded to handle energy regen before Rogue, Monk, Druid will work.

@@ -44,6 +44,13 @@ function Hekili:PLAYER_ENTERING_WORLD()
 	self.Class = select(2, UnitClass( 'player' ) )
 	self.Specialization, self.SpecializationName = GetSpecializationInfo( GetSpecialization() )
 	self.SpecializationKey = FormatKey( self.SpecializationName )
+	
+	for k,v in pairs( self.State.spec ) do
+		self.State.spec[ k ] = nil
+	end
+	
+	self.State.spec[ self.SpecializationKey ] = true
+	
 	self.GUID = UnitGUID("player")
 
 	if self.SetClassModifiers then self:SetClassModifiers() end
@@ -53,10 +60,6 @@ function Hekili:PLAYER_ENTERING_WORLD()
 	self:CacheDurableDisplayCriteria()
 
 	self:UpdateGear()
-	
-	if not InitialGearUpdate then
-		C_Timer.After( 3, Hekili.UpdateGear )
-	end
 	
 	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 end
@@ -81,6 +84,12 @@ function H:ACTIVE_TALENT_GROUP_CHANGED()
 	self.Specialization, self.SpecializationName = GetSpecializationInfo( GetSpecialization() )
 	self.SpecializationKey = FormatKey( self.SpecializationName )
 
+	for k,v in pairs( self.State.spec ) do
+		self.State.spec[ k ] = nil
+	end
+	
+	self.State.spec[ self.SpecializationKey ] = true
+	
 	if self.SetClassModifiers then self:SetClassModifiers() end
 
 	self:UpdateGlyphs()
@@ -267,6 +276,10 @@ function H:UpdateGear()
 	
 	Hekili.Tooltip:Hide()
 
+	if not InitialGearUpdate then
+		C_Timer.After( 3, Hekili.UpdateGear )
+	end
+	
 end
 
 

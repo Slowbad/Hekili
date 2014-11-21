@@ -34,6 +34,7 @@ local state = {
 	pet				= {},
 	player			= {},
 	race			= {},
+	seal			= {},
 	set_bonus		= {},
 	spec			= {},
 	stat			= {},
@@ -79,6 +80,13 @@ function H:Buff( aura, duration, stacks, value )
 		self.State.buff[ aura ].value   = value or 0
 	end
 
+end
+
+function H:Stance( stance )
+	for k in pairs( self.State.seal ) do
+		self.State.seal = false
+	end
+	self.State.seal[ stance ] = true
 end
 
 
@@ -152,6 +160,16 @@ function H:SetDistance( minimum, maximum )
 	self.State.target.minR = minimum
 	self.State.target.maxR = maximum
 end 
+
+
+function H:Gain( amount, resource )
+	self.State[ resource ].current = min( self.State[ resource ].max, self.State[ resource ].current + amount )
+end
+
+
+function H:Spend( amount, resource )
+	self.State[ resource ].current = max( 0, self.State[ resource ].current - amount )
+end
 
 
 --------------------------------------
@@ -288,10 +306,7 @@ Hekili.MT.mt_state = mt_state
 
 local mt_spec = {
 	__index = function(t, k)
-		if k == H.SpecializationKey then
-			return 1
-		end
-		return 0
+		return false
 	end
 }
 Hekili.MT.mt_spec = mt_spec
@@ -517,6 +532,15 @@ local mt_pets = {
 }
 Hekili.MT.mt_pets = mt_pets
 
+
+local mt_seals = {
+	__index = function(t, k)
+		if not H.Stances[ k ] then return false end
+		rawset(t, k, select(3, GetShapeshiftFormInfo( H.Stances[ k ] ) ) )
+		return t[k]
+	end
+}
+Hekili.MT.mt_seals = mt_seals
 
 -- Table of supported toggles (via keybinding).
 -- Need to add a commandline interface for these, but for some reason, I keep neglecting that.
@@ -1353,6 +1377,7 @@ setmetatable( state.glyph,		mt_glyphs )
 setmetatable( state.perk,		mt_perks )
 setmetatable( state.pet,			mt_pets )
 setmetatable( state.race,		mt_false )
+setmetatable( state.seal,		mt_seals )
 setmetatable( state.set_bonus,	mt_set_bonuses )
 setmetatable( state.spec,		mt_spec )
 setmetatable( state.stat,		mt_stat )
@@ -1364,7 +1389,7 @@ setmetatable( state.totem,		mt_totem )
 
 
 Hekili.Tables = { "pet", "stat", "toggle", "buff", "race", "spec", "glyph", "talent", "totem", "set_bonus", "target", "debuff", "dot", "cooldown", "action", "active_dot", "perk" }
-Hekili.Values = { "active", "active_enemies", "active_flame_shock", "adds", "agility", "air", "armor", "attack_power", "bonus_armor", "cast_delay", "cast_time", "casting", "cooldown_react", "cooldown_remains", "cooldown_up", "crit_rating", "deficit", "distance", "down", "duration", "earth", "enabled", "energy", "execute_time", "fire", "five", "focus", "four", "gcd", "hardcasts", "haste", "haste_rating", "health", "health_max", "health_pct", "intellect", "level", "mana", "mastery_rating", "mastery_value", "max_nonproc", "max_stack", "maximum_energy", "maximum_focus", "maximum_health", "maximum_mana", "maximum_rage", "maximum_runic", "melee_haste", "miss_react", "moving", "mp5", "multistrike_pct", "multistrike_rating", "one", "pct", "rage", "react", "regen", "remains", "remains", "resilience_rating", "runic", "spell_haste", "spell_power", "spirit", "stack", "stack_pct", "stacks", "stamina", "strength", "this_action", "three", "tick_damage", "tick_dmg", "tick_time", "ticking", "ticks", "ticks_remain", "time", "time_to_die", "time_to_max", "travel_time", "two", "up", "water", "weapon_dps", "weapon_offhand_dps", "weapon_offhand_speed", "weapon_speed", "single", "aoe", "cleave" }
+Hekili.Values = { "active", "active_enemies", "active_flame_shock", "adds", "agility", "air", "armor", "attack_power", "bonus_armor", "cast_delay", "cast_time", "casting", "cooldown_react", "cooldown_remains", "cooldown_up", "crit_rating", "deficit", "distance", "down", "duration", "earth", "enabled", "energy", "execute_time", "fire", "five", "focus", "four", "gcd", "hardcasts", "haste", "haste_rating", "health", "health_max", "health_pct", "intellect", "level", "mana", "mastery_rating", "mastery_value", "max_nonproc", "max_stack", "maximum_energy", "maximum_focus", "maximum_health", "maximum_mana", "maximum_rage", "maximum_runic", "melee_haste", "miss_react", "moving", "mp5", "multistrike_pct", "multistrike_rating", "one", "pct", "rage", "react", "regen", "remains", "remains", "resilience_rating", "runic", "seal", "spell_haste", "spell_power", "spirit", "stack", "stack_pct", "stacks", "stamina", "strength", "this_action", "three", "tick_damage", "tick_dmg", "tick_time", "ticking", "ticks", "ticks_remain", "time", "time_to_die", "time_to_max", "travel_time", "two", "up", "water", "weapon_dps", "weapon_offhand_dps", "weapon_offhand_speed", "weapon_speed", "single", "aoe", "cleave" }
 
 
 Hekili.State			= state

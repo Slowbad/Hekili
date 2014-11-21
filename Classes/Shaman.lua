@@ -2,229 +2,431 @@
 -- August 2014
 
 
-local AbilityMods, AddHandler = Hekili.Utils.AbilityMods, Hekili.Utils.AddHandler
+local AddAbility = Hekili.Utils.AddAbility
+local ModifyAbility = Hekili.Utils.ModifyAbility
+
+local AddHandler = Hekili.Utils.AddHandler
+
+local AddAura = Hekili.Utils.AddAura
+local ModifyAura = Hekili.Utils.ModifyAura
+
+local AddGlyph	= Hekili.Utils.AddGlyph
+local AddTalent = Hekili.Utils.AddTalent
+local AddPerk = Hekili.Utils.AddPerk
+local AddResource = Hekili.Utils.AddResource
+
+local AddItemSet = Hekili.Utils.AddItemSet
+
+local SetGCD = Hekili.Utils.SetGCD
+
 
 -- This table gets loaded only if there's a supported class/specialization.
-if (select(2, UnitClass("player")) == "SHAMAN") then
+if (select(2, UnitClass('player')) == 'SHAMAN') then
 
-	Hekili.Class = "SHAMAN"
+	Hekili.Class = 'SHAMAN'
 
-	AddResource( SPELL_POWER_MANA )
+	AddResource( SPELL_POWER_MANA, true )
 
-	AddTalent( "natures_guardian"     , 30884  )
-	AddTalent( "stone_bulwark_totem"  , 108270 )
-	AddTalent( "astral_shift"         , 108271 )
-	AddTalent( "frozen_power"         , 63374  )
-	AddTalent( "earthgrab_totem"      , 51485  )
-	AddTalent( "windwalk_totem"       , 108273 )
-	AddTalent( "call_of_the_elements" , 108285 )
-	AddTalent( "totemic_persistence"  , 108284 )
-	AddTalent( "totemic_projection"   , 108287 )
-	AddTalent( "elemental_mastery"    , 16166  )
-	AddTalent( "ancestral_swiftness"  , 16188  )
-	AddTalent( "echo_of_the_elements" , 108283 )
-	AddTalent( "rushing_streams"      , 147074 )
-	AddTalent( "ancestral_guidance"   , 108281 )
-	AddTalent( "conductivity"         , 108282 )
-	AddTalent( "unleashed_fury"       , 117012 )
-	AddTalent( "primal_elementalist"  , 117013 )
-	AddTalent( "elemental_blast"      , 117014 )
-	AddTalent( "elemental_fusion"     , 152257 )
-	AddTalent( "storm_elemental_totem", 152256 )
-	AddTalent( "liquid_magma"         , 152255 )
+	AddTalent( 'natures_guardian', 30884 )
+	AddTalent( 'stone_bulwark_totem', 108270 )
+	AddTalent( 'astral_shift', 108271 )
+	AddTalent( 'frozen_power', 63374 )
+	AddTalent( 'earthgrab_totem', 51485 )
+	AddTalent( 'windwalk_totem', 108273 )
+	AddTalent( 'call_of_the_elements', 108285 )
+	AddTalent( 'totemic_persistence', 108284 )
+	AddTalent( 'totemic_projection', 108287 )
+	AddTalent( 'elemental_mastery', 16166 )
+	AddTalent( 'ancestral_swiftness', 16188 )
+	AddTalent( 'echo_of_the_elements', 108283 )
+	AddTalent( 'rushing_streams', 147074 )
+	AddTalent( 'ancestral_guidance', 108281 )
+	AddTalent( 'conductivity', 108282 )
+	AddTalent( 'unleashed_fury', 117012 )
+	AddTalent( 'primal_elementalist', 117013 )
+	AddTalent( 'elemental_blast', 117014 )
+	AddTalent( 'elemental_fusion', 152257 )
+	AddTalent( 'storm_elemental_totem', 152256 )
+	AddTalent( 'liquid_magma', 152255 )
 
 	-- Major Glyphs.
-	AddGlyph( "capacitor_totem"     , 55442  )
-	AddGlyph( "chain_lightning"     , 55449  )
-	AddGlyph( "chaining"            , 55452  )
-	AddGlyph( "cleansing_waters"    , 55445  )
-	AddGlyph( "ephemeral_spirits"   , 159640 )
-	AddGlyph( "eternal_earth"       , 147781 )
-	AddGlyph( "feral_spirit"        , 63271  )
-	AddGlyph( "fire_elemental_totem", 55455  )
-	AddGlyph( "fire_nova"           , 55450  )
-	AddGlyph( "flame_shock"         , 55447  )
-	AddGlyph( "frost_shock"         , 55443  )
-	AddGlyph( "frostflame_weapon"   , 161654 )
-	AddGlyph( "ghost_wolf"          , 59289  )
-	AddGlyph( "grounding"           , 159643 )
-	AddGlyph( "grounding_totem"     , 55441  )
-	AddGlyph( "healing_storm"       , 89646  )
-	AddGlyph( "healing_stream_totem", 55456  )
-	AddGlyph( "healing_wave"        , 55440  )
-	AddGlyph( "hex"                 , 63291  )
-	AddGlyph( "lava_spread"         , 159644 )
-	AddGlyph( "lightning_shield"    , 101052 )
-	AddGlyph( "purge"               , 55439  )
-	AddGlyph( "purging"             , 147762 )
-	AddGlyph( "reactive_shielding"  , 159647 )
-	AddGlyph( "riptide"             , 63273  )
-	AddGlyph( "shamanistic_rage"    , 63280  )
-	AddGlyph( "shamanistic_resolve" , 159648 )
-	AddGlyph( "shocks"              , 159649 )
-	AddGlyph( "spirit_walk"         , 55454  )
-	AddGlyph( "spiritwalkers_aegis" , 159651 )
-	AddGlyph( "spiritwalkers_focus" , 159650 )
-	AddGlyph( "spiritwalkers_grace" , 55446  )
-	AddGlyph( "telluric_currents"   , 55453  )
-	AddGlyph( "thunder"             , 63270  )
-	AddGlyph( "totemic_recall"      , 55438  )
-	AddGlyph( "totemic_vigor"       , 63298  )
-	AddGlyph( "unstable_earth"      , 55437  )
-	AddGlyph( "water_shield"        , 55436  )
-	AddGlyph( "wind_shear"          , 55451  )
+	AddGlyph( 'capacitor_totem', 55442 )
+	AddGlyph( 'chain_lightning', 55449 )
+	AddGlyph( 'chaining', 55452 )
+	AddGlyph( 'cleansing_waters', 55445 )
+	AddGlyph( 'ephemeral_spirits', 159640 )
+	AddGlyph( 'eternal_earth', 147781 )
+	AddGlyph( 'feral_spirit', 63271 )
+	AddGlyph( 'fire_elemental_totem', 55455 )
+	AddGlyph( 'fire_nova', 55450 )
+	AddGlyph( 'flame_shock', 55447 )
+	AddGlyph( 'frost_shock', 55443 )
+	AddGlyph( 'frostflame_weapon', 161654 )
+	AddGlyph( 'ghost_wolf', 59289 )
+	AddGlyph( 'grounding', 159643 )
+	AddGlyph( 'grounding_totem', 55441 )
+	AddGlyph( 'healing_storm', 89646 )
+	AddGlyph( 'healing_stream_totem', 55456 )
+	AddGlyph( 'healing_wave', 55440 )
+	AddGlyph( 'hex', 63291 )
+	AddGlyph( 'lava_spread', 159644 )
+	AddGlyph( 'lightning_shield', 101052 )
+	AddGlyph( 'purge', 55439 )
+	AddGlyph( 'purging', 147762 )
+	AddGlyph( 'reactive_shielding', 159647 )
+	AddGlyph( 'riptide', 63273 )
+	AddGlyph( 'shamanistic_rage', 63280 )
+	AddGlyph( 'shamanistic_resolve', 159648 )
+	AddGlyph( 'shocks', 159649 )
+	AddGlyph( 'spirit_walk', 55454 )
+	AddGlyph( 'spiritwalkers_aegis', 159651 )
+	AddGlyph( 'spiritwalkers_focus', 159650 )
+	AddGlyph( 'spiritwalkers_grace', 55446 )
+	AddGlyph( 'telluric_currents', 55453 )
+	AddGlyph( 'thunder', 63270 )
+	AddGlyph( 'totemic_recall', 55438 )
+	AddGlyph( 'totemic_vigor', 63298 )
+	AddGlyph( 'unstable_earth', 55437 )
+	AddGlyph( 'water_shield', 55436 )
+	AddGlyph( 'wind_shear', 55451 )
 	
 	-- Minor Glyphs.
-	AddGlyph( "astral_fixation"     , 147787 )
-	AddGlyph( "astral_recall"       , 58058  )
-	AddGlyph( "deluge"              , 63279  )
-	AddGlyph( "elemental_familiars" , 147788 )
-	AddGlyph( "far_sight"           , 58059  )
-	AddGlyph( "flaming_serpents"    , 147772 )
-	AddGlyph( "ghostly_speed"       , 159642 )
-	AddGlyph( "lava_lash"           , 55444  )
-	AddGlyph( "lingering_ancestors" , 147784 )
-	AddGlyph( "rain_of_frogs"       , 147707 )
-	AddGlyph( "spirit_raptors"      , 147783 )
-	AddGlyph( "spirit_wolf"         , 147770 )
-	AddGlyph( "compy"               , 147785 )
-	AddGlyph( "lakestrider"         , 55448  )
-	AddGlyph( "spectral_wolf"       , 58135  )
-	AddGlyph( "thunderstorm"        , 62132  )
-	AddGlyph( "totemic_encirclement", 58057  )
+	AddGlyph( 'astral_fixation', 147787 )
+	AddGlyph( 'astral_recall', 58058 )
+	AddGlyph( 'deluge', 63279 )
+	AddGlyph( 'elemental_familiars', 147788 )
+	AddGlyph( 'far_sight', 58059 )
+	AddGlyph( 'flaming_serpents', 147772 )
+	AddGlyph( 'ghostly_speed', 159642 )
+	AddGlyph( 'lava_lash', 55444 )
+	AddGlyph( 'lingering_ancestors', 147784 )
+	AddGlyph( 'rain_of_frogs', 147707 )
+	AddGlyph( 'spirit_raptors', 147783 )
+	AddGlyph( 'spirit_wolf', 147770 )
+	AddGlyph( 'compy', 147785 )
+	AddGlyph( 'lakestrider', 55448 )
+	AddGlyph( 'spectral_wolf', 58135 )
+	AddGlyph( 'thunderstorm', 62132 )
+	AddGlyph( 'totemic_encirclement', 58057 )
 	
 	-- Player Buffs / Debuffs
-	AddAura( "ancestral_swiftness", 16188, "duration", 600 )
-	AddAura( "ascendance", 114051, "duration", 15 )
-	AddAura( "echo_of_the_elements", 159103, "duration", 20 )
-	AddAura( "elemental_blast", 117014, "duration", 8 )
-	AddAura( "elemental_fusion", 157174, "duration", 15, "max_stacks", 2 )
-	AddAura( "elemental_mastery", 16166, "duration", 20 )
-	AddAura( "improved_chain_lightning", 157766, "duration", 10 )
-	AddAura( "flame_shock", 8050, "duration", 30 )
-	AddAura( "frost_shock", 8056, "duration", 8 )
-	AddAura( "healing_rain", 73920, "duration", 10 )
-	AddAura( "lava_surge"      , 77762 , "duration", 6 )
-	AddAura( "lightning_shield", 324, "duration", 3600 )	
-	AddAura( "liquid_magma", 152255, "duration", 10, "affects", "pet" )
-	AddAura( "maelstrom_weapon", 51530 , "duration", 30, "max_stacks", 5)
-	AddAura( "spiritwalkers_grace", 79206, "duration", 15 )
-	AddAura( "stormstrike"     , 17364 , "duration", 15 )
-	AddAura( "thunderstorm", 51490, "duration", 5 )
-	AddAura( "unleash_flame"   , 73683 , "duration", 20                 )
-	AddAura( "unleash_wind"    , 73681 , "duration", 30, "max_stacks", 6)
+	AddAura( 'ancestral_swiftness', 16188, 'duration', 3600 )
+	AddAura( 'ascendance', 114051, 'duration', 15 )
+	AddAura( 'echo_of_the_elements', 159103, 'duration', 20 )
+	AddAura( 'elemental_blast', 117014, 'duration', 8 )
+	AddAura( 'elemental_fusion', 157174, 'duration', 15, 'max_stacks', 2 )
+	AddAura( 'elemental_mastery', 16166, 'duration', 20 )
+	AddAura( 'improved_chain_lightning', 157766, 'duration', 10 )
+	AddAura( 'flame_shock', 8050, 'duration', 30 )
+	AddAura( 'frost_shock', 8056, 'duration', 8 )
+	AddAura( 'healing_rain', 73920, 'duration', 10 )
+	AddAura( 'lava_surge', 77762 , 'duration', 6 )
+	AddAura( 'lightning_shield', 324, 'duration', 3600 )	
+	AddAura( 'liquid_magma', 152255, 'duration', 10, 'affects', 'pet' )
+	AddAura( 'maelstrom_weapon', 51530 , 'duration', 30, 'max_stacks', 5 )
+	AddAura( 'spiritwalkers_grace', 79206, 'duration', 15 )
+	AddAura( 'stormstrike'     , 17364 , 'duration', 15 )
+	AddAura( 'thunderstorm', 51490, 'duration', 5 )
+	AddAura( 'unleash_flame', 73683 , 'duration', 20 )
+	AddAura( 'unleash_wind', 73681 , 'duration', 30, 'max_stacks', 6 )
 
 	
-	AddPerk( "enhanced_chain_lightning", 157765 )
-	AddPerk( "enhanced_unleash", 157784 )
-	AddPerk( "improved_flame_shock", 157804 )
-	AddPerk( "improved_lightning_shield", 157774 )
-	AddPerk( "improved_maelstrom_weapon", 157807 )
-	AddPerk( "improved_reincarnation", 157764 )
+	AddPerk( 'enhanced_chain_lightning', 157765 )
+	AddPerk( 'enhanced_unleash', 157784 )
+	AddPerk( 'improved_flame_shock', 157804 )
+	AddPerk( 'improved_lightning_shield', 157774 )
+	AddPerk( 'improved_maelstrom_weapon', 157807 )
+	AddPerk( 'improved_reincarnation', 157764 )
 	
-	
-	-- Rethink DOT tracking...
-
 	-- Pick an instant cast ability for checking the GCD.
-	SetGCD( "lightning_shield" )
+	SetGCD( 'lightning_shield' )
 
 	-- Gear Sets
-	AddItemSet( "tier17", 115579, 115576, 115577, 115578, 115575 )
-	AddItemSet( "tier16_caster", 99341, 99347, 99340, 99342, 99095 )
-	AddItemSet( "tier16_melee", 99347, 99340, 99341, 99342, 99343 )
-	AddItemSet( "tier15_melee", 96689, 96690, 96691, 96692, 96693 )
-	AddItemSet( "tier14_melee", 87138, 87137, 87136, 87135, 87134 )
+	AddItemSet( 'tier17', 115579, 115576, 115577, 115578, 115575 )
+	AddItemSet( 'tier16_caster', 99341, 99347, 99340, 99342, 99095 )
+	AddItemSet( 'tier16_melee', 99347, 99340, 99341, 99342, 99343 )
+	AddItemSet( 'tier15_melee', 96689, 96690, 96691, 96692, 96693 )
+	AddItemSet( 'tier14_melee', 87138, 87137, 87136, 87135, 87134 )
 
 	
-	--	name, ID, cost (table), cast, gcdType, cooldown, ...
-	AddAbility( 'ancestral_swiftness'  , 16188 , 0    , 0  , 'off'  , 90  )
+	AddAbility(	'ancestral_swiftness', 16188,
+				{
+					spend = 0,
+					cast = 0,
+					gcdType	= 'off',
+					cooldown = 90
+				} )
 
-	AddAbility( 'ascendance'           , 165341, 0.052, 0	, 'off'  , 120 )
+	AddAbility(	'ascendance', 165341,
+				{
+					known = 114049,
+					spend = 0.052,
+					cast = 0,
+					gcdType = 'off',
+					cooldown = 120
+				} )
 	
-	AddAbility( 'bloodlust'            , 2825  , 0.215, 0  , 'off'  , 300 )
+	AddAbility( 'bloodlust', 2825,
+				{
+					spend = 0.215,
+					cast = 0,
+					gcdType = 'off',
+					cooldown = 300
+				} )
 	
-	AddAbility( 'chain_lightning'      , 421   , 0.071, 2.0, 'spell', 0   )
+	AddAbility( 'chain_lightning', 421,
+				{
+					spend = 0.01,
+					cast = 2.0,
+					gcdType = 'spell',
+					cooldown = 0
+				} )
 
-	AddAbility( 'earth_elemental_totem', 2062  , 0.281, 0  , 'totem', 300 )
+	AddAbility( 'earth_elemental_totem', 2062,
+				{
+					spend = 0.281,
+					cast = 0,
+					gcdType = 'totem',
+					cooldown = 300
+				} )
 
-	AddAbility( 'earth_shock'          , 8042  , 0.05 , 0  , 'spell', 6   )
+	AddAbility( 'earth_shock', 8042,
+				{
+					spend = 0.05,
+					cast = 0,
+					gcdType = 'spell',
+					cooldown = 6
+				} )
+
+	AddAbility( 'earthquake', 61882, 
+				{
+					spend = 0.008,
+					cast = 2.5,
+					gcdType = 'spell',
+					cooldown = 10
+				} )
+
+	AddAbility( 'elemental_blast', 117014,
+				{
+					spend = 0,
+					cast = 2.0,
+					gcdType = 'spell',
+					cooldown = 12
+				} )	
+
+	AddAbility( 'elemental_mastery', 16166,
+				{
+					spend = 0,
+					cast = 0,
+					gcdType = 'off',
+					cooldown = 120
+				} )
+
+	AddAbility( 'feral_spirit', 51533,
+				{
+					spend = 0.12,
+					cast = 0,
+					gcdType = 'spell',
+					cooldown = 120
+				} )	
+
+	AddAbility( 'fire_elemental_totem', 2894,
+				{
+					spend = 0.269,
+					cast = 0,
+					gcdType = 'totem',
+					cooldown = 300
+				} )
+
+	AddAbility( 'fire_nova', 1535,
+				{
+					spend = 0.137,
+					cast = 0,
+					gcdType = 'spell',
+					cooldown = 4.5
+				} )
+
+	AddAbility( 'flame_shock', 8050,
+				{
+					spend = 0.012,
+					cast = 0,
+					gcdType = 'spell',
+					cooldown = 6
+				} )
+
+	AddAbility( 'frost_shock', 8056,
+				{
+					spend = 0.012,
+					cast = 0,
+					gcdType = 'spell',
+					cooldown = 6
+				} )
+
+	AddAbility( 'healing_rain', 73920,
+				{
+					spend = 0.216,
+					cast = 2,
+					gcdType = 'spell',
+					cooldown = 10
+				} )	
+
+	AddAbility( 'healing_surge', 8004,
+				{
+					spend = 0.207,
+					cast = 1.5,
+					gcdType = 'spell',
+					cooldown = 0
+				} )	
+
+	AddAbility( 'heroism', 32182,
+				{
+					spend = 0.215,
+					cast = 0,
+					gcdType = 'off',
+					cooldown = 300
+				} )	
 	
-	AddAbility( 'earthquake'           , 61882 , 0.03 , 2.5, 'spell', 10  )
+	AddAbility( 'lava_beam', 114074,
+				{
+					known = function( s ) return s.spec.elemental and s.buff.ascendance.up end,
+					spend = 0.083,
+					cast = 2,
+					gcdType = 'spell',
+					cooldown = 0
+				} )
 
-	AddAbility( 'elemental_blast'      , 117014, 0    , 2.0, 'spell', 12  )
+	AddAbility( 'lava_burst', 51505,
+				{
+					known = function( s ) return s.spec.elemental and s.level >= 34 end,
+					spend = 0.005,
+					cast = 2,
+					gcdType = 'spell',
+					cooldown = 8
+				} )
 
-	AddAbility( 'elemental_mastery'    , 16166 , 0    , 0  , 'off'  , 90  )
+	AddAbility( 'lava_lash', 60103,
+				{
+					spend = 0.04,
+					cast = 0,
+					gcdType = 'melee',
+					cooldown = 9
+				} )
 
-	AddAbility( 'feral_spirit'         , 51533 , 0.12 , 0  , 'spell', 120 )
+	AddAbility( 'lightning_bolt', 403,
+				{
+					spend = 0.071,
+					cast = 2.5,
+					gcdType = 'spell',
+					cooldown = 0
+				} )
 
-	AddAbility( 'fire_elemental_totem' , 2894  , 0.269, 0  , 'totem', 300 )
+	AddAbility( 'lightning_shield', 324,
+				{
+					spend = 0,
+					cast = 0,
+					gcdType = 'spell',
+					cooldown = 0
+				} )
 
-	AddAbility( 'fire_nova'            , 1535  , 0.137, 0  , 'spell', 4.5 )
+	AddAbility( 'liquid_magma', 152255,
+				{
+					spend = 0,
+					cast = 0,
+					gcdType = 'spell',
+					cooldown = 45
+				} )
 
-	AddAbility( 'flame_shock'          , 8050  , 0.05 , 0  , 'spell', 6   )
+	AddAbility( 'magma_totem', 8190,
+				{
+					spend = 0.211,
+					cast = 0,
+					gcdType = 'totem',
+					cooldown = 0
+				} )
 
-	AddAbility( 'frost_shock'          , 8056  , 0.05 , 0  , 'spell', 6   )
+	AddAbility( 'searing_totem', 3599,
+				{
+					spend = 0.059,
+					cast = 0,
+					gcdType = 'totem',
+					cooldown = 0
+				} )
 
-	AddAbility( 'healing_rain'         , 73920 , 0.216, 2  , 'spell', 10  )
+	AddAbility( 'spiritwalkers_grace', 79206,
+				{
+					spend = 0.141,
+					cast = 0,
+					gcdType = 'off',
+					cooldown = 120
+				} )
 
-	AddAbility( 'healing_surge'        , 8004  , 0.207, 1.5, 'spell', 0   )
+	AddAbility( 'storm_elemental_totem', 152256,
+				{
+					spend = 0.269,
+					cast = 0,
+					gcdType = 'totem',
+					cooldown = 300
+				} )
 
-	AddAbility( 'heroism'              , 32182 , 0.215, 0  , 'off'  , 300 )
+	AddAbility( 'stormstrike', 17364,
+				{
+					known = function( s ) return s.spec.enhancement and not s.buff.ascendance.up end,
+					spend = 0.094,
+					cast = 0,
+					gcdType = 'melee',
+					cooldown = 7.5
+				} )
 	
-	AddAbility( 'lava_beam'            , 114074, 0.83 , 2  , 'spell', 0   )
-
-	AddAbility( 'lava_burst'           , 51505 , 0.02 , 2  , 'spell', 8   )
-
-	AddAbility( 'lava_lash'            , 60103 , 0.04 , 0  , 'melee', 9   )
-
-	AddAbility( 'lightning_bolt'       , 403   , 0.071, 2.5, 'spell', 0   )
-
-	AddAbility( 'lightning_shield'     , 324   , 0    , 0  , 'spell', 0   )
-
-	AddAbility( 'liquid_magma'         , 152255, 0    , 0  , 'spell', 45  )
-
-	AddAbility( 'magma_totem'          , 8190  , 0.211, 0  , 'totem', 0   )
-
-	AddAbility( 'searing_totem'        , 3599  , 0.059, 0  , 'totem', 0   )
-
-	AddAbility( 'spiritwalkers_grace'  , 79206 , 0.141, 0  , 'off'  , 120 )
-
-	AddAbility( 'storm_elemental_totem', 152256, 0.269, 0  , 'totem', 300 )
-
-	AddAbility( 'stormstrike'          , 17364 , 0.094, 0  , 'melee', 7.5 )
+	AddAbility( 'strike', 73899,
+				{
+					spend = 0.094,
+					cast = 0,
+					gcdType = 'melee',
+					cooldown = 8
+				} )
 	
-	AddAbility( 'strike'               , 73899 , 0.094, 0  , 'melee', 8   )
-	
-	AddAbility( 'thunderstorm'         , 51490 , 0    , 0  , 'spell', 45  )
+	AddAbility( 'thunderstorm', 51490,
+				{
+					spend = 0,
+					cast = 0,
+					gcdType = 'spell',
+					cooldown = 45
+				} )
 
-	AddAbility( 'unleash_elements'     , 73680 , 0.082, 0  , 'spell', 15  )
+	AddAbility( 'unleash_elements', 73680,
+				{
+					spend = 0.082,
+					cast = 0,
+					gcdType = 'spell',
+					cooldown = 15
+				} )
 
-	AddAbility( 'unleash_flame'        , 165462, 0.075, 0  , 'spell', 15  )
+	AddAbility( 'unleash_flame', 165462,
+				{
+					spend = 0.075,
+					cast = 0,
+					gcdType = 'spell',
+					cooldown = 15
+				} )
 
-	AddAbility( 'wind_shear'           , 57994 , 0.094, 0  , 'off'  , 12  )
+	AddAbility( 'wind_shear', 57994,
+				{
+					spend = 0.094,
+					cast = 0,
+					gcdType = 'off',
+					cooldown = 12
+				} )
 
-	AddAbility( 'windstrike'           , 115356, 0.094, 0  , 'melee', 7.5 )
+	AddAbility( 'windstrike', 115356,
+				{
+					known = function( s ) return s.spec.enhancement and s.buff.ascendance.up end,
+					spend = 0.094,
+					cast = 0,
+					gcdType = 'melee',
+					cooldown = 7.5
+				} )
 
-	
-	-- These strings get merged to return appropriate values for cooldowns, cast times, resource costs that have to be dynamically calculated.
-	-- Order is important.
-	local cast_ancestral_swiftness = 'if buff.ancestral_swiftness.up then return 0 end'
-	local cast_lava_surge          = 'if buff.lava_surge.up then return 0 end'
-	local cast_lightning_bolt		= 'x = x - 0.5'
-	local cast_maelstrom_weapon    = 'if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end'
-	
-	local cd_ascendance            = 'if buff.ascendance.up then return 0 end'
-	local cd_echo_of_the_elements	= 'if buff.echo_of_the_elements.up then return 0 end'
-	local cd_ephemeral_spirits		= 'if glyph.ephemeral_spirits.enabled then x = x / 2 end'
-	local cd_fire_elemental_totem	= 'if glyph.fire_elemental_totem.enabled then x = x / 2 end'
-	local cd_flurry				= 'x = x * haste'
-	local cd_frost_shock			= 'if glyph.frost_shock.enabled then x = x - 2 end'
-	local cd_thunder				= 'if glyph.thunder.enabled then x = x - 10 end'
-	local cd_spiritwalkers_focus	= 'if glyph.spiritwalkers_focus.enabled then x = x - 60 end'
-	
-	local perk_lightning_shield	= 'if perk.improved_lightning_shield.enabled then x = 20 else x = 15 end'
-	
-	
+				
 	function Hekili:SetClassModifiers()
 	
 		for k,v in pairs( self.Abilities ) do
@@ -237,82 +439,178 @@ if (select(2, UnitClass("player")) == "SHAMAN") then
 		if self.Specialization == 263 then
 			Hekili.minGCD = 1.0
 			
-			AbilityElements( 'ascendance', 'id', 165341 )
-			AuraElements( 'ascendance', 'id', 114051 )
+			ModifyAbility( 'ascendance', 'id', 165341 )
 
-			AbilityElements( 'lightning_bolt', 'cast', 2.5 )
-		
-			AbilityMods( 'chain_lightning', 'cast', cast_ancestral_swiftness, cast_maelstrom_weapon )
-			AbilityMods( 'chain_lightning', 'cost', cast_maelstrom_weapon )
+			ModifyAbility( 'chain_lightning', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
+				return x
+			end )
 			
-			AbilityMods( 'elemental_blast', 'cast', cast_ancestral_swiftness, cast_maelstrom_weapon )
-
-			AbilityMods( 'feral_spirit', 'cooldown', cd_ephemeral_spirits )
-
-			AbilityMods( 'fire_nova', 'cooldown', cd_echo_of_the_elements, cd_flurry )
-
-			AbilityMods( 'flame_shock', 'cooldown', cd_flurry )
-
-			AbilityMods( 'frost_shock', 'cooldown', cd_frost_shock, cd_flurry )
-
-			AbilityMods( 'healing_rain', 'cast', cast_ancestral_swiftness, cast_maelstrom_weapon )
-			AbilityMods( 'healing_rain', 'cost', cast_maelstrom_weapon )
-
-			AbilityMods( 'healing_surge', 'cast', cast_ancestral_swiftness, cast_maelstrom_weapon )
-			AbilityMods( 'healing_surge', 'cost', cast_maelstrom_weapon )
-
-			AbilityMods( 'lava_lash', 'cooldown', cd_echo_of_the_elements, cd_flurry )
-
-			AbilityMods( 'lightning_bolt', 'cast', cast_ancestral_swiftness, cast_maelstrom_weapon )
-			AbilityMods( 'lightning_bolt', 'cost', cast_maelstrom_weapon )
-
-			AuraElements( 'lightning_shield', 'max_stack', 1 )
-		
-			AbilityMods( 'stormstrike', 'cooldown', cd_echo_of_the_elements, cd_flurry )
+			ModifyAbility( 'chain_lightning', 'spend', function( x )
+				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
+				return x
+			end )
 			
-			AbilityMods( 'unleash_elements', 'cooldown', cd_flurry )
+			ModifyAbility( 'elemental_blast', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
+				return x
+			end )
+
+			ModifyAbility( 'feral_spirit', 'cooldown', function( x )
+				if glyph.ephemeral_spirits.enabled then x = x / 2 end
+				return x
+			end )
+
+			ModifyAbility( 'fire_nova', 'cooldown', function( x )
+				if buff.echo_of_the_elements.up then return 0 end
+				return x * haste
+			end )
+
+			ModifyAbility( 'flame_shock', 'cooldown', function( x )
+				return x * haste
+			end )
+
+			ModifyAbility( 'frost_shock', 'cooldown', function( x )
+				if glyph.frost_shock.enabled then x = x - 2 end
+				return x * haste
+			end )
+
+			ModifyAbility( 'healing_rain', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
+				return x
+			end )
 			
-			AbilityMods( 'windstrike', 'cooldown', cd_echo_of_the_elements, cd_flurry )
+			ModifyAbility( 'healing_rain', 'spend', function( x )
+				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
+				return x
+			end )
+
+			ModifyAbility( 'healing_surge', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
+				return x
+			end )
+			
+			ModifyAbility( 'healing_surge', 'spend', function( x )
+				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
+				return x
+			end )
+
+			ModifyAbility( 'lava_lash', 'cooldown', function( x )
+				if buff.echo_of_the_elements.up then return 0 end
+				return x * haste
+			end )
+
+			ModifyAbility( 'lightning_bolt', 'cast', 2.5 )
+
+			ModifyAbility( 'lightning_bolt', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
+				return x
+			end )
+			
+			ModifyAbility( 'lightning_bolt', 'spend', function( x )
+				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
+				return x
+			end )
+
+			ModifyAbility( 'stormstrike', 'cooldown', function( x )
+				if buff.echo_of_the_elements.up then return 0 end
+				return x * haste
+			end )
+			
+			ModifyAbility( 'unleash_elements', 'cooldown', function( x )
+				return x * haste
+			end )
+			
+			ModifyAbility( 'windstrike', 'cooldown', function( x )
+				if buff.echo_of_the_elements.up then return 0 end
+				return x * haste
+			end )
 	
+	
+			ModifyAura( 'ascendance', 'id', 114051 )
+			
+			ModifyAura( 'lightning_shield', 'max_stack', 1 )
+
 		-- Elemental
 		elseif self.Specialization == 262 then
 			Hekili.minGCD = 1.5
 
-			AbilityElements( 'ascendance', 'id', 165339 )
-			AuraElements( 'ascendance', 'id', 114050 )
+			ModifyAbility( 'ascendance', 'id', 165339 )
 
-			AbilityElements( 'lightning_bolt', 'cast', 2.0 )
+			ModifyAbility( 'chain_lightning', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				return x
+			end )
 			
-			AbilityMods( 'chain_lightning', 'cast', cast_ancestral_swiftness )
-		
-			AbilityMods( 'earthquake', 'cast', cast_ancestral_swiftness )
-			AbilityMods( 'earthquake', 'cooldown', cd_echo_of_the_elements )
+			ModifyAbility( 'earthquake', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				return x
+			end )
+			
+			ModifyAbility( 'earthquake', 'cooldown', cd_echo_of_the_elements )
 	
-			AbilityMods( 'elemental_blast', 'cast', cast_ancestral_swiftness )
+			ModifyAbility( 'elemental_blast', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				return x
+			end )
 	
-			AbilityMods( 'frost_shock', 'cooldown', cd_frost_shock, cd_echo_of_the_elements )
+			ModifyAbility( 'frost_shock', 'cooldown', cd_frost_shock, cd_echo_of_the_elements )
 
-			AbilityMods( 'healing_rain', 'cast', cast_ancestral_swiftness )
-			AbilityMods( 'healing_rain', 'cost', cast_maelstrom_weapon )
+			ModifyAbility( 'healing_rain', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				return x
+			end )
 
-			AbilityMods( 'healing_surge', 'cast', cast_ancestral_swiftness )
+			ModifyAbility( 'healing_surge', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				return x
+			end )
 
-			AbilityMods( 'lava_burst', 'cast', cast_lava_surge, cast_ancestral_swiftness )
-			AbilityMods( 'lava_burst', 'cooldown', cd_ascendance, cd_echo_of_the_elements )
+			ModifyAbility( 'lava_burst', 'cast', function( x )
+				if buff.lava_surge.up then return 0
+				elseif buff.ancestral_swiftness.up then return 0 end
+				return x
+			end )
+			ModifyAbility( 'lava_burst', 'cooldown', cd_ascendance, cd_echo_of_the_elements )
 			
-			AbilityMods( 'lightning_bolt', 'cast', cast_ancestral_swiftness )
+			ModifyAbility( 'lightning_bolt', 'cast', 2.0 )
+
+			ModifyAbility( 'lightning_bolt', 'cast', function( x )
+				if buff.ancestral_swiftness.up then return 0 end
+				return x
+			end )
 			
-			AbilityMods( 'spiritwalkers_focus', 'cooldown', cd_spiritwalkers_focus )
+			ModifyAbility( 'spiritwalkers_grace', 'cooldown', function( x )
+				if glyph.spiritwalkers_focus.enabled then x = x - 60 end
+				return x
+			end )
 			
-			AbilityMods( 'thunderstorm', 'cooldown', cd_thunder )
+			ModifyAbility( 'thunderstorm', 'cooldown', function( x )
+				if glyph.thunder.enabled then x = x - 10 end
+				return x
+			end )
+
+			ModifyAura( 'ascendance', 'id', 114050 )
+
+			ModifyAura( 'lightning_shield', 'max_stack', 15 )
 			
-			AuraElements( 'lightning_shield', 'max_stack', 15 )
-			AuraMods( 'lightning_shield', 'max_stack', perk_lightning_shield )
-		
+			ModifyAura( 'lightning_shield', 'max_stack', function( x )
+				if perk.improved_lightning_shield.enabled then x = 20 end
+				return x
+			end )
+
 		end
 		
 		-- Shared
-		AbilityMods( 'fire_elemental_totem', 'cooldown', cd_fire_elemental_totem )
+		ModifyAbility( 'fire_elemental_totem', 'cooldown', function( x )
+			if glyph.fire_elemental_totem.enabled then x = x / 2 end
+			return x
+		end )
 
 	end
 	

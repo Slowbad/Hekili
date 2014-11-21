@@ -129,56 +129,389 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 
 	
 	-- Abilities.
-	AddAbility( 'avatar'            , 107574, 0                         , 0  , 'spell', 180, 'passive', true)
-	AddAbility( 'battle_shout'      , 6673  , 0                         , 0  , 'spell', 0  , 'passive', true)
-	AddAbility( 'battle_stance'     , 2457  , 0                         , 0  , 'melee', 1.5, 'passive', true)
-	AddAbility( 'berserker_rage'    , 18499 , 0                         , 0  , 'spell', 30 , 'passive', true)
-	AddAbility( 'bladestorm'        , 46924 , 0                         , 0  , 'spell', 60                  )
-	AddAbility( 'bloodbath'         , 12292 , 0                         , 0  , 'spell', 60 , 'passive', true)
-	AddAbility( 'bloodthirst'       , 23881 , { SPELL_POWER_RAGE = -10 }, 0  , 'melee', 4.5                 )
-	AddAbility( 'charge'            , 100   , { SPELL_POWER_RAGE = -20 }, 0  , 'spell', 20                  )
-	AddAbility( 'colossus_smash'    , 167105, 0                         , 0  , 'melee', 20                  )
-	AddAbility( 'commanding_shout'  , 469   , 0                         , 0  , 'spell', 469, 'passive', true)
-	AddAbility( 'defensive_stance'  , 71    , 0                         , 0  , 'melee', 1.5, 'passive', true)
-	AddAbility( 'demoralizing_shout', 1160  , 0                         , 0  , 'spell', 60 , 'passive', true)
-	AddAbility( 'devastate'         , 20243 , 0                         , 0  , 'melee', 0                   )
-	AddAbility( 'die_by_the_sword'  , 118038, 0                         , 0  , 'spell', 120, 'passive', true)
-	AddAbility( 'dragon_roar'       , 118000, 0                         , 0  , 'spell', 60                  )
-	AddAbility( 'execute'           , 163201, 30                        , 0  , 'melee', 0                   )
-	AddAbility( 'hamstring'         , 1715  , 0                         , 0  , 'off'  , 1                   )
-	AddAbility( 'heroic_leap'       , 6544  , 0                         , 0  , 'spell', 45 , 'passive', true)
-	AddAbility( 'heroic_strike'     , 78    , 30                        , 0  , 'off'  , 1.5                 )
-	AddAbility( 'heroic_throw'      , 57755 , 0                         , 0  , 'melee', 6                   )
-	AddAbility( 'intervene'         , 3411  , 0                         , 0  , 'spell', 30 , 'passive', true)
-	AddAbility( 'intimidating_shout', 5246  , 0                         , 0  , 'spell', 90 , 'passive', true)
-	AddAbility( 'impending_victory' , 103840, 0                         , 0  , 'spell', 30                  )
-	AddAbility( 'last_stand'        , 12975 , 0                         , 0  , 'spell', 180, 'passive', true)
-	AddAbility( 'mocking_banner'    , 114192, 0                         , 0  , 'spell', 180, 'passive', true)
-	AddAbility( 'mortal_strike'     , 12294 , 20                        , 0  , 'melee', 6                   )
-	AddAbility( 'piercing_howl'     , 12323 , 10                        , 0  , 'spell', 0  , 'passive', true)
-	AddAbility( 'pummel'            , 6552  , 0                         , 0  , 'off'  , 15                  )
-	AddAbility( 'raging_blow'       , 85288 , 10                        , 0  , 'melee', 0                   )
-	AddAbility( 'rallying_cry'      , 97462 , 0                         , 0  , 'spell', 180, 'passive', true)
-	AddAbility( 'ravager'           , 152277, 0                         , 0  , 'melee', 60 , 'passive', true)
-	AddAbility( 'recklessness'      , 1719  , 0                         , 0  , 'spell', 180, 'passive', true)
-	AddAbility( 'rend'              , 772   , 5                         , 0  , 'melee', 0                   )
-	AddAbility( 'revenge'           , 6572  , 0                         , 0  , 'melee', 9                   )
-	AddAbility( 'shattering_throw'  , 64382 , 0                         , 1.5, 'spell', 300                 )
-	AddAbility( 'shield_barrier'    , 174926, 20                        , 0  , 'spell', 1.5, 'passive', true)
-	AddAbility( 'shield_block'      , 2565  , 60                        , 0  , 'melee', 12 , 'passive', true)
-	AddAbility( 'shield_charge'     , 156321, 20                        , 0  , 'melee', 15                  )
-	AddAbility( 'shield_slam'       , 23922 , 0                         , 0  , 'melee', 6                   )
-	AddAbility( 'shield_wall'       , 871   , 0                         , 0  , 'spell', 300, 'passive', true)
-	AddAbility( 'shockwave'         , 46968 , 0                         , 0  , 'spell', 40 , 'passive', true)
-	AddAbility( 'siegebreaker'      , 176289, 0                         , 0  , 'melee', 45                  )
-	AddAbility( 'spell_reflection'  , 23920 , 0                         , 0  , 'spell', 25 , 'passive', true)
-	AddAbility( 'storm_bolt'        , 107570, 0                         , 0  , 'spell', 30                  )
-	AddAbility( 'sweeping_strikes'  , 12328 , 10                        , 0  , 'spell', 10 , 'passive', true)
-	AddAbility( 'taunt'             , 355   , 0                         , 0  , 'melee', 8  , 'passive', true)
-	AddAbility( 'thunder_clap'      , 6343  , 10                        , 0  , 'spell', 6  , 'passive', true)
-	AddAbility( 'victory_rush'      , 34428 , 200                       , 0  , 'melee', 0                   )
-	AddAbility( 'whirlwind'         , 1680  , 20                        , 0  , 'melee', 0                   )
-	AddAbility( 'wild_strike'       , 100130, 45                        , 0  , 'melee', 0                   )
+	AddAbility( 'avatar', 107574,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 180,
+			passive = true
+		} )
+	AddAbility( 'battle_shout', 6673,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 0,
+			passive = true
+		} )
+	AddAbility( 'battle_stance', 2457,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 1.5,
+			passive = true
+		} )
+	AddAbility( 'berserker_rage', 18499,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 30,
+			passive = true
+		} )
+	AddAbility( 'bladestorm', 46924,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 60
+		} )
+	AddAbility( 'bloodbath', 12292,
+		{
+			known = function( s ) return s.talent.bloodbath.enabled end,
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 60,
+			passive = true
+		} )
+	AddAbility( 'bloodthirst', 23881,
+		{
+			known = function( s ) return s.spec.fury and IsSpellKnown( 78 ) end,
+			spend = 0,
+			gain = 10,
+			cast = 0,
+			gcdType = 'spell',
+			cooldown = 4.5
+		} )
+	AddAbility( 'charge', 100,
+		{
+			spend = 0,
+			gain = 20,
+			cast = 0,
+			gcdType = 'spell',
+			cooldown = 20
+		} )
+	AddAbility( 'colossus_smash', 167105,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 20
+		} )
+	AddAbility( 'commanding_shout', 469,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 469,
+			passive = true
+		} )
+	AddAbility( 'defensive_stance', 71,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 1.5,
+			passive = true
+		} )
+	AddAbility( 'demoralizing_shout', 1160,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 60,
+			passive = true
+		} )
+	AddAbility( 'devastate', 20243,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 0
+		} )
+	AddAbility( 'die_by_the_sword', 118038,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 120,
+			passive = true
+		} )
+	AddAbility( 'dragon_roar', 118000,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 60
+		} )
+	AddAbility( 'execute', 163201,
+		{
+			spend = 30,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 0,
+			usable = function( s ) return s.buff.sudden_death.up or s.target.health_pct <= 20 ) end
+		} )
+	AddAbility( 'hamstring', 1715,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'off'
+			cooldown = 1
+		} )
+	AddAbility( 'heroic_leap', 6544,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 45,
+			passive = true
+		} )
+	AddAbility( 'heroic_strike', 78,
+		{
+			spend = 30,
+			cast = 0
+			gcdType = 'off'
+			cooldown = 1.5
+		} )
+	AddAbility( 'heroic_throw', 57755,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 6
+		} )
+	AddAbility( 'intervene', 3411,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 30,
+			passive = true
+		} )
+	AddAbility( 'intimidating_shout', 5246,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 90,
+			passive = true
+		} )
+	AddAbility( 'impending_victory', 103840,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 30
+		} )
+	AddAbility( 'last_stand', 12975,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 180,
+			passive = true
+		} )
+	AddAbility( 'mocking_banner', 114192,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 180,
+			passive = true
+		} )
+	AddAbility( 'mortal_strike', 12294,
+		{
+			known = function( s ) return s.spec.arms and IsSpellKnown( 78 ) end,
+			spend = 20,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 6
+		} )
+	AddAbility( 'piercing_howl', 12323,
+		{
+			spend = 10,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 0,
+			passive = true
+		} )
+	AddAbility( 'pummel', 6552,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'off'
+			cooldown = 15
+		} )
+	AddAbility( 'raging_blow', 85288,
+		{
+			spend = 10,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 0,
+			usable = function( s ) return s.buff.raging_blow.up end,
+		} )
+	AddAbility( 'rallying_cry', 97462,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 180,
+			passive = true
+		} )
+	AddAbility( 'ravager', 152277,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 60,
+			passive = true
+		} )
+	AddAbility( 'recklessness', 1719,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 180,
+			passive = true
+		} )
+	AddAbility( 'rend', 772,
+		{
+			spend = 5,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 0
+		} )
+	AddAbility( 'revenge', 6572,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 9
+		} )
+	AddAbility( 'shattering_throw', 64382,
+		{
+			spend = 0,
+			cast = 1.5
+			gcdType = 'spell'
+			cooldown = 300
+		} )
+	AddAbility( 'shield_barrier', 174926,
+		{
+			spend = 20,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 1.5,
+			passive = true
+		} )
+	AddAbility( 'shield_block', 2565,
+		{
+			spend = 60,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 12,
+			passive = true
+		} )
+	AddAbility( 'shield_charge', 156321,
+		{
+			spend = 20,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 15
+		} )
+	AddAbility( 'shield_slam', 23922,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 6
+		} )
+	AddAbility( 'shield_wall', 871,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 300,
+			passive = true
+		} )
+	AddAbility( 'shockwave', 46968,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 40,
+			passive = true
+		} )
+	AddAbility( 'siegebreaker', 176289,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 45
+		} )
+	AddAbility( 'spell_reflection', 23920,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 25,
+			passive = true
+		} )
+	AddAbility( 'storm_bolt', 107570,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 30
+		} )
+	AddAbility( 'sweeping_strikes', 12328,
+		{
+			spend = 10,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 10,
+			passive = true
+		} )
+	AddAbility( 'taunt', 355,
+		{
+			spend = 0,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 8,
+			passive = true
+		} )
+	AddAbility( 'thunder_clap', 6343,
+		{
+			spend = 10,
+			cast = 0
+			gcdType = 'spell'
+			cooldown = 6,
+			passive = true
+		} )
+	AddAbility( 'victory_rush', 34428,
+		{
+			spend = 200,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 0
+		} )
+	AddAbility( 'whirlwind', 1680,
+		{
+			spend = 20,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 0
+		} )
+	AddAbility( 'wild_strike', 100130,
+		{
+			spend = 45,
+			cast = 0
+			gcdType = 'melee'
+			cooldown = 0
+		} )
 	
 	
 	SetGCD( "battle_shout" )

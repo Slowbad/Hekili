@@ -15,7 +15,7 @@ Constants.lua
 State.lua
 Classes.lua
 Classes\Shaman.lua
-# Classes\Paladin.lua
+Classes\Paladin.lua
 # Classes\Warrior.lua
 Events.lua
 Targets.lua

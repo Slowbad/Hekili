@@ -5,6 +5,7 @@
 
 
 local H = Hekili
+local GetResourceName = H.Utils.GetResourceName
 
 
 -- Metatable to return modified information about an ability, if available.
@@ -17,6 +18,7 @@ local mt_modifiers = {
 		end
 	end
 }
+
 
 -- New model requires splitting spells into categories.
 H.Abilities		= {}
@@ -35,7 +37,7 @@ H.Keys			= setmetatable( {}, {
 } )
 
 
-function AddAbility( key, id, cost, cast, gcd, cooldown, ... )
+function Hekili.Utils.AddAbility( key, id, values )
 	
 	local name = GetSpellInfo( id )
 	
@@ -53,69 +55,53 @@ function AddAbility( key, id, cost, cast, gcd, cooldown, ... )
 	H.Keys = H.Keys or {}
 	H.Keys[ #H.Keys+1 ] = key
 	
-	AbilityElements( key, "cost", cost, "cast", cast, "gcdType", gcd, "cooldown", cooldown, ... )
+	AbilityElements( key, values )
 	
 end
+local AddAbility = Hekili.Utils.AddAbility
 
 	
-function AbilityElements( key, ... )
-	local args, ability = { ... }, H.Abilities[ key ]
+function AbilityElements( key, values )
+	local ability = H.Abilities[ key ]
 	
 	if not ability then return end
 	
-	for i = 1, #args, 2 do
-		local k, v = args[i], args[i+1]
-		
-		if k and v then
-			if k == 'id' then ability[k] = v
-			else ability.elem[k] = v end
-		end
+	for k,v in pairs( values ) do
+		if k == 'id' then ability[k] = v
+		else ability.elem[k] = v end
 	end
 
 end
 
 
--- Applies a modifying function to a table.  Each line is added in order.
-function Modify( tab, key, elem, ... )
-	local entry, args = H[tab][key], { ... }
+-- Modify
+-- If 'elem' is an ID, it will modify the base table.
+-- If 'value' is a function, it will be used as a modifier.
+-- If 'value' is a raw value, it will replace the base element.
+function Modify( tab, key, elem, value )
+	local entry = H[tab][key]
 	if not entry then return end
 	
-	local loader = 'return function( x )\n'
-	for i = 1, #args do
-		loader = loader .. args[i] .. '\n'
-	end
-	
-	if elem == 'cast' then
-		if entry.gcdType == 'melee' then
-			loader = loader .. 'return x * melee_haste\n' .. 'end'
+	if type( value ) == 'function' then
+		entry.mods[elem] = setfenv( value, Hekili.State )
+	else
+		if elem == 'id' then
+			entry[elem] = value
 		else
-			loader = loader .. 'return x * spell_haste\n' .. 'end'
+			entry.elem[elem] = value
 		end
-	else
-		loader = loader .. 'return x\n' .. 'end'
 	end
-	
-	local success, outcome = pcall( loadstring( loader ) )
-	
-	if success then
-		entry['str_'..elem] = loader
-		entry.mods[elem] = setfenv( outcome, Hekili.State )
-	else
-		entry.mods[elem] = outcome .. '\n' .. loader
-	end
-
 end
 
 
 -- Wrapper for the ability table.
-function AbilityMods( key, elem, ... )
-	Modify( 'Abilities', key, elem, ... )
+function Hekili.Utils.ModifyAbility( key, elem, value )
+	Modify( 'Abilities', key, elem, value )
 end
-H.Utils.AbilityMods = AbilityMods
 
 
 H.Perks = {}
-function AddPerk( key, id )
+function Hekili.Utils.AddPerk( key, id )
 	local name = GetSpellInfo(id)
 	
 	if name then
@@ -131,7 +117,25 @@ end
 			
 
 
-function AddAura( key, id, ... )
+function Hekili.Utils.AuraElements( key, ... )
+	local args, aura = { ... }, H.Auras[ key ]
+	
+	if not aura then return end
+	
+	for i = 1, #args, 2 do
+		local k, v = args[i], args[i+1]
+		
+		if k and v then
+			if k == 'id' then aura[k] = v
+			else aura.elem[k] = v end
+		end
+	end
+
+end
+local AuraElements = Hekili.Utils.AuraElements
+
+
+function Hekili.Utils.AddAura( key, id, ... )
 	local name = GetSpellInfo( key )
 	
 	H.Auras[ key ] = setmetatable( {
@@ -152,31 +156,15 @@ function AddAura( key, id, ... )
 	AuraElements( key, 'duration', 30, 'max_stacks', 1, ... )
 	
 end
+local AddAura = Hekili.Utils.AddAura
 
 
-function AuraElements( key, ... )
-	local args, aura = { ... }, H.Auras[ key ]
-	
-	if not aura then return end
-	
-	for i = 1, #args, 2 do
-		local k, v = args[i], args[i+1]
-		
-		if k and v then
-			if k == 'id' then aura[k] = v
-			else aura.elem[k] = v end
-		end
-	end
-
+function Hekili.Utils.ModifyAura( key, elem, func )
+	Modify( 'Auras', key, elem, func )
 end
 
 
-function AuraMods( key, elem, ... )
-	Modify( 'Auras', key, elem, ... )
-end
-
-
-function AddTalent( key, id )
+function Hekili.Utils.AddTalent( key, id )
 	local name = GetSpellInfo( id )
 	
 	if not name then return end
@@ -190,10 +178,9 @@ function AddTalent( key, id )
 	H.Keys[ #H.Keys+1 ] = key
 
 end
-H.Utils.AddTalent = AddTalent
 
 
-function AddGlyph( key, id )
+function Hekili.Utils.AddGlyph( key, id )
 	local name = GetSpellInfo( id )
 	
 	if not name then return end
@@ -207,25 +194,23 @@ function AddGlyph( key, id )
 	H.Keys[ #H.Keys+1 ] = key
 
 end
-H.Utils.AddGlyph = AddGlyph
 
 
 H.Resources		= {}
-function AddResource( resource )
+function Hekili.Utils.AddResource( resource, primary )
 
 	H.Resources[ resource ] = true
 	
-	if not Hekili.ClassResource then Hekili.ClassResource = resource end
+	if primary or not Hekili.ClassResource then Hekili.ClassResource = resource end
 
 	H.Keys = H.Keys or {}
-	H.Keys[ #H.Keys+1 ] = key
+	H.Keys[ #H.Keys+1 ] = GetResourceName( resource )
 	
 end
-H.Utils.AddResource = AddResource
 
 
 H.Gear			= {}
-function AddItemSet( name, ... )
+function Hekili.Utils.AddItemSet( name, ... )
 
 	local arg = { ... }
 
@@ -239,7 +224,7 @@ function AddItemSet( name, ... )
 	H.Keys[ #H.Keys+1 ] = name
 
 end
-H.Utils.AddItemSet = AddItemSet
+local AddItemSet = Hekili.Utils.AddItemSet
 
 
 H.MetaGem		= {}
@@ -253,29 +238,32 @@ end
 H.Utils.AddMeta = AddMeta
 
 
-function SetGCD( key )
+function Hekili.Utils.SetGCD( key )
 
 	H.GCD = key
 
 end
-H.Utils.SetGCD = SetGCD
 
 
 function AddHandler( ability, f )
-	AbilityElements( ability, 'handler', setfenv( f, Hekili.State ) )
+	local ab = Hekili.Abilities[ ability ]
+	
+	if not ab then return end
+	
+	ab.elem[ 'handler' ] = setfenv( f, Hekili.State )
 end
 H.Utils.AddHandler = AddHandler
 
 
 function RunHandler( ability )
 	local ab = H.Abilities[ ability ]
-	local s = Hekili.State
 	
 	if ab and ab.elem[ 'handler' ] then
 		ab.elem[ 'handler' ] ()
 	end
 	
 	if select(2, UnitClass( 'PLAYER' ) ) == 'WARRIOR' and ( not ab.elem.passive ) and s.nextMH < 0 then
+		local s = Hekili.State
 		s.nextMH = s.now + s.offset - 0.01
 		s.nextOH = s.now + s.offset + 0.99
 	end
@@ -283,33 +271,40 @@ function RunHandler( ability )
 end
 H.Utils.RunHandler = RunHandler
 
+
+H.Stances = {}
+function H.Utils.AddStance( key, index, id )
+	H.Stances[ key ] = index
+end
+
+
 ------------------------------
 -- SHARED SPELLS/BUFFS/ETC. --
 ------------------------------
 
 -- Bloodlust.
-AddAura( 'ancient_hysteria'     , 90355, 'duration', 40 )
-AddAura( 'bloodlust'            , 2825 , 'duration', 40 )
-AddAura( 'heroism'              , 32182, 'duration', 40 )
-AddAura( 'time_warp'            , 80353, 'duration', 40 )
+AddAura( 'ancient_hysteria', 90355, 'duration', 40 )
+AddAura( 'bloodlust', 2825 , 'duration', 40 )
+AddAura( 'heroism', 32182, 'duration', 40 )
+AddAura( 'time_warp', 80353, 'duration', 40 )
 
 -- Sated.
-AddAura( 'exhaustion'           , 57723, 'duration', 600 )
-AddAura( 'insanity'             , 95809, 'duration', 600 )
-AddAura( 'sated'                , 57724, 'duration', 600 )
+AddAura( 'exhaustion', 57723, 'duration', 600 )
+AddAura( 'insanity', 95809, 'duration', 600 )
+AddAura( 'sated', 57724, 'duration', 600 )
 AddAura( 'temporal_displacement', 80354, 'duration', 600 )
 
 -- Enchants.
-AddAura( 'dancing_steel'        , 104434, 'duration', 12, 'max_stacks', 2 )
+AddAura( 'dancing_steel', 104434, 'duration', 12, 'max_stacks', 2 )
 
 -- Potions.
-AddAura( 'jade_serpent_potion'  , 105702, 'duration', 25 )
-AddAura( 'mogu_power_potion'    , 105706, 'duration', 25 )
-AddAura( 'virmens_bite_potion'  , 105697, 'duration', 25 )
+AddAura( 'jade_serpent_potion', 105702, 'duration', 25 )
+AddAura( 'mogu_power_potion', 105706, 'duration', 25 )
+AddAura( 'virmens_bite_potion', 105697, 'duration', 25 )
 
 -- Trinkets.
-AddAura( 'dextrous'             , 146308, 'duration', 20 )
-AddAura( 'vicious'              , 148903, 'duration', 10 )
+AddAura( 'dextrous', 146308, 'duration', 20 )
+AddAura( 'vicious', 148903, 'duration', 10 )
 
 
 -- Meta Gems (for crit dmg bonus)
@@ -318,23 +313,46 @@ AddItemSet( 'crit_bonus_meta', 76885, 76888, 76886, 76884 )
 
 -- Racials.
 -- AddSpell( 26297,	"berserking",	10 )
--- AddSpell( 20572,	"blood_fury",	15 )
-AddAbility( 'berserking', 26297, 0         , 0, 'off', 180 )
+AddAbility( 'berserking', 26297,
+			{
+				spend = 0,
+				cast = 0,
+				gcdType = 'off',
+				cooldown = 180
+			} )
+
 AddHandler( 'berserking', function ()
 	H:Buff( 'berserking' )
 end )
-AddAura   ( 'berserking', 26297, 'duration', 10 )
 
-AddAbility( 'blood_fury', 20572, 0         , 0, 'off', 120 )
+AddAura( 'berserking', 26297, 'duration', 10 )
+
+
+-- AddSpell( 20572,	"blood_fury",	15 )
+AddAbility( 'blood_fury', 20572,
+			{
+				spend = 0,
+				cast = 0,
+				gcdType = 'off',
+				cooldown = 120
+			} )
+			
 AddHandler( 'blood_fury', function ()
 	H:Buff( 'blood_fury', 15 )
 end )
-AddAura   ( 'blood_fury', 20572, 'duration', 15 )
+
+AddAura( 'blood_fury', 20572, 'duration', 15 )
 
 
 -- Special Instructions
-AddAbility( 'wait', -1, 0, 0, 'off', 0 )
-AbilityElements( 'wait', 'name', 'Wait' )
+AddAbility( 'wait', -1,
+			{
+				spend = 0,
+				cast = 0,
+				gcdType = 'off',
+				cooldown = 0
+			} )
+H.Abilities[ 'wait' ].name = 'Wait'
 
 
 
