@@ -113,17 +113,20 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 	AddAura( 'divine_protection', 498 )
 	AddAura( 'divine_purpose', 86172 )
 	AddAura( 'divine_shield', 642 )
+	AddAura( 'execution_sentence', 114157 )
 	AddAura( 'final_verdict', 157048 )
 	AddAura( 'hand_of_freedom', 1044 )
 	AddAura( 'hand_of_protection', 1022 )
 	AddAura( 'hand_of_sacrifice', 6940 )
 	AddAura( 'holy_avenger', 105809 )
-	AddAura( 'liadrins_righteousness', 156989 )
-	AddAura( 'maraads_truth', 156990 )
+	AddAura( 'liadrins_righteousness', 156989, 'duration', 20  )
+	AddAura( 'maraads_truth', 156990, 'duration', 20  )
 	AddAura( 'righteous_fury', 25780 )
 	AddAura( 'seal_of_command', 105361 )
 	AddAura( 'seal_of_insight', 20165 )
 	AddAura( 'selfless_healer', 114250 )
+	AddAura( 'turalyons_justice', 156987, 'duration', 20 )
+	AddAura( 'uthers_insight', 156988, 'duration', 20 )
 
 	-- Perks.
 	AddPerk( 'empowered_divine_storm', 174718 )
@@ -167,7 +170,12 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 		} )
 	
 	AddHandler( 'blessing_of_kings', function ()
+		if buff.blessing_of_might.mine then
+			H:RemoveBuff( 'blessing_of_might' )
+			H:RemoveBuff( 'mastery' )
+		end
 		H:Buff( 'blessing_of_kings', 3600 )
+		H:Buff( 'str_agi_int', 3600 )
 	end )
 		
 		
@@ -180,7 +188,12 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 		} )
 
 	AddHandler( 'blessing_of_might', function ()
+		if buff.blessing_of_kings.mine then
+			H:RemoveBuff( 'blessing_of_kings' )
+			H:RemoveBuff( 'str_agi_int' )
+		end
 		H:Buff( 'blessing_of_might', 3600 )
+		H:Buff( 'mastery', 3600 )
 	end )
 		
 	
@@ -221,7 +234,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			spend = 0.128,
 			cast = 0,
 			gcdType = 'spell', 
-			cooldown = 60
+			cooldown = 60,
+			known = function( s ) return s.talent.execution_sentence.enabled end
 		} )
 	
 	AddHandler( 'execution_sentence', function ()
@@ -336,6 +350,13 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 	
 	AddHandler( 'judgment', function ()
 		H:Gain( buff.holy_avenger.up and 3 or 1, 'holy_power' )
+		if talent.empowered_seals.enabled then
+			if seal.justice then H:Buff( 'turalyons_justice', 20 )
+			elseif seal.insight then H:Buff( 'uthers_insight', 20 )
+			elseif seal.righteousness then H:Buff( 'liadrins_righteousness', 20 )
+			elseif seal.truth then H:Buff( 'maraads_truth', 20 )
+			end
+		end
 	end )
 	
 	
@@ -352,7 +373,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 		{
 			spend =  0.117,
 			cast = 0,
-			gcdType = 'spell',
+			gcdType = 'off',
 			cooldown = 15
 		} )
 	
@@ -366,7 +387,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			spend = 0,
 			cast = 0,
 			gcdType = 'spell',
-			cooldown = 0
+			cooldown = 0,
+			usable = function( s ) return not s.seal.righteousness end
 		} )
 	
 	AddHandler( 'seal_of_righteousness', function ()
@@ -379,7 +401,9 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			spend = 0,
 			cast = 0,
 			gcdType = 'spell',
-			cooldown = 0
+			cooldown = 0,
+			known = 105361,
+			usable = function( s ) return not s.seal.truth end
 		} )
 
 	AddHandler( 'seal_of_truth', function ()
@@ -423,7 +447,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 	
 	Hekili.Default( '@Retribution, Interrupts', 'actionLists', 2.07, "^1^T^SEnabled^B^SName^SRetribution,~`Interrupt^SRelease^N2.06^SSpecialization^N70^SActions^T^N1^T^SEnabled^B^SName^SRebuke^SRelease^N2.06^SAbility^Srebuke^SScript^Starget.casting^t^t^SScript^S^t^^" )
 	
-	Hekili.Default( '@Retribution, Buffs', 'actionLists', 2.07, "^1^T^SEnabled^B^SName^SRetribution,~`Buffs^SRelease^N2.06^SSpecialization^N70^SActions^T^N1^T^SEnabled^B^SName^SBlessing~`of~`Kings^SRelease^N2.06^SAbility^Sblessing_of_kings^SScript^Sbuff.blessing_of_kings.down^t^t^SScript^S^t^^" )
+	Hekili.Default( '@Retribution, Buffs', 'actionLists', 2.08, "^1^T^SEnabled^B^SName^S@Retribution,~`Buffs^SRelease^N2.07^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SBlessing~`of~`Kings^SRelease^N2.06^SScript^S!buff.str_agi_int.up^SAbility^Sblessing_of_kings^t^N2^T^SEnabled^B^SName^SBlessing~`of~`Might^SRelease^N2.06^SAbility^Sblessing_of_might^SScript^S!buff.mastery.up&!buff.str_agi_int.mine^t^N3^T^SEnabled^B^SName^SSeal~`of~`Truth^SAbility^Sseal_of_truth^SScript^S(time=0|!talent.empowered_seals.enabled)&active_enemies<2&!seal.truth^SRelease^N2.06^t^N4^T^SEnabled^b^SName^SSeal~`of~`Righteousness^SAbility^Sseal_of_righteousness^SScript^Sactive_enemies>=4&target.time_to_die>=30^SRelease^N2.06^t^t^SSpecialization^N70^t^^" )
 	
 	
 	

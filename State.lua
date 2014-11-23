@@ -53,6 +53,7 @@ local state = {
 }
 
 state.race[ FormatKey( UnitRace('player') ) ] = true
+state.stance = state.seal
 
 
 -- Place an ability on cooldown in the simulated game state.
@@ -78,13 +79,14 @@ function H:Buff( aura, duration, stacks, value )
 		self.State.buff[ aura ].expires = self.State.now + self.State.offset + ( duration or H.Auras[ aura ].duration )
 		self.State.buff[ aura ].count   = stacks or 1
 		self.State.buff[ aura ].value   = value or 0
+		self.State.buff[ aura ].caster  = 'player'
 	end
 
 end
 
 function H:Stance( stance )
 	for k in pairs( self.State.seal ) do
-		self.State.seal = false
+		self.State.seal[ k ] = false
 	end
 	self.State.seal[ stance ] = true
 end
@@ -253,7 +255,6 @@ local mt_state	= {
 			return ( H.Auras[ t.this_action ].duration )
 		
 		elseif k == 'ticking' then
-			-- print ( "checking " .. t.this_action .. " ticking in mt_state: " .. tostring( t.dot[ t.this_action ].ticking ) )
 			return ( t.dot[ t.this_action ].ticking )
 			
 		elseif k == 'ticks' then return 0
@@ -600,8 +601,8 @@ local mt_target = {
 			return UnitLevel('target') or UnitLevel('player')
 
 		elseif k == 'time_to_die' then
-			return H.GetTTD()
-
+			return H.GetTTD( UnitGUID( 'target' ) or 0 )
+		
 		elseif k == 'health_current' then
 			return ( UnitHealth('target') > 0 and UnitHealth('target') or 50000 )
 		
@@ -821,8 +822,27 @@ Hekili.MT.mt_resource = mt_resource
 -- Table of default handlers for auras (buffs, debuffs).
 local mt_default_aura = {
 	__index = function(t, k)
-		if k == 'count' or k == 'expires' then
-			local name, _, _, count, _, _, expires = UnitBuff( 'player', H.Auras[ t.key ].name )
+		if k == 'name' then
+			-- Check for raid buff.
+			if H.Auras[ t.key ].id < 0 then
+				local name = GetRaidBuffTrayAuraInfo( -1 * H.Auras[ t.key ].id )
+				t.name = name
+				return name
+			end
+			
+			t.name = H.Auras[ t.key ].name
+			return H.Auras[ t.key ].name
+				
+		elseif k == 'count' or k == 'expires' or k == 'caster' then
+			
+			if not t.name then
+				t.count = 0
+				t.expires = 0
+				t.caster = 'unknown'
+				return t[k]
+			end
+			
+			local name, _, _, count, _, _, expires, caster = UnitBuff( 'player', t.name )
 
 			if name then
 				count = max(1, count)
@@ -831,6 +851,7 @@ local mt_default_aura = {
 			
 			t.count = count or 0
 			t.expires = expires or 0
+			t.caster = caster or 'unknown'
 			
 			return t[k]
 	
@@ -857,6 +878,9 @@ local mt_default_aura = {
 		
 		elseif k == 'max_stack' then
 			return H.Auras[ t.key ].max_stack or 1
+		
+		elseif k == 'mine' then
+			return t.caster == 'player'
 		
 		elseif k == 'stack' or k == 'stacks' or k == 'react' then
 			if t.up then return ( t.count ) else return 0 end
@@ -890,7 +914,7 @@ local mt_buffs	= {
 			local found = false
 			
 			for i = 1, 40 do
-				local name, _, _, count, _, _, expires, _, _, _, id = UnitBuff( 'player', i )
+				local name, _, _, count, _, _, expires, caster, _, _, id = UnitBuff( 'player', i )
 				
 				if not name then break end
 				
@@ -902,6 +926,7 @@ local mt_buffs	= {
 				if H.Auras[ id ] then
 					t[ key ] = {
 						key		= key,
+						name	= name,
 						count	= count or 0,
 						expires	= expires or 0
 					}
@@ -913,6 +938,7 @@ local mt_buffs	= {
 			if not found then 
 				t[k] = {
 					key		= k,
+					name	= name,
 					count	= 0,
 					expires	= 0
 				}
@@ -925,13 +951,26 @@ local mt_buffs	= {
 		if k == 'liquid_magma' then
 			t[k] = {
 				key		= k,
+				name	= GetSpellInfo( H.Auras[ 'liquid_magma' ].id ),
 				count	= H.State.cooldown.liquid_magma.remains > 34.5 and 1 or 0,
 				expires = H.State.cooldown.liquid_magma.expires - 34.5
 			}
 			return t[k]
+		
+		elseif H.Auras[ k ].id < 0 then
+			local id = -1 * H.Auras[ k ].id
+			local name, _, _, duration, expires, spellID = GetRaidBuffTrayAuraInfo( id )
+			t[k] = {
+				key = k,
+				name = name,
+				count = name and 1 or 0,
+				expires = name and ( expires > 0 and expires or 3600 ) or 0
+			}
+			return t[k]
+		
 		end
-				
-		local name, _, _, count, _, _, expires = UnitBuff( 'player', H.Auras[ k ].name )
+		
+		local name, _, _, count, _, _, expires, caster = UnitBuff( 'player', H.Auras[ k ].name )
 
 		if name then
 			count = max(1, count)
@@ -940,8 +979,10 @@ local mt_buffs	= {
 		
 		t[k] = {
 			key		= k,
+			name	= name,
 			count	= count or 0,
-			expires	= expires or 0
+			expires	= expires or 0,
+			caster	= caster
 		}
 		return ( t[k] )
 			
@@ -1149,7 +1190,6 @@ local mt_default_dot = {
 			return H.debuffs[ H.Auras[ H.State.this_action ].name ].tick_dmg or 0
 		
 		elseif k == 'ticking' then
-			-- print( "checking ticking: " .. tostring( t.remains > 0 ) )
 			return ( t.remains > 0 )
 		
 		end
@@ -1294,7 +1334,6 @@ local mt_default_action	= {
 			return H.Abilities[ t.action ].cast
 		
 		elseif k == 'ticking' then
-			-- print("checking " .. s.this_action .. " ticking in mt_default_action: " .. tostring( s.dot[ s.this_action ].ticking ) )
 			return ( s.dot[ s.this_action ].ticking )
 			
 		elseif k == 'ticks' then

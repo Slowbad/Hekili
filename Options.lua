@@ -13,7 +13,7 @@ function Hekili:GetDefaults()
 	local defaults = {
 		profile = {
 			Version			= 2,
-			Release			= 6,
+			Release			= 10,
 			Enabled			= true,
 			Locked			= false,
 			Debug			= false,
@@ -2156,6 +2156,7 @@ function Hekili:SetOption( info, input )
 							button:Show()
 						end
 					end
+					RebuildUI = true
 				
 				elseif option == 'Script' then
 					display[option] = input:trim()
@@ -2240,7 +2241,6 @@ function Hekili:SetOption( info, input )
 				
 				import.Name = GetUniqueName( profile.actionLists, import.Name )
 				profile.actionLists[ #profile.actionLists + 1 ] = import
-				
 				Rebuild = true
 				
 			end

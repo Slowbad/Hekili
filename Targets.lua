@@ -4,11 +4,9 @@
 
 local H = Hekili
 
-
 -- Table to collect enemies that are damaged or debuffed by us or our minions.
 local tCount = 0
 local targets = {}
-
 
 Hekili.Targets = targets
 
@@ -141,6 +139,8 @@ function H:Eliminate( id )
 	self:UpdateMinion( id )
 	self:UpdateTarget( id )
 	
+	self.TTD[ id ] = nil
+	
 	for k,v in pairs( debuffs ) do
 		self:TrackDebuff( k, id )
 	end
@@ -166,6 +166,7 @@ function Hekili:Audit()
 	for whom, when in pairs( targets ) do
 		if now - when > grace_period then
 			self:UpdateTarget( whom )
+			self.TTD[ whom ] = nil
 		end
 	end
 	

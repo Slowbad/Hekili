@@ -450,6 +450,10 @@ function Hekili:ResetState()
 	
 	-- broke fullscan for now.  :(
 	for k in pairs( s.buff ) do
+		if H.Auras[ k ].id < 0 then
+			s.buff[ k ].name		= nil
+		end
+		s.buff[ k ].caster		= nil
 		s.buff[ k ].count		= nil
 		s.buff[ k ].expires	= nil
 	end
@@ -690,7 +694,10 @@ function Hekili.IsUsable( spell )
 	local ability = H.Abilities[ spell ]
 	local s = Hekili.State
 	
-	if ability.usable then return ability.usable( s ) end
+	if ability.usable then
+		if type( ability.usable ) == 'number' then return IsUsableSpell( ability.usable )
+		elseif type( ability.usable ) == 'function' then return ability.usable( s ) end
+	end
 	
 	return true
 	

@@ -136,12 +136,12 @@ local AuraElements = Hekili.Utils.AuraElements
 
 
 function Hekili.Utils.AddAura( key, id, ... )
-	local name = GetSpellInfo( key )
+	local name = id > 0 and GetSpellInfo( id ) or nil
 	
 	H.Auras[ key ] = setmetatable( {
 		id		= id,
 		key		= key,
-		name	= GetSpellInfo( id ),
+		name	= name,
 		elem	= {},
 		mods	= {}
 	}, mt_modifiers )
@@ -305,6 +305,18 @@ AddAura( 'virmens_bite_potion', 105697, 'duration', 25 )
 -- Trinkets.
 AddAura( 'dextrous', 146308, 'duration', 20 )
 AddAura( 'vicious', 148903, 'duration', 10 )
+
+
+-- Raid Buffs
+AddAura( 'attack_power_multiplier', -3, 'duration', 3600 )
+AddAura( 'critical_strike', -6, 'duration', 3600 )
+AddAura( 'haste', -4, 'duration', 3600 )
+AddAura( 'mastery', -7, 'duration', 3600 )
+AddAura( 'multistrike', -8, 'duration', 3600 )
+AddAura( 'spell_power_multiplier', -5, 'duration', 3600 )
+AddAura( 'stamina', -2, 'duration', 3600 )
+AddAura( 'str_agi_int', -1, 'duration', 3600 )
+AddAura( 'versatility', -9, 'duration', 3600 )
 
 
 -- Meta Gems (for crit dmg bonus)

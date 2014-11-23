@@ -329,7 +329,7 @@ Hekili.Swing = {
 -- Use dots/debuffs to count active targets.
 -- Track dot power (until 6.0) for snapshotting.
 -- Note that this was ported from an unreleased version of Hekili, and is currently only counting damaged enemies.
-function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName, _, _, interrupt, _, _, _, _, offhand, multistrike )
+function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName, _, amount, interrupt, a, b, c, d, offhand, multistrike, ... )
 
 	if subtype == 'UNIT_DIED' or subtype == 'UNIT_DESTROYED' and self:KnownTarget( destGUID ) then
 		self:Eliminate( destGUID )
@@ -386,6 +386,7 @@ function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, so
 
 		if subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
 			self:UpdateTarget( destGUID, time )
+			-- local resisted, blocked, absorbed = b, c, d
 		end
 
 	end
@@ -396,23 +397,29 @@ end
 
 
 -- Borrowed TTD linear regression model from 'Nemo' by soulwhip (with permission).
-function H.InitTTD()
-	H.TTD				= H.TTD or {}
-	H.TTD.n				= 1
-	H.TTD.timeSum		= GetTime()
-	H.TTD.healthSum		= UnitHealth("target") or 0
-	H.TTD.timeMean		= H.TTD.timeSum * H.TTD.timeSum
-	H.TTD.healthMean	= H.TTD.timeSum * H.TTD.healthSum
-	H.TTD.GUID			= UnitGUID("target") or nil
-	H.TTD.sec			= 300
+function H.InitTTD( UID )
+	H.TTD = H.TTD or {}
+	
+	if UID then
+		local uid = UnitGUID( UID )
+		H.TTD[ uid ] = H.TTD[ uid ] or {}
+		H.TTD[ uid ].n = 1
+		H.TTD[ uid ].timeSum = GetTime()
+		H.TTD[ uid ].healthSum = UnitHealth( UID ) or 0
+		H.TTD[ uid ].timeMean = H.TTD[ uid ].timeSum * H.TTD[ uid ].timeSum
+		H.TTD[ uid ].healthMean = H.TTD[ uid ].timeSum * H.TTD[ uid ].healthSum
+		H.TTD[ uid ].GUID = uid
+		H.TTD[ uid ].name = UnitName( UID )
+		H.TTD[ uid ].sec = 300
+	end
 end
 
 
-function H.GetTTD()
-	if not H.TTD then H.InitTTD() end
+function H.GetTTD( uid )
+	if not H.TTD or not H.TTD[ uid ] then return 300 end
 
-	if H.TTD.sec then
-		return H.TTD.sec
+	if H.TTD[ uid ].sec then
+		return H.TTD[ uid ].sec
 	else
 		return 300
 	end
@@ -422,45 +429,50 @@ end
 -- Time to die calculations.
 function H:UNIT_HEALTH( _, UID )
 
-	if UID ~= "target" then
+	local uid = UnitGUID( UID )
+	
+	if not self:KnownTarget( uid ) then
 		return
 	end
 	
-	if not H.TTD then H.InitTTD() end
+	if not H.TTD or not H.TTD[ uid ] then H.InitTTD( UID ) end
 
-	if ( H.TTD.GUID ~= UnitGUID(UID) and not UnitIsFriend('player', UID) ) then
-		H.InitTTD()
+	if ( H.TTD[ uid ].GUID ~= uid and not UnitIsFriend('player', UID ) ) then
+		H.InitTTD( UID )
 	end
 	
-	if ( UnitHealth(UID) == UnitHealthMax(UID) ) then
-		H.InitTTD()
+	if ( UnitHealth( UID ) == UnitHealthMax( UID ) ) then
+		H.InitTTD( UID )
 		return
 	end
 
 	local now = GetTime()
 	
-	if ( not H.TTD.n ) then H.InitTTD() end
+	if ( not H.TTD[ uid ].n ) then H.InitTTD( UID ) end
 	
-	H.TTD.n				= H.TTD.n + 1
-	H.TTD.timeSum		= H.TTD.timeSum + now
-	H.TTD.healthSum		= H.TTD.healthSum + UnitHealth(UID)
-	H.TTD.healthMean	= H.TTD.healthMean + (now * UnitHealth(UID))
-	H.TTD.timeMean		= H.TTD.timeMean + (now * now)
+	H.TTD[ uid ].n				= H.TTD[ uid ].n + 1
+	H.TTD[ uid ].timeSum		= H.TTD[ uid ].timeSum + now
+	H.TTD[ uid ].healthSum		= H.TTD[ uid ].healthSum + UnitHealth( UID )
+	H.TTD[ uid ].timeMean		= H.TTD[ uid ].timeMean + (now * now)
+	H.TTD[ uid ].healthMean	= H.TTD[ uid ].healthMean + (now * UnitHealth( UID ))
 	
-	local difference	= (H.TTD.healthSum * H.TTD.timeMean - H.TTD.healthMean * H.TTD.timeSum)
+	local difference	= (H.TTD[ uid ].healthSum * H.TTD[ uid ].timeMean - H.TTD[ uid ].healthMean * H.TTD[ uid ].timeSum)
 	local projectedTTD	= nil
 	
 	if difference > 0 then
-		local divisor = (H.TTD.healthSum * H.TTD.timeSum - H.TTD.healthMean * H.TTD.n) - now
-		if divisor == 0 then divisor = 1 end
-		projectedTTD = difference / divisor
+		local divisor = ( H.TTD[ uid ].healthSum * H.TTD[ uid ].timeSum ) - ( H.TTD[ uid ].healthMean * H.TTD[ uid ].n )
+		projectedTTD = 0
+		if divisor > 0 then
+			projectedTTD = difference / divisor - now
+		end
 	end
 
-	if not projectedTTD or projectedTTD < 0 or H.TTD.n < 7 then
+	if not projectedTTD or projectedTTD < 0 or H.TTD[ uid ].n < 3 then
 		return
 	else
 		projectedTTD = ceil(projectedTTD)
 	end
 
-	H.TTD.sec = projectedTTD
+	H.TTD[ uid ].sec = projectedTTD
+	
 end
