@@ -37,21 +37,29 @@ H.Keys			= setmetatable( {}, {
 } )
 
 
-function Hekili.Utils.AddAbility( key, id, values )
+
+function Hekili.Utils.AddAbility( key, ... )
+	
+	local num = select( "#", ... )
+	
+	if num < 2 then return end
+	
+	local id, values = select( 1, ...), select( num, ... )
+	values.id = id
 	
 	local name = GetSpellInfo( id )
-	
 	if not name and id > 0 then return end
 	
 	H.Abilities[ key ] = setmetatable( {
-		id		= id,
 		name	= name,
 		elem	= {}, -- storage for each attribute
 		mods	= {}  -- storage for attribute modifiers
 	}, mt_modifiers )
 	
-	H.Abilities[ id ] = H.Abilities[ key ]
-
+	for i = 1, num - 1 do
+		H.Abilities[ select( i, ... ) ] = H.Abilities[ key ]
+	end
+	
 	H.Keys = H.Keys or {}
 	H.Keys[ #H.Keys+1 ] = key
 	
@@ -67,8 +75,9 @@ function AbilityElements( key, values )
 	if not ability then return end
 	
 	for k,v in pairs( values ) do
-		if k == 'id' then ability[k] = v
-		else ability.elem[k] = v end
+		ability.elem[k] = v
+		--[[  if k == 'id' then ability[k] = v
+		else ability.elem[k] = v end ]]
 	end
 
 end

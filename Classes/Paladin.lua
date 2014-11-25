@@ -241,8 +241,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 		H:Debuff( 'target', 'execution_sentence', 10 )
 	end )
 
-	
-	AddAbility( 'exorcism', 122032,
+	AddAbility( 'exorcism', 879, 122032,
 		{
 			known = 879,
 			spend = 0.04,
@@ -255,6 +254,11 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 		return x * haste
 	end )
 	
+	ModifyAbility( 'exorcism', 'id', function ( x )
+		if glyph.mass_exorcism.enabled then return 122032 end
+		return x
+	end )
+
 	AddHandler( 'exorcism', function ()
 		if buff.blazing_contempt.up then
 			H:Gain( 3, 'holy_power' )
@@ -262,7 +266,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 		else
 			H:Gain( buff.holy_avenger.up and 3 or 1, 'holy_power' )
 		end
-	end )
+	end )	
 	
 
 	AddAbility( 'final_verdict', 157048,
