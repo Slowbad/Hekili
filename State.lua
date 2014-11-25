@@ -693,14 +693,15 @@ Hekili.MT.mt_target = mt_target
 local mt_target_health = {
 	__index = function(t, k)
 		if k == 'current' then
-			return UnitCanAttack('player', 'target') and UnitHealth('target') or 0
+			t.current = UnitCanAttack('player', 'target') and UnitHealth('target') or 0
+			return t.current
 		
 		elseif k == 'max' then
-			return UnitCanAttack('player', 'target') and UnitHealthMax('target') or 0
+			t.max = UnitCanAttack('player', 'target') and UnitHealthMax('target') or 0
+			return t.max
 			
 		elseif k == 'pct' then
 			return t.max ~= 0 and ( 100 * t.current / t.max ) or 100
-			
 		end
 	end
 }

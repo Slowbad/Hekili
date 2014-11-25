@@ -6,7 +6,7 @@ local H = Hekili
 local SpellRange = LibStub("SpellRange-1.0")
 local FormatKey, GetSpecializationID, GetResourceName, RunHandler = H.Utils.FormatKey, H.Utils.GetSpecializationID, H.Utils.GetResourceName, H.Utils.RunHandler
 local trim = string.trim
-local MT = Hekili.MT
+local mt_resource = Hekili.MT.mt_resource
 local tblCopy = Hekili.Utils.tblCopy
 
 
@@ -430,8 +430,8 @@ end
 
 
 local z_PVP = {
-	arena	= true,
-	pvp		= true
+	arena = true,
+	pvp = true
 }
 
 
@@ -439,33 +439,33 @@ function Hekili:ResetState()
 	
 	local s = self.State
 	
-	s.now		= GetTime()
-	s.offset	= 0
+	s.now = GetTime()
+	s.offset = 0
 	
 	-- A decent start, but assumes our first ability is always aggressive.  Not necessarily true...
 	if self.Class == 'WARRIOR' then
-		s.nextMH	= ( self.combat ~= 0 and self.Swing.nextMH > self.State.now ) and self.Swing.nextMH or -1
-		s.nextOH	= ( self.combat ~= 0 and self.Swing.nextOH > self.State.now ) and self.Swing.nextOH or -1
+		s.nextMH = ( self.combat ~= 0 and self.Swing.nextMH > self.State.now ) and self.Swing.nextMH or -1
+		s.nextOH = ( self.combat ~= 0 and self.Swing.nextOH > self.State.now ) and self.Swing.nextOH or -1
 	end
 	
 	-- broke fullscan for now.  :(
 	for k in pairs( s.buff ) do
 		if H.Auras[ k ].id < 0 then
-			s.buff[ k ].name		= nil
+			s.buff[ k ].name = nil
 		end
-		s.buff[ k ].caster		= nil
-		s.buff[ k ].count		= nil
-		s.buff[ k ].expires	= nil
+		s.buff[ k ].caster = nil
+		s.buff[ k ].count = nil
+		s.buff[ k ].expires = nil
 	end
 
 	for k in pairs( s.cooldown ) do
-		s.cooldown[ k ].duration	= nil
-		s.cooldown[ k ].expires	= nil
+		s.cooldown[ k ].duration = nil
+		s.cooldown[ k ].expires = nil
 	end
 	
 	for k in pairs( s.debuff ) do
-		s.debuff[ k ].count	= nil
-		s.debuff[ k ].expires	= nil
+		s.debuff[ k ].count = nil
+		s.debuff[ k ].expires = nil
 	end
 	
 	-- s.dot currently just wraps s.debuff
@@ -482,30 +482,37 @@ function Hekili:ResetState()
 		s.totem[ k ].expires = nil
 	end
 	
+	s.target.health.current = nil
+	s.target.health.max = nil
+	
 	-- range checks
-	s.target.minR		= nil
-	s.target.maxR		= nil
+	s.target.minR = nil
+	s.target.maxR = nil
 	
 	-- interrupts
-	s.target.casting	= nil
+	s.target.casting = nil
 	
 	for k,_ in pairs( H.Resources ) do
 		local key = GetResourceName( k )
 		
-		self.State[ key ]			= rawget( self.State, key ) or setmetatable( {}, mt_resource )
-		self.State[ key ].current	= UnitPower( 'player', k )
-		self.State[ key ].max		= UnitPowerMax( 'player', k )
+		s[ key ] = rawget( s, key ) or setmetatable( {}, mt_resource )
+		s[ key ].current = UnitPower( 'player', k )
+		s[ key ].max = UnitPowerMax( 'player', k )
 		
 		if k == UnitPowerType('player') then
 			local active, inactive = GetPowerRegen()
 			
-			if self.State.time > 0 then
-				self.State[ key ].regen = active
+			if s.time > 0 then
+				s[ key ].regen = active
 			else
-				self.State[ key ].regen = inactive
+				s[ key ].regen = inactive
 			end
 		end
 	end
+	
+	s.health = rawget( s, 'health' ) or setmetatable( {}, mt_resource )
+	s.health.current = UnitHealth( 'player' )
+	s.health.max = UnitHealthMax( 'player' )
 	
 	-- Special case spells that suck.
 	if Hekili.Abilities[ 'ascendance' ] and s.buff.ascendance.up then
@@ -516,14 +523,14 @@ function Hekili:ResetState()
 
 	local spellcast, _, _, _, _, endCast = UnitCastingInfo('player')
 	if endCast ~= nil then
-		cast_time	= ( endCast / 1000 ) - GetTime()
-		casting		= FormatKey( spellcast )
+		cast_time = ( endCast / 1000 ) - GetTime()
+		casting = FormatKey( spellcast )
 	end
 	
 	local spellcast, _, _, _, _, endCast = UnitChannelInfo('player')
 	if endCast ~= nil then
-		cast_time	= ( endCast / 1000) - GetTime()
-		casting		= FormatKey( spellcast )
+		cast_time = ( endCast / 1000) - GetTime()
+		casting = FormatKey( spellcast )
 	end				
 	
 

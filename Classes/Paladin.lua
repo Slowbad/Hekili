@@ -144,9 +144,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 	SetGCD( 'blessing_of_kings' )
 
 	-- Gear Sets
-	-- AddItemSet( 'tier16_melee', 99347, 99340, 99341, 99342, 99343 )
-	-- AddItemSet( 'tier15_melee', 96689, 96690, 96691, 96692, 96693 )
-	-- AddItemSet( 'tier14_melee', 87138, 87137, 87136, 87135, 87134 )
+	AddItemSet( 'tier17', 115565, 115566, 115567, 115568, 115569 )
 
 	AddAbility( 'avenging_wrath', 31884,
 		{
@@ -257,7 +255,12 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 	end )
 	
 	AddHandler( 'exorcism', function ()
-		H:Gain( buff.holy_avenger.up and 3 or 1, 'holy_power' )
+		if buff.blazing_contempt.up then
+			H:Gain( 3, 'holy_power' )
+			H:RemoveBuff( 'blazing_contempt' )
+		else
+			H:Gain( buff.holy_avenger.up and 3 or 1, 'holy_power' )
+		end
 	end )
 	
 
@@ -310,6 +313,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 	end )
 	
 	AddHandler( 'hammer_of_wrath', function ()
+		if set_bonus.tier17_4pc==1 then H:Buff( "blazing_contempt", 20 ) end
 		H:Gain( buff.holy_avenger.up and 3 or 1, 'holy_power' )
 	end )
 	

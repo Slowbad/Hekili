@@ -192,7 +192,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 
 	AddAbility( 'earth_shock', 8042,
 				{
-					spend = 0.05,
+					spend = 0.012,
 					cast = 0,
 					gcdType = 'spell',
 					cooldown = 6
@@ -289,7 +289,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 	AddAbility( 'lava_beam', 114074,
 				{
 					known = function( s ) return s.spec.elemental and s.buff.ascendance.up end,
-					spend = 0.083,
+					spend = 0.01,
 					cast = 2,
 					gcdType = 'spell',
 					cooldown = 0
@@ -306,7 +306,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 
 	AddAbility( 'lava_lash', 60103,
 				{
-					spend = 0.04,
+					spend = 0.01,
 					cast = 0,
 					gcdType = 'melee',
 					cooldown = 9
@@ -314,7 +314,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 
 	AddAbility( 'lightning_bolt', 403,
 				{
-					spend = 0.071,
+					spend = 0.018,
 					cast = 2.5,
 					gcdType = 'spell',
 					cooldown = 0
@@ -346,7 +346,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 
 	AddAbility( 'searing_totem', 3599,
 				{
-					spend = 0.059,
+					spend = 0.03,
 					cast = 0,
 					gcdType = 'totem',
 					cooldown = 0
@@ -371,7 +371,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 	AddAbility( 'stormstrike', 17364,
 				{
 					known = function( s ) return s.spec.enhancement and not s.buff.ascendance.up end,
-					spend = 0.094,
+					spend = 0.01,
 					cast = 0,
 					gcdType = 'melee',
 					cooldown = 7.5
@@ -395,7 +395,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 
 	AddAbility( 'unleash_elements', 73680,
 				{
-					spend = 0.082,
+					spend = 0.075,
 					cast = 0,
 					gcdType = 'spell',
 					cooldown = 15
@@ -420,7 +420,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 	AddAbility( 'windstrike', 115356,
 				{
 					known = function( s ) return s.spec.enhancement and s.buff.ascendance.up end,
-					spend = 0.094,
+					spend = 0.01,
 					cast = 0,
 					gcdType = 'melee',
 					cooldown = 7.5
@@ -441,6 +441,14 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 			
 			ModifyAbility( 'ascendance', 'id', 165341 )
 
+			ModifyAbility( 'ascendance', 'spend', function( x )
+				return x * 0.25
+			end )
+			
+			ModifyAbility( 'bloodlust', 'spend', function( x )
+				return x * 0.25
+			end )
+
 			ModifyAbility( 'chain_lightning', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
 				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
@@ -450,6 +458,10 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 			ModifyAbility( 'chain_lightning', 'spend', function( x )
 				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
 				return x
+			end )
+
+			ModifyAbility( 'earth_elemental_totem', 'spend', function( x )
+				return x * 0.25
 			end )
 			
 			ModifyAbility( 'elemental_blast', 'cast', function( x )
@@ -463,20 +475,37 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 				return x
 			end )
 
+			ModifyAbility( 'feral_spirit', 'spend', function( x )
+				return x * 0.25
+			end )
+			
 			ModifyAbility( 'fire_nova', 'cooldown', function( x )
 				if buff.echo_of_the_elements.up then return 0 end
 				return x * haste
 			end )
 
+			ModifyAbility( 'fire_nova', 'spend', function( x )
+				if spec.enhancement then return x * 0.25 end
+				return x
+			end )
+			
 			ModifyAbility( 'flame_shock', 'cooldown', function( x )
 				return x * haste
+			end )
+			
+			ModifyAbility( 'flame_shock', 'spend', function( x )
+				return x * 0.10
 			end )
 
 			ModifyAbility( 'frost_shock', 'cooldown', function( x )
 				if glyph.frost_shock.enabled then x = x - 2 end
 				return x * haste
 			end )
-
+			
+			ModifyAbility( 'frost_shock', 'spend', function( x )
+				return x * 0.10
+			end )
+			
 			ModifyAbility( 'healing_rain', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
 				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
@@ -499,6 +528,10 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 				return x
 			end )
 
+			ModifyAbility( 'heroism', 'spend', function( x )
+				return x * 0.25
+			end )
+
 			ModifyAbility( 'lava_lash', 'cooldown', function( x )
 				if buff.echo_of_the_elements.up then return 0 end
 				return x * haste
@@ -517,6 +550,14 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 				return x
 			end )
 
+			ModifyAbility( 'magma_totem', 'spend', function( x )
+				return x * 0.25
+			end )
+
+			ModifyAbility( 'searing_totem', 'spend', function( x )
+				return x * 0.25
+			end )			
+			
 			ModifyAbility( 'stormstrike', 'cooldown', function( x )
 				if buff.echo_of_the_elements.up then return 0 end
 				return x * haste
@@ -524,6 +565,14 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 			
 			ModifyAbility( 'unleash_elements', 'cooldown', function( x )
 				return x * haste
+			end )
+
+			ModifyAbility( 'unleash_elements', 'spend', function( x )
+				return x * 0.25
+			end )
+			
+			ModifyAbility( 'wind_shear', 'spend', function( x )
+				return x * 0.25
 			end )
 			
 			ModifyAbility( 'windstrike', 'cooldown', function( x )
@@ -552,14 +601,21 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 				return x
 			end )
 			
-			ModifyAbility( 'earthquake', 'cooldown', cd_echo_of_the_elements )
+			ModifyAbility( 'earthquake', 'cooldown',  function( x )
+				if buff.echo_of_the_elements.up then return 0 end
+				return x
+			end )
 	
 			ModifyAbility( 'elemental_blast', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
 				return x
 			end )
 	
-			ModifyAbility( 'frost_shock', 'cooldown', cd_frost_shock, cd_echo_of_the_elements )
+			ModifyAbility( 'frost_shock', 'cooldown',  function( x )
+				if buff.echo_of_the_elements.up then return 0 end
+				if glyph.frost_shock.enabled then x = x - 2 end
+				return x
+			end )
 
 			ModifyAbility( 'healing_rain', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
@@ -576,7 +632,11 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 				elseif buff.ancestral_swiftness.up then return 0 end
 				return x
 			end )
-			ModifyAbility( 'lava_burst', 'cooldown', cd_ascendance, cd_echo_of_the_elements )
+			ModifyAbility( 'lava_burst', 'cooldown', function( x )
+				if buff.ascendance.up then return 0 end
+				if buff.echo_of_the_elements.up then return 0 end
+				return x
+			end )
 			
 			ModifyAbility( 'lightning_bolt', 'cast', 2.0 )
 
@@ -609,6 +669,11 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 		-- Shared
 		ModifyAbility( 'fire_elemental_totem', 'cooldown', function( x )
 			if glyph.fire_elemental_totem.enabled then x = x / 2 end
+			return x
+		end )
+		
+		ModifyAbility( 'fire_elemental_totem', 'spend', function( x )
+			if spec.enhancement then return x * 0.25 end
 			return x
 		end )
 
