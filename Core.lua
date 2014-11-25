@@ -606,7 +606,7 @@ function HasRequiredResources( ability )
 			spend = action.spend
 			resource = action.spend_type or Hekili.ClassResource
 		elseif type( action.spend ) == 'function' then
-			spend, resource = action.spend()
+			spend, resource = action.spend( s )
 		end
 
 		local resKey = GetResourceName( resource )
@@ -629,6 +629,8 @@ function H:UpdateResources( ability )
 	local action = H.Abilities[ ability ]
 	
 	if not action then return end
+
+	local s = self.State
 	
 	-- First, spend resources.
 	if action.spend then
@@ -638,7 +640,7 @@ function H:UpdateResources( ability )
 			spend = action.spend
 			resource = action.spend_type or Hekili.ClassResource
 		elseif type( action.spend ) == 'function' then
-			spend, resource = action.spend()
+			spend, resource = action.spend( s )
 		end
 
 		local resKey = GetResourceName( resource )
@@ -658,7 +660,7 @@ function H:UpdateResources( ability )
 			gain = action.gain
 			resource = action.gain_type or Hekili.ClassResource
 		elseif type( action.gain ) == 'function' then
-			gain, resource = action.gain()
+			gain, resource = action.gain( s )
 		end
 
 		local resKey = GetResourceName( resource )
