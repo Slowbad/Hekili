@@ -84,7 +84,6 @@ end
 
 
 -- Modify
--- If 'elem' is an ID, it will modify the base table.
 -- If 'value' is a function, it will be used as a modifier.
 -- If 'value' is a raw value, it will replace the base element.
 function Modify( tab, key, elem, value )
@@ -94,11 +93,7 @@ function Modify( tab, key, elem, value )
 	if type( value ) == 'function' then
 		entry.mods[elem] = setfenv( value, Hekili.State )
 	else
-		if elem == 'id' then
-			entry[elem] = value
-		else
-			entry.elem[elem] = value
-		end
+		entry.elem[elem] = value
 	end
 end
 

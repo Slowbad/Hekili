@@ -157,7 +157,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					cooldown = 90
 				} )
 
-	AddAbility(	'ascendance', 165341,
+	AddAbility(	'ascendance', 165341, 165339,
 				{
 					known = 114049,
 					spend = 0.052,
@@ -452,7 +452,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 			ModifyAbility( 'chain_lightning', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
 				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
-				return x
+				return x * haste
 			end )
 			
 			ModifyAbility( 'chain_lightning', 'spend', function( x )
@@ -467,7 +467,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 			ModifyAbility( 'elemental_blast', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
 				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
-				return x
+				return x * haste
 			end )
 
 			ModifyAbility( 'feral_spirit', 'cooldown', function( x )
@@ -509,7 +509,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 			ModifyAbility( 'healing_rain', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
 				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
-				return x
+				return x * haste
 			end )
 			
 			ModifyAbility( 'healing_rain', 'spend', function( x )
@@ -520,7 +520,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 			ModifyAbility( 'healing_surge', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
 				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
-				return x
+				return x * haste
 			end )
 			
 			ModifyAbility( 'healing_surge', 'spend', function( x )
@@ -542,7 +542,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 			ModifyAbility( 'lightning_bolt', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
 				if buff.maelstrom_weapon.up then x = ( x - ( x * ( 0.2 * buff.maelstrom_weapon.stack ) ) ) end
-				return x
+				return x * haste
 			end )
 			
 			ModifyAbility( 'lightning_bolt', 'spend', function( x )
@@ -579,8 +579,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 				if buff.echo_of_the_elements.up then return 0 end
 				return x * haste
 			end )
-	
-	
+
 			ModifyAura( 'ascendance', 'id', 114051 )
 			
 			ModifyAura( 'lightning_shield', 'max_stack', 1 )
@@ -589,16 +588,18 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 		elseif self.Specialization == 262 then
 			Hekili.minGCD = 1.5
 
-			ModifyAbility( 'ascendance', 'id', 165339 )
+			ModifyAbility( 'ascendance', 'id', function( x )
+				return 165339
+			end )
 
 			ModifyAbility( 'chain_lightning', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
-				return x
+				return x * haste
 			end )
 			
 			ModifyAbility( 'earthquake', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
-				return x
+				return x * haste
 			end )
 			
 			ModifyAbility( 'earthquake', 'cooldown',  function( x )
@@ -608,7 +609,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 	
 			ModifyAbility( 'elemental_blast', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
-				return x
+				return x * haste
 			end )
 	
 			ModifyAbility( 'frost_shock', 'cooldown',  function( x )
@@ -619,19 +620,20 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 
 			ModifyAbility( 'healing_rain', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
-				return x
+				return x * haste
 			end )
 
 			ModifyAbility( 'healing_surge', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
-				return x
+				return x * haste
 			end )
 
 			ModifyAbility( 'lava_burst', 'cast', function( x )
 				if buff.lava_surge.up then return 0
 				elseif buff.ancestral_swiftness.up then return 0 end
-				return x
+				return x * haste
 			end )
+			
 			ModifyAbility( 'lava_burst', 'cooldown', function( x )
 				if buff.ascendance.up then return 0 end
 				if buff.echo_of_the_elements.up then return 0 end
@@ -642,7 +644,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 
 			ModifyAbility( 'lightning_bolt', 'cast', function( x )
 				if buff.ancestral_swiftness.up then return 0 end
-				return x
+				return x * haste
 			end )
 			
 			ModifyAbility( 'spiritwalkers_grace', 'cooldown', function( x )
@@ -805,7 +807,6 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 		if buff.ancestral_swiftness.up then H:RemoveBuff( 'ancestral_swiftness' )
 		elseif buff.maelstrom_weapon.up then H:RemoveBuff( 'maelstrom_weapon' ) end
 	end )
-
 
 	AddHandler( 'heroism', Hekili.Abilities[ 'bloodlust' ].handler )
 
