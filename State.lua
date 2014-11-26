@@ -258,7 +258,7 @@ local mt_state	= {
 			return ( H.Auras[ t.this_action ].duration )
 		
 		elseif k == 'ticking' then
-			if t.dot[ t.this_action ] then return ( t.dot[ t.this_action ].ticking ) end
+			if H.Auras[ t.this_action ] then return ( t.dot[ t.this_action ].ticking ) end
 			return false
 			
 		elseif k == 'ticks' then return 0
