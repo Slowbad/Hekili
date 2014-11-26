@@ -2202,7 +2202,7 @@ function Hekili:SetOption( info, input )
 				if option == 'Move' then
 					local placeholder = table.remove( display.Queues, hookID )
 					table.insert( display.Queues, input, placeholder )
-					RebuildOptions, RebuildCache, RebuildScripts, Select = true, true, true, 'P'..input
+					Rebuild, Select = true, 'P'..input
 				
 				elseif option == 'Script' then
 					hook[ option ] = input:trim()
@@ -2341,7 +2341,7 @@ function Hekili:SetOption( info, input )
 					action[ option ] = nil
 					local placeholder = table.remove( list.Actions, actID )
 					table.insert( list.Actions, input, placeholder )
-					RebuildScripts, RebuildOptions, Select = true, true, 'A'..input
+					Rebuild, Select = true, 'A'..input
 				
 				elseif option == 'Script' or option == 'Args' then
 					input = input:trim()
