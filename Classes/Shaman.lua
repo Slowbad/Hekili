@@ -117,6 +117,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 	AddAura( 'elemental_fusion', 157174, 'duration', 15, 'max_stacks', 2 )
 	AddAura( 'elemental_mastery', 16166, 'duration', 20 )
 	AddAura( 'improved_chain_lightning', 157766, 'duration', 10 )
+	Hekili.Auras[ 'enhanced_chain_lightning' ] = Hekili.Auras[ 'improved_chain_lightning' ] -- alias bc SimC uses both.
 	AddAura( 'flame_shock', 8050, 'duration', 30 )
 	AddAura( 'frost_shock', 8056, 'duration', 8 )
 	AddAura( 'healing_rain', 73920, 'duration', 10 )
@@ -653,6 +654,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 			end )
 			
 			ModifyAbility( 'lava_burst', 'cooldown', function( x )
+				if buff.lava_surge.up and cast_start > 0 and buff.lava_surge.applied > cast_start then return 0 end
 				if buff.ascendance.up then return 0 end
 				if buff.echo_of_the_elements.up then return 0 end
 				return x
@@ -835,7 +837,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 	AddHandler( 'lava_beam', Hekili.Abilities[ 'chain_lightning' ].handler )
 	
 	AddHandler( 'lava_burst', function ()
-		if buff.lava_surge.up then H:RemoveBuff( 'lava_surge' )  end
+		if buff.lava_surge.up and ( cast_start == 0 or buff.lava_surge.applied < cast_start ) then H:RemoveBuff( 'lava_surge' ) end
 		if buff.echo_of_the_elements.up then H:RemoveBuff( 'echo_of_the_elements' ) end
 	end )
 	

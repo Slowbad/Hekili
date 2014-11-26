@@ -272,6 +272,8 @@ function RunHandler( ability )
 		Hekili.State.false_start = Hekili.State.now + Hekili.State.offset
 	end
 	
+	Hekili.State.cast_start = 0
+	
 	if select(2, UnitClass( 'PLAYER' ) ) == 'WARRIOR' and ( not ab.elem.passive ) and s.nextMH < 0 then
 		local s = Hekili.State
 		s.nextMH = s.now + s.offset - 0.01
