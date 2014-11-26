@@ -441,6 +441,7 @@ function Hekili:ResetState()
 	
 	s.now = GetTime()
 	s.offset = 0
+	s.false_start = 0
 	
 	-- A decent start, but assumes our first ability is always aggressive.  Not necessarily true...
 	if self.Class == 'WARRIOR' then

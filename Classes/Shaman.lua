@@ -179,7 +179,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.01,
 					cast = 2.0,
 					gcdType = 'spell',
-					cooldown = 0
+					cooldown = 0,
+					hostile = true
 				} )
 
 	AddAbility( 'earth_elemental_totem', 2062,
@@ -195,7 +196,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.012,
 					cast = 0,
 					gcdType = 'spell',
-					cooldown = 6
+					cooldown = 6,
+					hostile = true
 				} )
 
 	AddAbility( 'earthquake', 61882, 
@@ -203,7 +205,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.008,
 					cast = 2.5,
 					gcdType = 'spell',
-					cooldown = 10
+					cooldown = 10,
+					hostile = true
 				} )
 
 	AddAbility( 'elemental_blast', 117014,
@@ -211,7 +214,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0,
 					cast = 2.0,
 					gcdType = 'spell',
-					cooldown = 12
+					cooldown = 12,
+					hostile = true
 				} )	
 
 	AddAbility( 'elemental_mastery', 16166,
@@ -243,7 +247,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.137,
 					cast = 0,
 					gcdType = 'spell',
-					cooldown = 4.5
+					cooldown = 4.5,
+					hostile = true
 				} )
 
 	AddAbility( 'flame_shock', 8050,
@@ -251,7 +256,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.012,
 					cast = 0,
 					gcdType = 'spell',
-					cooldown = 6
+					cooldown = 6,
+					hostile = true
 				} )
 
 	AddAbility( 'frost_shock', 8056,
@@ -259,7 +265,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.012,
 					cast = 0,
 					gcdType = 'spell',
-					cooldown = 6
+					cooldown = 6,
+					hostile = true
 				} )
 
 	AddAbility( 'healing_rain', 73920,
@@ -292,7 +299,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.01,
 					cast = 2,
 					gcdType = 'spell',
-					cooldown = 0
+					cooldown = 0,
+					hostile = true
 				} )
 
 	AddAbility( 'lava_burst', 51505,
@@ -301,7 +309,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.005,
 					cast = 2,
 					gcdType = 'spell',
-					cooldown = 8
+					cooldown = 8,
+					hostile = true
 				} )
 
 	AddAbility( 'lava_lash', 60103,
@@ -309,7 +318,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.01,
 					cast = 0,
 					gcdType = 'melee',
-					cooldown = 9
+					cooldown = 9,
+					hostile = true
 				} )
 
 	AddAbility( 'lightning_bolt', 403,
@@ -317,7 +327,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.018,
 					cast = 2.5,
 					gcdType = 'spell',
-					cooldown = 0
+					cooldown = 0,
+					hostile = true
 				} )
 
 	AddAbility( 'lightning_shield', 324,
@@ -333,7 +344,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0,
 					cast = 0,
 					gcdType = 'spell',
-					cooldown = 45
+					cooldown = 45,
+					hostile = true
 				} )
 
 	AddAbility( 'magma_totem', 8190,
@@ -341,7 +353,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.211,
 					cast = 0,
 					gcdType = 'totem',
-					cooldown = 0
+					cooldown = 0,
+					hostile = true
 				} )
 
 	AddAbility( 'searing_totem', 3599,
@@ -349,7 +362,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.03,
 					cast = 0,
 					gcdType = 'totem',
-					cooldown = 0
+					cooldown = 0,
+					hostile = true
 				} )
 
 	AddAbility( 'spiritwalkers_grace', 79206,
@@ -374,7 +388,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.01,
 					cast = 0,
 					gcdType = 'melee',
-					cooldown = 7.5
+					cooldown = 7.5,
+					hostile = true
 				} )
 	
 	AddAbility( 'strike', 73899,
@@ -382,7 +397,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.094,
 					cast = 0,
 					gcdType = 'melee',
-					cooldown = 8
+					cooldown = 8,
+					hostile = true
 				} )
 	
 	AddAbility( 'thunderstorm', 51490,
@@ -390,7 +406,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0,
 					cast = 0,
 					gcdType = 'spell',
-					cooldown = 45
+					cooldown = 45,
+					hostile = true
 				} )
 
 	AddAbility( 'unleash_elements', 73680,
@@ -423,7 +440,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 					spend = 0.01,
 					cast = 0,
 					gcdType = 'melee',
-					cooldown = 7.5
+					cooldown = 7.5,
+					hostile = true
 				} )
 
 				

@@ -219,7 +219,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			end,
 			cast = 0,
 			gcdType = 'melee',
-			cooldown = 0
+			cooldown = 0,
+			hostile = true
 		} )
 
 	AddHandler( 'divine_storm', function ()
@@ -234,7 +235,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			cast = 0,
 			gcdType = 'spell', 
 			cooldown = 60,
-			known = function( s ) return s.talent.execution_sentence.enabled end
+			known = function( s ) return s.talent.execution_sentence.enabled end,
+			hostile = true
 		} )
 	
 	AddHandler( 'execution_sentence', function ()
@@ -247,7 +249,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			spend = 0.04,
 			cast = 0,
 			gcdType = 'spell',
-			cooldown = 15
+			cooldown = 15,
+			hostile = true
 		} )
 
 	ModifyAbility( 'exorcism', 'cooldown', function( x )
@@ -278,7 +281,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			cast = 0,
 			gcdType = 'spell',
 			cooldown = 0,
-			known = function( s ) return s.talent.final_verdict.enabled end
+			known = function( s ) return s.talent.final_verdict.enabled end,
+			hostile = true
 		} )
 
 	AddHandler( 'final_verdict', function()
@@ -292,7 +296,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			spend = 0.03,
 			cast = 0,
 			gcdType = 'melee',
-			cooldown = 4.5
+			cooldown = 4.5,
+			hostile = true
 		} )	
 	
 	ModifyAbility( 'hammer_of_the_righteous', 'cooldown', function( x )
@@ -310,7 +315,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			cast = 0,
 			gcdType = 'melee',
 			cooldown = 6,
-			usable = function( s ) return ( s.target.health_pct <= ( s.perk.empowered_hammer_of_wrath.enabled and 35 or 20 ) ) or s.buff.avenging_wrath.up end
+			usable = function( s ) return ( s.target.health_pct <= ( s.perk.empowered_hammer_of_wrath.enabled and 35 or 20 ) ) or s.buff.avenging_wrath.up end,
+			hostile = true
 		} )
 
 	ModifyAbility( 'hammer_of_wrath', 'cooldown', function( x )
@@ -344,7 +350,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			spend = 0.17,
 			cast = 0,
 			gcdType = 'spell',
-			cooldown = 20
+			cooldown = 20,
+			hostile = true
 		} )	
 	
 
@@ -353,7 +360,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			spend = 0.12,
 			cast = 0,
 			gcdType = 'spell',
-			cooldown = 6
+			cooldown = 6,
+			hostile = true
 		} )
 	
 	ModifyAbility( 'judgment', 'cooldown', function( x )
@@ -377,7 +385,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			spend = 0.519,
 			cast = 0,
 			gcdType = 'spell',
-			cooldown = 60
+			cooldown = 60,
+			hostile = true
 		} )
 
 	
@@ -386,7 +395,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			spend =  0.117,
 			cast = 0,
 			gcdType = 'off',
-			cooldown = 15
+			cooldown = 15,
+			hostile = true
 		} )
 	
 	AddHandler( 'rebuke', function ()
@@ -446,7 +456,8 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			cast = 0,
 			gcdType = 'spell',
 			cooldown = 0,
-			known = function( s ) return not s.talent.final_verdict.enabled end
+			known = function( s ) return not s.talent.final_verdict.enabled end,
+			hostile = true
 		} )
 	
 	AddHandler( 'templars_verdict', function ()

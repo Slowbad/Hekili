@@ -60,7 +60,7 @@ state.stance = state.seal
 function H:SetCooldown( action, duration )
 
 	self.State.cooldown[ action ]			= self.State.cooldown[ action ] or {}
-	self.State.cooldown[ action ].start	= self.State.now + self.State.offset
+	-- self.State.cooldown[ action ].start	= self.State.now + self.State.offset
 	self.State.cooldown[ action ].duration	= duration
 	self.State.cooldown[ action ].expires	= self.State.now + self.State.offset + duration
 	
@@ -201,8 +201,8 @@ local mt_state	= {
 			
 		elseif k == 'time' then
 			-- Calculate time in combat.
-			if H.combat == 0 then return t.offset
-			else return t.now + ( t.offset or 0 ) - H.combat end
+			if H.combat == 0 and t.false_start == 0 then return 0
+			else return t.now + ( t.offset or 0 ) - ( H.combat > 0 and H.combat or t.false_start ) end
 
 		elseif k == 'time_to_die' then
 			-- Harvest TTD calculation from Hekili.

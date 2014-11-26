@@ -262,8 +262,14 @@ H.Utils.AddHandler = AddHandler
 function RunHandler( ability )
 	local ab = H.Abilities[ ability ]
 	
-	if ab and ab.elem[ 'handler' ] then
+	if not ab then return end
+	
+	if ab.elem[ 'handler' ] then
 		ab.elem[ 'handler' ] ()
+	end
+	
+	if ab.hostile and H.combat == 0 then
+		Hekili.State.false_start = Hekili.State.now + Hekili.State.offset
 	end
 	
 	if select(2, UnitClass( 'PLAYER' ) ) == 'WARRIOR' and ( not ab.elem.passive ) and s.nextMH < 0 then
