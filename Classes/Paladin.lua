@@ -347,6 +347,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 	
 	AddAbility( 'holy_prism', 114165,
 		{
+      known = function( s ) return s.talent.holy_prism.enabled end,
 			spend = 0.17,
 			cast = 0,
 			gcdType = 'spell',
@@ -382,6 +383,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 	
 	AddAbility( 'lights_hammer', 114158,
 		{
+      known = function( s ) return s.talent.lights_hammer.enabled end,
 			spend = 0.519,
 			cast = 0,
 			gcdType = 'spell',

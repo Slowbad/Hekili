@@ -87,17 +87,49 @@ end
 
 
 local non_localized_specializations = {
-  [250] = 'blood',  [251] = 'frost',  [252] = 'unholy',
-  [102] = 'balance',  [103] = 'feral',  [104] = 'guardian',  [105] = 'restoration',
-  [253] = 'beast_mastery',  [254] = 'marksmanship',  [255] = 'survival',
-  [62] = 'arcane',  [63] = 'fire',  [64] = 'frost',
-  [268] = 'brewmaster',  [269] = 'windwalker',  [270] = 'mistweaver',
-  [65] = 'holy',  [66] = 'protection',  [70] = 'retribution',
-  [256] = 'discipline',  [257] = 'holy',  [258] = 'shadow',
-  [259] = 'assassination',  [260] = 'combat',  [261] = 'subtlety',
-  [262] = 'elemental',  [263] = 'enhancement',  [264] = 'restoration',
-  [265] = 'affliction',  [266] = 'demonology',  [267] = 'destruction',
-  [71] = 'arms',  [72] = 'fury',
+  [250] = 'blood',
+  [251] = 'frost',
+  [252] = 'unholy',
+
+  [102] = 'balance',
+  [103] = 'feral',
+  [104] = 'guardian',
+  [105] = 'restoration',
+
+  [253] = 'beast_mastery',
+  [254] = 'marksmanship',
+  [255] = 'survival',
+
+  [62] = 'arcane',
+  [63] = 'fire',
+  [64] = 'frost',
+
+  [268] = 'brewmaster',
+  [269] = 'windwalker',
+  [270] = 'mistweaver',
+
+  [65] = 'holy',
+  [66] = 'protection',
+  [70] = 'retribution',
+
+  [256] = 'discipline',
+  [257] = 'holy',
+  [258] = 'shadow',
+
+  [259] = 'assassination',
+  [260] = 'combat',
+  [261] = 'subtlety',
+
+  [262] = 'elemental',
+  [263] = 'enhancement',
+  [264] = 'restoration',
+
+  [265] = 'affliction',
+  [266] = 'demonology',
+  [267] = 'destruction',
+
+  [71] = 'arms',
+  [72] = 'fury',
   [73] = 'protection'
 }
 
