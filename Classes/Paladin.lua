@@ -125,6 +125,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 	AddAura( 'seal_of_command', 105361 )
 	AddAura( 'seal_of_insight', 20165 )
 	AddAura( 'selfless_healer', 114250 )
+	AddAura( 'seraphim', 152262 )
 	AddAura( 'turalyons_justice', 156987, 'duration', 20 )
 	AddAura( 'uthers_insight', 156988, 'duration', 20 )
 
