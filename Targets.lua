@@ -169,6 +169,14 @@ function Hekili:Audit()
 			self.TTD[ whom ] = nil
 		end
 	end
+  
+  for i = #Hekili.IncomingDamage, 1, -1 do
+    local instance = Hekili.IncomingDamage[ i ]
+    
+    if instance.t < ( now - 15 ) then
+      table.remove( Hekili.IncomingDamage, i )
+    end
+  end
 	
 	if self.DB.profile.Enabled then
 		C_Timer.After( 1, self.Audit )

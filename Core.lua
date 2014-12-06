@@ -261,7 +261,7 @@ function StripScript( str, thorough )
 		-- Collapse whitespace around comparison operators.
 		str = str:gsub("[%s-]==[%s-]", "=="):gsub("[%s-]>=[%s-]", ">="):gsub("[%s-]<=[%s-]", "<="):gsub("[%s-]~=[%s-]", "~="):gsub("[%s-]<[%s-]", "<"):gsub("[%s-]>[%s-]", ">")
 	else
-		str = str:gsub("[=+]", " "):gsub("[><~]", " "):gsub("[*//-+]", " ")
+		str = str:gsub("[=+]", " "):gsub("[><~]", " "):gsub("[%*//%-%+]", " ")
 	end
 	
 	-- Collapse the rest of the whitespace.
@@ -348,6 +348,9 @@ function H:OnEnable()
 	if self.DB.profile.Enabled then
 		-- Combat Log (targets, debuffs).
 		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    
+    -- Damage Taken
+    self:RegisterEvent("UNIT_COMBAT")
 		
 		-- Sanity checks, may want to just get this into the RefreshOptions() from profile handling.
 		self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
@@ -414,7 +417,7 @@ local s_textures = setmetatable( {},
 	{
 		__index = function(t, k)
 			local a = _G[ 'GetSpellTexture' ](k)
-			if a then t[k] = a end
+			if a and k ~= GetSpellInfo( 115698 ) then t[k] = a end
 			return (a)
 		end
 	} )
@@ -443,6 +446,11 @@ function Hekili:ResetState()
 	s.offset = 0
 	s.false_start = 0
 	s.cast_start = 0
+  
+  for i = #s.purge, 1, -1 do
+    s[ s.purge[ i ] ] = nil
+    table.remove( s.purge, i )
+  end
 	
 	-- A decent start, but assumes our first ability is always aggressive.  Not necessarily true...
 	if self.Class == 'WARRIOR' then
@@ -450,7 +458,6 @@ function Hekili:ResetState()
 		s.nextOH = ( self.combat ~= 0 and self.Swing.nextOH > self.State.now ) and self.Swing.nextOH or -1
 	end
 	
-	-- broke fullscan for now.  :(
 	for k in pairs( s.buff ) do
 		if H.Auras[ k ].id < 0 then
 			s.buff[ k ].name = nil
@@ -464,6 +471,8 @@ function Hekili:ResetState()
 	for k in pairs( s.cooldown ) do
 		s.cooldown[ k ].duration = nil
 		s.cooldown[ k ].expires = nil
+    s.cooldown[ k ].charges = nil
+    s.cooldown[ k ].next_charge = nil
 	end
 	
 	for k in pairs( s.debuff ) do
@@ -537,7 +546,7 @@ function Hekili:ResetState()
 		cast_time = ( endCast / 1000) - GetTime()
 		casting = FormatKey( spellcast )
 	end				
-
+  
 	if cast_time and casting then
 		self:Advance( cast_time )
 		if self.Abilities[ casting ] then
@@ -547,8 +556,14 @@ function Hekili:ResetState()
 	end
 	
 	-- Delay to end of GCD.
-	if self.State.cooldown[ self.GCD ].remains > 0 then
-		self:Advance( self.State.cooldown[ self.GCD ].remains )
+  local delay = s.cooldown[ self.GCD ].remains
+  
+  if self.Class == 'MONK' and s.buff.spinning_crane_kick.up then
+    delay = max( delay, s.buff.spinning_crane_kick.remains )
+  end
+  
+	if delay > 0 then
+		self:Advance( delay )
 	end
 
 end
@@ -614,12 +629,20 @@ function HasRequiredResources( ability )
 		end
 
 		local resKey = GetResourceName( resource )
+    
+    if resKey == 'focus' or resKey == 'energy' then
+      -- Thought: We'll already delay CD based on time to get energy/focus.
+      -- So let's leave it alone.
+      return true
+    end
 		
 		if spend > 0 and spend < 1 then
 			spend = ( spend * s[ resKey ].max )
 		end
 		
-		return ( s[ resKey ].current >= spend )
+    if spend > 0 then
+      return ( s[ resKey ].current >= spend )
+    end
 	end
 	
 	return true
@@ -653,7 +676,9 @@ function H:UpdateResources( ability )
 			spend = ( spend * self.State[ resKey ].max )
 		end
 		
-		self.State[ resKey ].current = min( max(0, self.State[ resKey ].current - spend ), self.State[ resKey ].max )
+    if spend > 0 then
+      self.State[ resKey ].current = min( max(0, self.State[ resKey ].current - spend ), self.State[ resKey ].max )
+    end
 	end
 	
 	-- Now, gain resources.
@@ -728,9 +753,30 @@ function WaitTime( action )
 			delay = 180 - ( 15 - Hekili.State.buff.ascendance.remains )
 		end
 	end
-	
-	return max( delay, Hekili.State.cooldown[ Hekili.GCD ].remains ) 
+  
+  local ability = Hekili.Abilities[ action ]
+  
+  if ability.spend and Hekili.Class == 'MONK' then
+    local spend, resource
+    
+    if type( ability.spend ) == 'number' then
+      spend = ability.spend
+      resource = ability.spend_type or Hekili.ClassResource
+    elseif type( ability.spend ) == 'function' then
+      spend, resource = ability.spend( Hekili.State )
+    end
+    
+    resource = GetResourceName( resource )
+    
+    if resource == 'focus' or resource == 'energy' and spend > Hekili.State[ resource ].current then
+      delay = max( delay, 0.1 + ( ( spend - Hekili.State[ resource ].current ) / Hekili.State[ resource ].regen ) )
+    end
+  end
+
+	return delay
 end
+
+Hekili.WaitTime = WaitTime
 
 
 function ImplantDebugData( queue )
@@ -748,6 +794,17 @@ function ImplantDebugData( queue )
 		Hekili:StoreValues( queue.ActElements, scrAction )
 	end
 end							
+
+
+function Hekili.Check( action, key )
+  print( 'Checking ' .. action .. ' (' .. key .. ').')
+  print( '...IsKnown: ' .. tostring( IsKnown( action ) ) )
+  print( '...IsUsable: ' .. tostring( IsUsable( action ) ) )
+  print( '...Resources: ' .. tostring( HasRequiredResources( action ) ) )
+  print( '...Script: ' .. tostring( Hekili:CheckScript( 'A', key ) ) )
+  print( '...Wait: ' .. WaitTime( action ) )
+  print( '...CD: ' .. Hekili.State.cooldown[action].remains )
+end
 
 
 Hekili.Queue = {}
@@ -807,10 +864,11 @@ function Hekili:ProcessHooks( dispID )
 										local entry	= list.Actions[ actID ]
 										s.this_action	= entry.Ability
 										local wait_time = WaitTime( s.this_action )
+                    s.this_delay = wait_time
 										
 										if self.ActionVisible[ listID..':'..actID ] then
 											-- Check for commands before checking actual actions.
-											
+                      
 											if entry.Ability == 'wait' then
 												if self:CheckScript( 'A', listID..':'..actID ) then
 													local args = self:GetModifiers( listID, actID )
@@ -822,7 +880,8 @@ function Hekili:ProcessHooks( dispID )
 
 												end
 											
-											elseif IsKnown( s.this_action ) and IsUsable( s.this_action ) and wait_time < chosen_wait and HasRequiredResources( s.this_action ) and ( self.Abilities[ s.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and self:CheckScript( 'A', listID..':'..actID ) then
+											elseif IsKnown( s.this_action ) and IsUsable( s.this_action ) and ( wait_time + 0.1 ) < chosen_wait and HasRequiredResources( s.this_action ) and ( self.Abilities[ s.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and self:CheckScript( 'A', listID..':'..actID ) then
+                      
 												chosen_action	= s.this_action
 												chosen_caption	= entry.Caption
 												chosen_wait		= wait_time
@@ -841,7 +900,7 @@ function Hekili:ProcessHooks( dispID )
 												Queue[i].caption		= chosen_caption
 												Queue[i].wait			= wait_time
 												
-											end
+                      end
 										
 										end
 										

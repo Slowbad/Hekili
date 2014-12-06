@@ -2490,7 +2490,6 @@ function Hekili:SerializeActionList( num )
 	
 	local serial = tblCopy( self.DB.profile.actionLists[ num ] )
 	
-	-- return self:Serialize(flat_display)
 	return self:Serialize( serial )
 end
 
@@ -2511,8 +2510,8 @@ function Hekili:ImportSimulationCraftActionList( str )
 
 	import = import:gsub("(|)([^|])", "%1|%2"):gsub("|||", "||")
 	
-	for _, v in ipairs( Hekili.Utils.Resources ) do
-		import, times = import:gsub( '('..v..')([^.])', "%1.current%2" )
+	for _, v in pairs( Hekili.Utils.Resources ) do
+		import, times = import:gsub( '([^_ ])('..v..')([^._])', "%1%2.current%3" )
 		if times > 0 then
 			Hekili:Print("Converted '" .. v .. "' to '" .. v .. ".current' (" .. times .. "x)." )
 		end
@@ -2522,6 +2521,16 @@ function Hekili:ImportSimulationCraftActionList( str )
 	if times > 0 then
 		Hekili:Print("Converted unconditional 'buff.react' to 'buff.up' (" .. times .. "x)." )
 	end
+  
+	import, times = import:gsub( "(incoming_damage_%d+[m]?s)([^><=~])", "%1>0%2" )
+	if times > 0 then
+		Hekili:Print("Converted unconditional 'incoming_damage_Xms' to 'incoming_damage_Xms>0' (" .. times .. "x)." )
+	end
+  
+  import, times = import:gsub( "!buff.(.-).remains", "!buff.%1.up")
+  if times > 0 then
+    Hekili:Print("Converted '!buff.X.remains' to '!buff.X.up' (" .. times .. "x)." )
+  end
 	
 	for i in import:gmatch("action.-=/?([^\n^$]*)") do
 		local _, commas = i:gsub(",", "")

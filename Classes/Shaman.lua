@@ -126,7 +126,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 	AddAura( 'liquid_magma', 152255, 'duration', 10, 'affects', 'pet' )
 	AddAura( 'maelstrom_weapon', 51530 , 'duration', 30, 'max_stacks', 5 )
 	AddAura( 'spiritwalkers_grace', 79206, 'duration', 15 )
-	AddAura( 'stormstrike'     , 17364 , 'duration', 15 )
+	AddAura( 'stormstrike', 17364 , 'duration', 15 )
 	AddAura( 'thunderstorm', 51490, 'duration', 5 )
 	AddAura( 'unleash_flame', 73683 , 'duration', 20 )
 	AddAura( 'unleash_wind', 73681 , 'duration', 30, 'max_stacks', 6 )

@@ -475,3 +475,38 @@ function H:UNIT_HEALTH( _, UID )
 	H.TTD[ uid ].sec = projectedTTD
 	
 end
+
+
+H.IncomingDamage = {}
+
+function H:UNIT_COMBAT( event, unitID, action, descriptor, damage, damageType )
+
+  if unitID == 'player' and action == 'WOUND' and damage > 0 then
+    local dmg = {
+      t = GetTime(),
+      damage = damage,
+      damageType = damageType
+    }
+    
+    table.insert( H.IncomingDamage, dmg )
+  end
+
+end
+
+
+function Hekili.DamageInLast( t )
+
+  local dmg = 0
+  local start = GetTime() - min( t, 15 )
+  
+  for k, v in pairs( H.IncomingDamage ) do
+  
+    if v.t > start then
+      dmg = dmg + v.damage
+    end
+      
+  end
+  
+  return dmg
+
+end

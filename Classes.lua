@@ -368,6 +368,28 @@ end )
 AddAura( 'blood_fury', 20572, 'duration', 15 )
 
 
+AddAbility( 'arcane_torrent', 28730, 50613, 80483, 129597, 155145, 25046, 69179,
+  {
+    spend = 0,
+    cast = 0,
+    gcdType = 'spell',
+    cooldown = 120
+  } )
+
+AddHandler( 'arcane_torrent', function ()
+  if Hekili.Resources[ SPELL_POWER_MANA ] then H:Gain( 0.03, SPELL_POWER_MANA ) end
+  H:Interrupt( 'target' )
+  
+  if class.death_knight then H:Gain( 20, "runic_power" )
+  elseif class.hunter then H:Gain( 15, "focus" )
+  elseif class.monk then H:Gain( 1, "chi" )
+  elseif class.paladin then H:Gain( 1, "holy_power" )
+  elseif class.rogue then H:Gain( 15, "energy" )
+  elseif class.warrior then H:Gain( 15, "rage" )
+  end
+end )
+
+
 -- Special Instructions
 AddAbility( 'wait', -1,
 			{

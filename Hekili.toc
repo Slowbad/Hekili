@@ -14,8 +14,9 @@ MultilineEditor.lua
 Constants.lua
 State.lua
 Classes.lua
-Classes\Shaman.lua
+Classes\Monk.lua
 Classes\Paladin.lua
+Classes\Shaman.lua
 # Classes\Warrior.lua
 Events.lua
 Targets.lua
