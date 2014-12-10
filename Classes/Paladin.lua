@@ -438,6 +438,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 	
 	AddAbility( 'seraphim', 152262,
 		{
+      known = function ( s ) return s.talent.seraphim.enabled end,
 			spend = 5,
 			spend_type = SPELL_POWER_HOLY_POWER,
 			cast = 0,
