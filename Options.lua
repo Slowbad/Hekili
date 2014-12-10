@@ -2517,9 +2517,9 @@ function Hekili:ImportSimulationCraftActionList( str )
 		end
 	end
 	
-	import, times = import:gsub( "(react)([^><=~])", "up%2" )
+	import, times = import:gsub( "[.](react)([^><=~])", ".up%2" )
 	if times > 0 then
-		Hekili:Print("Converted unconditional 'buff.react' to 'buff.up' (" .. times .. "x)." )
+		Hekili:Print("Converted unconditional 'buff.X.react' to 'buff.X.up' (" .. times .. "x)." )
 	end
   
 	import, times = import:gsub( "(incoming_damage_%d+[m]?s)([^><=~])", "%1>0%2" )

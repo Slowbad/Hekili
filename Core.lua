@@ -769,7 +769,7 @@ function WaitTime( action )
     resource = GetResourceName( resource )
     
     if resource == 'focus' or resource == 'energy' and spend > Hekili.State[ resource ].current then
-      delay = max( delay, 0.1 + ( ( spend - Hekili.State[ resource ].current ) / Hekili.State[ resource ].regen ) )
+      delay = max( delay, 0.25 + ( ( spend - Hekili.State[ resource ].current ) / Hekili.State[ resource ].regen ) )
     end
   end
 
@@ -1030,6 +1030,8 @@ function CheckDisplayCriteria( dispID )
 	return true
 
 end
+Hekili.CDC = CheckDisplayCriteria
+
 
 
 

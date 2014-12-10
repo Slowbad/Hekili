@@ -1290,11 +1290,11 @@ local mt_set_bonuses = {
 			if class then set = set .. class end
 
 			if t[set] >= pieces then
-				return 1
+				return true
 			end
 		end 
 		
-		return 0
+		return false
 
 	end
 }

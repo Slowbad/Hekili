@@ -102,6 +102,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
 	AddGlyph( 'zen_meditation', 120477 )
 	
 	-- Player Buffs.
+  AddAura( 'chi_explosion', 157680 )
 	AddAura( 'cranes_zeal', 127722 )
 	AddAura( 'fortifying_brew', 115203 )
 	AddAura( 'shuffle', 115307 )
@@ -174,6 +175,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
 	
 	AddAbility( 'blackout_kick', 100784,
 		{
+      known = function ( s ) return not s.talent.chi_explosion.enabled end,
 			spend = function ( s )
         if s.buff.combo_breaker_bok.up then return 0, SPELL_POWER_CHI end
         return 2, SPELL_POWER_CHI
@@ -190,6 +192,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
 	AddHandler( 'blackout_kick', function ()
 		if spec.brewmaster then H:Buff( 'shuffle', 6 )
 		elseif spec.mistweaver then H:Buff( 'cranes_zeal', 20 ) end
+    if buff.serenity.up then H:Gain( 2, 'chi' ) end
     H:RemoveBuff( 'combo_breaker_bok' )
 	end )
 	
@@ -256,6 +259,9 @@ if (select(2, UnitClass('player')) == 'MONK') then
       spend = function( s )
         if s.stance.spirited_crane then
           return 0.035, SPELL_POWER_MANA
+        end
+        if s.stance.fierce_tiger then
+          return 45, SPELL_POWER_ENERGY
         end
         return 40, SPELL_POWER_ENERGY
       end,
@@ -369,6 +375,10 @@ if (select(2, UnitClass('player')) == 'MONK') then
       usable = function ( s ) return s.target.health.pct < 10 end
     } )
   
+  AddHandler( 'touch_of_death', function ()
+    if buff.serenity.up then H:Gain( 3, 'chi' ) end
+  end )
+  
   
   AddAbility( 'breath_of_fire', 115181,
     {
@@ -383,6 +393,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
     if perk.improved_breath_of_fire.enabled or debuff.dizzying_haze.up then
       H:Debuff( 'target', 'breath_of_fire', 8 )
     end
+    if buff.serenity.up then H:Gain( 2, 'chi' ) end
   end )
   
   
@@ -467,6 +478,10 @@ if (select(2, UnitClass('player')) == 'MONK') then
       cooldown = 0
     } )
   
+  AddHandler( 'enveloping_mist', function ()
+    if buff.serenity.up then H:Gain( 3, 'chi' ) end
+  end )
+  
 
   AddAbility( 'fists_of_fury', 113656,
     {
@@ -479,6 +494,10 @@ if (select(2, UnitClass('player')) == 'MONK') then
     
   ModifyAbility( 'fists_of_fury', 'cast', function ( x )
     return x * haste
+  end )
+  
+  AddHandler( 'fists_of_fury', function ()
+    if buff.serenity.up then H:Gain( 3, 'chi' ) end
   end )
   
   
@@ -507,6 +526,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
   
   AddHandler( 'guard', function ()
     H:Buff( 'guard', 30 )
+    if buff.serenity.up then H:Gain( 2, 'chi' ) end
   end )
   
   
@@ -599,6 +619,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
     } )
   
   AddHandler( 'purifying_brew', function ()
+    if buff.serenity.up then H:Gain( 1, 'chi' ) end
     H:RemoveDebuff( 'player', 'stagger' )
     H:RemoveDebuff( 'player', 'light_stagger' )
     H:RemoveDebuff( 'player', 'moderate_stagger' )
@@ -641,6 +662,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
     } )
   
   AddHandler( 'rising_sun_kick', function ()
+    if buff.serenity.up then H:Gain( 2, 'chi' ) end
     H:Debuff( 'target', 'rising_sun_kick', 15 )
   end )
   
@@ -781,6 +803,10 @@ if (select(2, UnitClass('player')) == 'MONK') then
       gcdType = 'spell',
       cooldown = 0
     } )
+    
+  AddHandler( 'uplift', function ()
+    if buff.serenity.up then H:Gain( 2, 'chi' ) end
+  end )
   
   
   AddAbility( 'zen_meditation', 116176,
@@ -866,20 +892,28 @@ if (select(2, UnitClass('player')) == 'MONK') then
   
   AddHandler( 'chi_explosion', function ()
     if spec.brewmaster then
-      if chi.current >= 2 then H:Buff( 'shuffle', 2 + 2 * min(4, chi.current ) ) end
-      if chi.current >= 3 then
+      if chi.current >= 1 then H:Buff( 'shuffle', 2 + 2 * min(4, chi.current ) ) end
+      if chi.current >= 2 then
         H:RemoveDebuff( 'player', 'stagger' )
         H:RemoveDebuff( 'player', 'light_stagger' )
         H:RemoveDebuff( 'player', 'moderate_stagger' )
         H:RemoveDebuff( 'player', 'heavy_stagger' )
       end
     elseif spec.windwalker then
-      if chi.current >= 2 then H:Debuff( 'target', 'chi_explosion', 6 ) end
-      if chi.current >= 3 then H:AddStack( 'tigereye_brew', 1 ) end
+      if chi.current >= 1 then H:Debuff( 'target', 'chi_explosion', 6 ) end
+      if chi.current >= 2 then H:AddStack( 'tigereye_brew', 120, 1 ) end
     elseif spec.mistweaver then
-      if chi.current >= 2 then H:Buff( 'target', 'chi_explosion', 6 ) end
+      if chi.current >= 1 then H:Buff( 'target', 'chi_explosion', 6 ) end
     end
-    if buff.combo_breaker_ce.up then H:RemoveBuff( 'combo_breaker_ce' ) end
+    -- If we had more than one chi going into this, spend up to 3 more.
+    if chi.current > 0 then
+      H:Spend( min( 3, chi.current ), 'chi' )
+    end
+    
+    if buff.combo_breaker_ce.up then
+      H:RemoveBuff( 'combo_breaker_ce' )
+      H:Gain( 2, 'chi' )
+    end
   end )
   
   
