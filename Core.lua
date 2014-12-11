@@ -494,7 +494,7 @@ function Hekili:ResetState()
 		s.totem[ k ].expires = nil
 	end
 	
-	s.target.health.current = nil
+	s.target.health.actual = nil
 	s.target.health.max = nil
 	
 	-- range checks
@@ -507,8 +507,8 @@ function Hekili:ResetState()
 	for k,_ in pairs( H.Resources ) do
 		local key = GetResourceName( k )
 		
-		s[ key ] = rawget( s, key ) or setmetatable( {}, mt_resource )
-		s[ key ].current = UnitPower( 'player', k )
+		s[ key ] = rawget( s, key ) or setmetatable( { resource = key }, mt_resource )
+		s[ key ].actual = UnitPower( 'player', k )
 		s[ key ].max = UnitPowerMax( 'player', k )
 		
 		if k == UnitPowerType('player') then
@@ -522,8 +522,8 @@ function Hekili:ResetState()
 		end
 	end
 	
-	s.health = rawget( s, 'health' ) or setmetatable( {}, mt_resource )
-	s.health.current = UnitHealth( 'player' )
+	s.health = rawget( s, 'health' ) or setmetatable( { resource = 'health' }, mt_resource )
+	s.health.actual = UnitHealth( 'player' )
 	s.health.max = UnitHealthMax( 'player' )
 	
 	-- Special case spells that suck.
@@ -578,6 +578,7 @@ function H:Advance( time )
 	end
 	
 	s.offset = s.offset + time
+  s.this_delay = 0
 	
 	for k,_ in pairs( self.Resources ) do
 		local resKey = GetResourceName( k )
@@ -590,7 +591,7 @@ function H:Advance( time )
 				local gain = floor( 35 * s.mainhand_speed ) / 10
 				if self.Specialization == 71 then gain = gain * 2 end
 				
-				resource.current = min( resource.max, resource.current + gain )
+				resource.actual = min( resource.max, resource.actual + gain )
 				
 				s.nextMH = s.nextMH + MH
 			end
@@ -598,13 +599,13 @@ function H:Advance( time )
 			while ( OH and s.nextOH > 0 and s.nextOH < s.now + s.offset ) do
 				local gain = floor( 35 * s.offhand_speed * 0.5 ) / 10
 				
-				resource.current = min( resource.max, resource.current + gain )
+				resource.actual = min( resource.max, resource.actual + gain )
 
 				s.nextOH = s.nextOH + OH
 			end
 		
 		elseif resource.regen and resource.regen ~= 0 then
-			resource.current = min( resource.max, resource.current + ( resource.regen * time ) )
+			resource.actual = min( resource.max, resource.actual + ( resource.regen * time ) )
 		end
 	end
 
@@ -677,7 +678,7 @@ function H:UpdateResources( ability )
 		end
 		
     if spend > 0 then
-      self.State[ resKey ].current = min( max(0, self.State[ resKey ].current - spend ), self.State[ resKey ].max )
+      self.State[ resKey ].actual = min( max(0, self.State[ resKey ].actual - spend ), self.State[ resKey ].max )
     end
 	end
 	
@@ -698,7 +699,7 @@ function H:UpdateResources( ability )
 			gain = ( gain * self.State[ resKey ].max )
 		end
 
-		self.State[ resKey ].current = min( max(0, self.State[ resKey ].current + gain ), self.State[ resKey ].max )
+		self.State[ resKey ].actual = min( max(0, self.State[ resKey ].actual + gain ), self.State[ resKey ].max )
 	end
 	
 end
@@ -769,7 +770,7 @@ function WaitTime( action )
     resource = GetResourceName( resource )
     
     if resource == 'focus' or resource == 'energy' and spend > Hekili.State[ resource ].current then
-      delay = max( delay, 0.25 + ( ( spend - Hekili.State[ resource ].current ) / Hekili.State[ resource ].regen ) )
+      delay = max( delay, ( spend - Hekili.State[ resource ].current ) / Hekili.State[ resource ].regen )
     end
   end
 
@@ -880,7 +881,7 @@ function Hekili:ProcessHooks( dispID )
 
 												end
 											
-											elseif IsKnown( s.this_action ) and IsUsable( s.this_action ) and ( wait_time + 0.1 ) < chosen_wait and HasRequiredResources( s.this_action ) and ( self.Abilities[ s.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and self:CheckScript( 'A', listID..':'..actID ) then
+											elseif IsKnown( s.this_action ) and IsUsable( s.this_action ) and wait_time < chosen_wait and HasRequiredResources( s.this_action ) and ( self.Abilities[ s.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and self:CheckScript( 'A', listID..':'..actID ) then
                       
 												chosen_action	= s.this_action
 												chosen_caption	= entry.Caption

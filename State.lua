@@ -133,12 +133,13 @@ end
 -- Needs to actually use 'unit' !
 function H:Debuff( unit, aura, duration, stacks, value )
 
+
 	if duration == 0 then
-		self.State.buff[ aura ].expires = 0
-		self.State.buff[ aura ].count = 0
-		self.State.buff[ aura ].value = 0
-		self.State.buff[ aura ].start = 0
-		self.State.buff[ aura ].unit = unit
+		self.State.debuff[ aura ].expires = 0
+		self.State.debuff[ aura ].count = 0
+		self.State.debuff[ aura ].value = 0
+		self.State.debuff[ aura ].start = 0
+		self.State.debuff[ aura ].unit = unit
 	else
     self.State.debuff[ aura ] = self.State.debuff[ aura ] or {}
     self.State.debuff[ aura ].expires = self.State.now + self.State.offset + duration
@@ -202,12 +203,12 @@ end
 
 
 function H:Gain( amount, resource )
-	self.State[ resource ].current = min( self.State[ resource ].max, self.State[ resource ].current + amount )
+	self.State[ resource ].actual = min( self.State[ resource ].max, self.State[ resource ].actual + amount )
 end
 
 
 function H:Spend( amount, resource )
-	self.State[ resource ].current = max( 0, self.State[ resource ].current - amount )
+	self.State[ resource ].actual = max( 0, self.State[ resource ].actual - amount )
 end
 
 
@@ -235,6 +236,9 @@ local mt_state	= {
 		if k == 'this_action' then
 			-- We haven't tested an ability yet.
 			return 'wait'
+    
+    elseif k == 'this_delay' then
+      return 0
 			
 		elseif k == 'time' then
 			-- Calculate time in combat.
@@ -891,6 +895,13 @@ local mt_resource = {
 	__index = function(t, k)
 		if k == 'pct' then
 			return 100 * ( t.current / t.max )
+    
+    elseif k == 'current' then
+      -- This accommodates testing energy levels after a delay (i.e., use 'jab' in 3 seconds, conditions need to know energy at that time).
+      if t.resource == 'energy' or t.resource == 'focus' then
+        return min( t.max, t.actual + ( t.regen * Hekili.State.this_delay ) )
+      end
+      return t.actual
 		
 		elseif k == 'deficit' then
 			return t.max - t.current
