@@ -2506,33 +2506,35 @@ end
 function Hekili:ImportSimulationCraftActionList( str )
 	local import = str and str or Hekili.ImportString
 	local output, errors = {}, {}
-	local times = 0
+	local line, times = 0, 0
 
 	import = import:gsub("(|)([^|])", "%1|%2"):gsub("|||", "||")
 	
-	for _, v in pairs( Hekili.Utils.Resources ) do
-		import, times = import:gsub( '([^_ ])('..v..')([^._])', "%1%2.current%3" )
-		if times > 0 then
-			Hekili:Print("Converted '" .. v .. "' to '" .. v .. ".current' (" .. times .. "x)." )
-		end
-	end
-	
-	import, times = import:gsub( "[.](react)([^><=~])", ".up%2" )
-	if times > 0 then
-		Hekili:Print("Converted unconditional 'buff.X.react' to 'buff.X.up' (" .. times .. "x)." )
-	end
+  for i in import:gmatch("action.-=/?([^\n^$]*)") do
+    line = line + 1
   
-	import, times = import:gsub( "(incoming_damage_%d+[m]?s)([^><=~])", "%1>0%2" )
-	if times > 0 then
-		Hekili:Print("Converted unconditional 'incoming_damage_Xms' to 'incoming_damage_Xms>0' (" .. times .. "x)." )
-	end
+    for _, v in pairs( Hekili.Utils.Resources ) do
+      i, times = i:gsub( '([^_ ])('..v..')([^._])', "%1%2.current%3" )
+      if times > 0 then
+        Hekili:Print("Line " .. line .. ": Converted '" .. v .. "' to '" .. v .. ".current' (" .. times .. "x)." )
+      end
+    end
+    
+    i, times = i:gsub( "buff[.](.-)[.](react)([^><=~])", "buff.%1.up%3" )
+    if times > 0 then
+      Hekili:Print("Line " .. line .. ": Converted unconditional 'X.react' to 'X.up' (" .. times .. "x)." )
+    end
+    
+    i, times = i:gsub( "(incoming_damage_%d+[m]?s)([^><=~])", "%1>0%2" )
+    if times > 0 then
+      Hekili:Print("Line " .. line .. ": Converted unconditional 'incoming_damage_Xms' to 'incoming_damage_Xms>0' (" .. times .. "x)." )
+    end
+    
+    i, times = i:gsub( "[!]buff.(.-).remains", "!buff.%1.up")
+    if times > 0 then
+      Hekili:Print("Line " .. line .. ": Converted '!buff.X.remains' to '!buff.X.up' (" .. times .. "x)." )
+    end
   
-  import, times = import:gsub( "!buff.(.-).remains", "!buff.%1.up")
-  if times > 0 then
-    Hekili:Print("Converted '!buff.X.remains' to '!buff.X.up' (" .. times .. "x)." )
-  end
-	
-	for i in import:gmatch("action.-=/?([^\n^$]*)") do
 		local _, commas = i:gsub(",", "")
 		local _, condis = i:gsub(",if=", "")
 		

@@ -948,6 +948,13 @@ local mt_default_aura = {
 				t.caster = 'unknown'
 				return t[k]
 			end
+      
+      if t.key == 'liquid_magma' then
+				t.count	= H.State.cooldown.liquid_magma.remains > 34.5 and 1 or 0
+				t.expires = H.State.cooldown.liquid_magma.expires - 34.5
+        t.caster = 'player'
+        return t[k]
+      end
 
       if H.Auras[ t.key ].fullscan then
         for i = 1, 40 do
