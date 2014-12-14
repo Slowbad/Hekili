@@ -497,7 +497,7 @@ function Hekili:ResetState()
 		s.totem[ k ].expires = nil
 	end
 	
-	s.target.health.actual = nil
+	s.target.health.current = nil
 	s.target.health.max = nil
 	
 	-- range checks
