@@ -164,6 +164,16 @@ if (select(2, UnitClass('player')) == 'MONK') then
       if k == 'heavy' then return Hekili.State.debuff.heavy_stagger.up
       elseif k == 'moderate' then return Hekili.State.debuff.moderate_stagger.up or Hekili.State.debuff.heavy_stagger.up
       elseif k == 'light' then return Hekili.State.debuff.light_stagger.up or Hekili.State.debuff.moderate_stagger.up or Hekili.State.debuff.heavy_stagger.up
+      elseif k == 'amount' then
+        if Hekili.State.debuff.heavy_stagger.up then return Hekili.State.debuff.heavy_stagger.v2
+        elseif Hekili.State.debuff.moderate_stagger.up then return Hekili.State.debuff.moderate_stagger.v2
+        elseif Hekili.State.debuff.light_stagger.up then return Hekili.State.debuff.light_stagger.v2
+        else return 0 end
+      elseif k == 'tick' then
+        if Hekili.State.debuff.heavy_stagger.up then return Hekili.State.debuff.heavy_stagger.v1
+        elseif Hekili.State.debuff.moderate_stagger.up then return Hekili.State.debuff.moderate_stagger.v1
+        elseif Hekili.State.debuff.light_stagger.up then return Hekili.State.debuff.light_stagger.v1
+        else return 0 end
       end
       
       error( "UNK: " .. k )

@@ -316,7 +316,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
 			cast = 0,
 			gcdType = 'melee',
 			cooldown = 6,
-			usable = function( s ) return ( s.target.health_pct <= ( s.perk.empowered_hammer_of_wrath.enabled and 35 or 20 ) ) or s.buff.avenging_wrath.up end,
+			usable = function( s ) return ( s.target.health_pct <= ( s.perk.empowered_hammer_of_wrath.enabled and 35 or 20 ) ) or s.buff.avenging_wrath.up or IsUsableSpell( Hekili.Abilities[ 'hammer_of_wrath' ].name ) end,
 			hostile = true
 		} )
 

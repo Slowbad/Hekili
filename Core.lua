@@ -478,6 +478,9 @@ function Hekili:ResetState()
 	for k in pairs( s.debuff ) do
 		s.debuff[ k ].count = nil
 		s.debuff[ k ].expires = nil
+    s.debuff[ k ].v1 = nil
+    s.debuff[ k ].v2 = nil
+    s.debuff[ k ].v3 = nil
 	end
 	
 	-- s.dot currently just wraps s.debuff

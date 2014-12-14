@@ -1390,9 +1390,9 @@ Hekili.MT.mt_dots = mt_dots
 -- Needs review.
 local mt_default_debuff = {
 	__index = function(t, k)
-		if k == 'count' or k == 'expires' then
+		if k == 'count' or k == 'expires' or k == 'v1' or k == 'v2' or k == 'v3' then
       local unit = t.unit or 'target'
-			local name, _, _, count, _, _, expires = UnitDebuff( unit, H.Auras[ t.key ].name, nil, 'PLAYER' )
+			local name, _, _, count, _, _, expires, _, _, _, _, _, _, _, v1, v2, v3 = UnitDebuff( unit, H.Auras[ t.key ].name, nil, 'PLAYER' )
 			
 			if name then
 				count = max(1, count)
@@ -1401,6 +1401,9 @@ local mt_default_debuff = {
 			
 			t.count = count or 0
 			t.expires = expires or 0
+      t.v1 = v1 or 0
+      t.v2 = v2 or 0
+      t.v3 = v3 or 0
 			
 			return t[ k ]
 			
@@ -1451,7 +1454,7 @@ local mt_debuffs	= {
 		
 		else
       local unit = H.Auras[ k ].unit or 'target'
-			local name, _, _, count, _, _, expires = UnitDebuff( unit, H.Auras[ k ].name, nil, 'PLAYER' )
+			local name, _, _, count, _, _, expires, _, _, _, _, _, _, _, v1, v2, v3 = UnitDebuff( unit, H.Auras[ k ].name, nil, 'PLAYER' )
 
 			if name then
 				count = max(1, count)
@@ -1463,7 +1466,10 @@ local mt_debuffs	= {
 				id		= H.Auras[ k ].id,
 				count	= count or 0,
 				expires	= expires or 0,
-        unit = unit
+        unit = unit,
+        v1 = v1,
+        v2 = v2,
+        v3 = v3
 			}
 			return ( t[k] )
 			
