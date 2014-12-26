@@ -2,7 +2,7 @@
 ## Version: 2.0
 ## Title: Hekili
 ## Author: Hekili
-## Notes: Hekili with support for in-game modifications.
+## Notes: Priority helper for Shamans, Paladins, and Monks with support for in-game modifications.
 ## SavedVariables: HekiliDB
 ## OptionalDeps: Masque
 
