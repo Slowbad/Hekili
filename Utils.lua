@@ -13,8 +13,7 @@ end
 
 
 local function round ( num, places )
-		return tonumber( string.format( "%." .. ( places or 0 ) .. "f", num ) )
-	end
+  return tonumber( string.format( "%." .. ( places or 0 ) .. "f", num ) )
 end
 Hekili.Utils.Round = round
 
