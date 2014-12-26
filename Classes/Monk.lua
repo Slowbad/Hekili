@@ -28,9 +28,16 @@ local SetGCD = Hekili.Utils.SetGCD
 if (select(2, UnitClass('player')) == 'MONK') then
 
 	Hekili.Class = 'MONK'
+  Hekili.State.gcd = 1.0
 
+	function Hekili:SetClassModifiers()
+    if Hekili.SpecializationKey == 'mistweaver' then Hekili.State.gcd = nil
+    else Hekili.State.gcd = 1.0 end
+  end
+  
 	AddResource( SPELL_POWER_ENERGY, true )
 	AddResource( SPELL_POWER_CHI )
+  AddResource( SPELL_POWER_MANA )
 	-- AddResource( SPELL_POWER_HEALTH )
 
 	AddTalent( 'ascension', 115396 )
@@ -102,11 +109,11 @@ if (select(2, UnitClass('player')) == 'MONK') then
 	AddGlyph( 'zen_meditation', 120477 )
 	
 	-- Player Buffs.
-  AddAura( 'chi_explosion', 157680 )
-	AddAura( 'cranes_zeal', 127722 )
+	AddAura( 'cranes_zeal', 127722, 'duration', 20 )
 	AddAura( 'fortifying_brew', 115203 )
 	AddAura( 'shuffle', 115307 )
   AddAura( 'breath_of_fire', 123725 )
+  AddAura( 'chi_explosion', 157680 )
   AddAura( 'combo_breaker_bok', 116768 )
   AddAura( 'combo_breaker_ce', 159407 )
   AddAura( 'combo_breaker_tp', 118864 )
@@ -118,8 +125,11 @@ if (select(2, UnitClass('player')) == 'MONK') then
   AddAura( 'guard', 115295 )
   AddAura( 'heavy_stagger', 124273, 'unit', 'player' )
   AddAura( 'keg_smash', 121253 )
+  AddAura( 'legacy_of_the_emperor', 115921, 'duration', 3600 )
+  AddAura( 'legacy_of_the_white_tiger', 116781, 'duration', 3600 )
   AddAura( 'light_stagger', 124275, 'unit', 'player' )
-  AddAura( 'mana_tea', 115294 )
+  AddAura( 'mana_tea_stacks', 115867, 'duration', 120, 'max_stacks', 15 )
+  AddAura( 'mana_tea_activated', 115294 )
   AddAura( 'moderate_stagger', 124274, 'duration', 10, 'unit', 'player' )
   AddAura( 'rising_sun_kick', 130320 )
   AddAura( 'rushing_jade_wind', 116847 )
@@ -128,9 +138,9 @@ if (select(2, UnitClass('player')) == 'MONK') then
   AddAura( 'stagger', 124255 )
   AddAura( 'tiger_palm', 100787 )
   AddAura( 'tiger_power', 125359 )
-  AddAura( 'tigereye_brew_use', 116740, 'fullscan', true )
   AddAura( 'tigereye_brew', 125195, 'fullscan', true )
-  AddAura( 'unleash_wind', 73681 , 'duration', 30, 'max_stacks', 6 )
+  AddAura( 'tigereye_brew_use', 116740, 'fullscan', true )
+  AddAura( 'vital_mists', 118674, 'duration', 30, 'max_stacks', 5 )
   AddAura( 'zen_sphere', 124081 )
   
 	-- Perks.
@@ -145,11 +155,11 @@ if (select(2, UnitClass('player')) == 'MONK') then
 	
 	-- Stances.
 	-- Need to confirm the right IDs based on spec.
-	AddStance( 'fierce_tiger', 1 )
-	AddStance( 'spirited_crane', 2 )
-	AddStance( 'sturdy_ox', 1 )
-	AddStance( 'wise_serpent', 4 )
-	
+	AddStance( 'fierce_tiger', 'windwalker', 1 )
+	AddStance( 'sturdy_ox', 'brewmaster', 1 )
+	AddStance( 'wise_serpent', 'mistweaver', 1 )
+  AddStance( 'spirited_crane', 'mistweaver', 2 )
+		
 	-- Pick an instant cast ability for checking the GCD.
 	SetGCD( 'legacy_of_the_emperor' )
 	-- Need to confirm "legacy_of_the_emperor" works with WW, BM since they upgrade to "legacy_of_the_white_tiger."
@@ -181,6 +191,29 @@ if (select(2, UnitClass('player')) == 'MONK') then
   } )
   
   
+  function Hekili:CreateClassToggles()
+    local found, empty = false, nil
+    
+    for i = 1, 5 do
+      if not empty and self.DB.profile[ 'Toggle ' ..i.. ' Name' ] == nil then
+        empty = i
+      elseif self.DB.profile[ 'Toggle ' ..i.. ' Name' ] == 'mitigation' then
+        found = i
+        break
+      end
+    end
+    
+    if not found and empty then
+      self.DB.profile[ 'Toggle ' ..empty.. ' Name' ] = 'mitigation'
+      found = empty
+    end
+    
+    if type( found ) == 'number' then
+      self.DB.profile[ 'Toggle_' .. found ] = self.DB.profile[ 'Toggle_' .. found ] == nil and true or self.DB.profile[ 'Toggle_' .. found ]
+    end
+  end
+
+  
 	-- Abilities
 	
 	AddAbility( 'blackout_kick', 100784,
@@ -194,15 +227,18 @@ if (select(2, UnitClass('player')) == 'MONK') then
 			gcdType = 'melee',
 			cooldown = 0,
 			usable = function( s )
-				if s.spec.mistweaver and s.stance.wise_serpent then return false end
+				if s.stance.wise_serpent then return false end
 				return true
 			end,
 		} )
 	
 	AddHandler( 'blackout_kick', function ()
 		if spec.brewmaster then H:Buff( 'shuffle', 6 )
-		elseif spec.mistweaver then H:Buff( 'cranes_zeal', 20 ) end
-    if buff.serenity.up then H:Gain( 2, 'chi' ) end
+		elseif spec.mistweaver then
+      H:AddStack( 'vital_mists', 30, 2 )
+      H:Buff( 'cranes_zeal', 20 )
+    end
+    if buff.serenity.up and not buff.combo_breaker_bok.up then H:Gain( 2, 'chi' ) end
     H:RemoveBuff( 'combo_breaker_bok' )
 	end )
 	
@@ -216,7 +252,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
 			cast = 4, -- need a 'channel' version.
 			gcdType = 'spell',
 			cooldown = 0,
-			usable = function( s ) return not stance.wise_serpent end
+			usable = function( s ) return not s.stance.wise_serpent end
 		} )
 	
 	AddHandler( 'crackling_jade_lightning', function ()
@@ -267,12 +303,8 @@ if (select(2, UnitClass('player')) == 'MONK') then
   AddAbility( 'jab', 100780,
     {
       spend = function( s )
-        if s.stance.spirited_crane then
-          return 0.035, SPELL_POWER_MANA
-        end
-        if s.stance.fierce_tiger then
-          return 45, SPELL_POWER_ENERGY
-        end
+        if s.stance.spirited_crane then return 0.035, SPELL_POWER_MANA
+        elseif s.stance.fierce_tiger then return 45, SPELL_POWER_ENERGY end
         return 40, SPELL_POWER_ENERGY
       end,
       cast = 0,
@@ -334,9 +366,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
   AddAbility( 'surging_mist', 116694,
     {
       spend = function ( s )
-        if s.spec.mistweaver then
-          return 0.047, SPELL_POWER_MANA
-        end
+        if s.spec.mistweaver then return 0.047, SPELL_POWER_MANA end
         return 30, SPELL_POWER_ENERGY
       end,
       cast = 1.5,
@@ -344,15 +374,21 @@ if (select(2, UnitClass('player')) == 'MONK') then
       cooldown = 0
     } )
   
+  ModifyAbility( 'surging_mist', 'cast', function ( x )
+    if buff.vital_mists.up then x = ( x - ( x * ( 0.2 * buff.vital_mists.stack ) ) ) end
+    return x * haste
+  end )
+  
   AddHandler( 'surging_mist', function ()
     if spec.mistweaver then H:Gain( 1, 'chi' ) end
+    H:RemoveBuff( 'vital_mists' )
   end )
   
   
   AddAbility( 'tiger_palm', 100787,
     {
       spend = function ( s )
-        if s.spec.brewmaster or s.buff.combo_breaker_bok.up then
+        if s.spec.brewmaster or s.buff.combo_breaker_tp.up then
           return 0, SPELL_POWER_CHI
         end
         return 1, SPELL_POWER_CHI
@@ -369,8 +405,12 @@ if (select(2, UnitClass('player')) == 'MONK') then
     } )
   
   AddHandler( 'tiger_palm', function ()
-    if spec.brewmaster then H:Buff( 'tiger_palm', 20 ) end
-    if spec.windwalker then H:Buff( 'tiger_power', 20 ) end
+    if buff.serenity.up and not buff.combo_breaker_tp.up then H:Gain( 1, 'chi' ) end
+    if spec.brewmaster then H:Buff( 'tiger_palm', 20 )
+    else
+      H:Buff( 'tiger_power', 20 )
+      H:AddStack( 'vital_mists', 30, 1 )
+    end
     H:RemoveBuff( 'combo_breaker_tp' )
   end )
   
@@ -531,8 +571,18 @@ if (select(2, UnitClass('player')) == 'MONK') then
       cast = 0,
       gcdType = 'off',
       cooldown = 30,
-      charges = function ( s ) if s.perk.improved_guard.enabled then return 2 end return 1 end
+      charges = 1
     } )
+
+  ModifyAbility( 'guard', 'cooldown', function ( x )
+    if cooldown.guard.charges > 1 then return 1 end
+    return x
+  end )
+  
+  ModifyAbility( 'guard', 'charges', function ( x )
+    if perk.improved_guard.enabled then return 2 end
+    return x
+  end )
   
   AddHandler( 'guard', function ()
     H:Buff( 'guard', 30 )
@@ -558,9 +608,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
   AddAbility( 'legacy_of_the_emperor', 115921,
     {
       spend = function ( s )
-        if s.spec.mistweaver then
-          return 0.01, SPELL_POWER_MANA
-        end
+        if s.spec.mistweaver then return 0.01, SPELL_POWER_MANA end
         return 20, SPELL_POWER_ENERGY
       end,
       cast = 0,
@@ -570,6 +618,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
   
   AddHandler( 'legacy_of_the_emperor', function ()
     H:Buff( 'legacy_of_the_emperor', 3600 )
+    H:Buff( 'str_agi_int', 3600 )
   end )
   
   
@@ -584,6 +633,8 @@ if (select(2, UnitClass('player')) == 'MONK') then
    
   AddHandler( 'legacy_of_the_white_tiger', function ()
     H:Buff( 'legacy_of_the_white_tiger', 3600 )
+    H:Buff( 'str_agi_int', 3600 )
+    H:Buff( 'critical_strike', 3600 )
   end )
   
   
@@ -618,6 +669,10 @@ if (select(2, UnitClass('player')) == 'MONK') then
     return buff.mana_tea.stack * 0.5
   end )
   
+  AddHandler( 'mana_tea', function ()
+    H:RemoveBuff( 'mana_tea_stacks' )
+  end )
+  
   
   AddAbility( 'purifying_brew', 119582,
     {
@@ -625,7 +680,8 @@ if (select(2, UnitClass('player')) == 'MONK') then
       spend_type = SPELL_POWER_CHI,
       cast = 0,
       gcdType = 'off',
-      cooldown = 1
+      cooldown = 1,
+      usable = function ( s ) return s.stagger.light end,
     } )
   
   AddHandler( 'purifying_brew', function ()
@@ -668,11 +724,18 @@ if (select(2, UnitClass('player')) == 'MONK') then
       spend_type = SPELL_POWER_CHI,
       cast = 0,
       gcdType = 'melee',
-      cooldown = 8
+      cooldown = 8,
+      charges = 1
     } )
+  
+  ModifyAbility( 'rising_sun_kick', 'charges', function ( x )
+    if talent.pool_of_mists.enabled then return 3 end
+    return nil
+  end )
   
   AddHandler( 'rising_sun_kick', function ()
     if buff.serenity.up then H:Gain( 2, 'chi' ) end
+    if spec.mistweaver then H:AddStack( 'vital_mists', 30, 2 ) end
     H:Debuff( 'target', 'rising_sun_kick', 15 )
   end )
   
@@ -866,14 +929,20 @@ if (select(2, UnitClass('player')) == 'MONK') then
       recharge = 60
     } )
     
+  ModifyAbility( 'chi_brew', 'cooldown', function ( x )
+    if cooldown.chi_brew.charges > 1 then return 0 end
+    return x
+  end )
+    
+    
   AddHandler( 'chi_brew', function ()
     H:Gain( 2, 'chi' )
     if spec.windwalker then
       H:AddStack( 'tigereye_brew', 120, 2 )
     elseif spec.brewmaster then
-      H:AddStack( 'elusive_brew', 30, 5 )
+      H:AddStack( 'elusive_brew_stacks', 30, 5 )
     elseif spec.mistweaver then
-      H:AddStack( 'mana_tea', 30, 1 )
+      H:AddStack( 'mana_tea_stacks', 120, 1 )
     end
   end )
   
@@ -896,34 +965,33 @@ if (select(2, UnitClass('player')) == 'MONK') then
         return 1, SPELL_POWER_CHI
       end,
       cast = 0,
-      gcdType = 'spell',
+      gcdType = 'melee',
       cooldown = 0
     } )
   
   AddHandler( 'chi_explosion', function ()
+    local faux_chi = buff.combo_breaker_ce.up and chi.current or chi.current + 1
     if spec.brewmaster then
-      if chi.current >= 1 then H:Buff( 'shuffle', 2 + 2 * min(4, chi.current ) ) end
-      if chi.current >= 2 then
+      if faux_chi >= 2 then H:Buff( 'shuffle', 2 + 2 * min(4, chi.current ) ) end
+      if faux_chi >= 3 then
         H:RemoveDebuff( 'player', 'stagger' )
         H:RemoveDebuff( 'player', 'light_stagger' )
         H:RemoveDebuff( 'player', 'moderate_stagger' )
         H:RemoveDebuff( 'player', 'heavy_stagger' )
       end
     elseif spec.windwalker then
-      if chi.current >= 1 then H:Debuff( 'target', 'chi_explosion', 6 ) end
-      if chi.current >= 2 then H:AddStack( 'tigereye_brew', 120, 1 ) end
+      if faux_chi >= 2 then H:Debuff( 'target', 'chi_explosion', 6 ) end
+      if faux_chi >= 3 then H:AddStack( 'tigereye_brew', 120, 1 ) end
     elseif spec.mistweaver then
-      if chi.current >= 1 then H:Buff( 'target', 'chi_explosion', 6 ) end
+      if faux_chi >= 1 then H:Buff( 'chi_explosion', 6 ) end
+      if faux_chi >= 2 then H:Buff( 'cranes_zeal', 20 ) end
+      H:AddStack( 'vital_mists', 30, faux_chi )
     end
     -- If we had more than one chi going into this, spend up to 3 more.
-    if chi.current > 0 then
+    if chi.current > 0 and not buff.combo_breaker_ce.up then
       H:Spend( min( 3, chi.current ), 'chi' )
     end
-    
-    if buff.combo_breaker_ce.up then
-      H:RemoveBuff( 'combo_breaker_ce' )
-      H:Gain( 2, 'chi' )
-    end
+    H:RemoveBuff( 'combo_breaker_ce' )
   end )
   
   
@@ -1106,31 +1174,41 @@ if (select(2, UnitClass('player')) == 'MONK') then
   end )
   
   
-	Hekili.Default( "@Windwalker, Single Target", "actionLists", 2.17, "^1^T^SEnabled^B^SName^S@Windwalker,~`Single~`Target^SRelease^N2.13^SSpecialization^N269^SActions^T^N1^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SScript^Sbuff.tiger_power.remains<=3^SAbility^Stiger_palm^t^N2^T^SEnabled^B^SName^SRising~`Sun~`Kick^SRelease^N2.06^SScript^S(debuff.rising_sun_kick.down|debuff.rising_sun_kick.remains<3)^SAbility^Srising_sun_kick^t^N3^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SScript^Sbuff.tiger_power.down&debuff.rising_sun_kick.remains>1&energy.time_to_max>1^SAbility^Stiger_palm^t^N4^T^SEnabled^B^SName^SFists~`of~`Fury^SRelease^N2.06^SScript^Senergy.time_to_max>cast_time&buff.tiger_power.remains>cast_time&debuff.rising_sun_kick.remains>cast_time&!buff.serenity.up^SAbility^Sfists_of_fury^t^N5^T^SEnabled^b^SName^STouch~`of~`Death^SRelease^N2.06^SScript^Starget.health.percent<10^SAbility^Stouch_of_death^t^N6^T^SEnabled^B^SName^SHurricane~`Strike^SRelease^N2.06^SScript^Stalent.hurricane_strike.enabled&energy.time_to_max>cast_time&buff.tiger_power.remains>cast_time&debuff.rising_sun_kick.remains>cast_time&buff.energizing_brew.down^SAbility^Shurricane_strike^t^N7^T^SEnabled^B^SName^SEnergizing~`Brew^SRelease^N2.06^SScript^Scooldown.fists_of_fury.remains>6&(!talent.serenity.enabled|(!buff.serenity.up&cooldown.serenity.remains>4))&energy.current+energy.regen*gcd<50^SAbility^Senergizing_brew^t^N8^T^SEnabled^B^SName^SRising~`Sun~`Kick~`(1)^SRelease^N2.06^SScript^S!talent.chi_explosion.enabled^SAbility^Srising_sun_kick^t^N9^T^SEnabled^B^SName^SChi~`Wave^SRelease^N2.06^SScript^Senergy.time_to_max>2&buff.serenity.down^SAbility^Schi_wave^t^N10^T^SEnabled^B^SName^SChi~`Burst^SRelease^N2.06^SScript^Stalent.chi_burst.enabled&energy.time_to_max>2&buff.serenity.down^SAbility^Schi_burst^t^N11^T^SEnabled^B^SName^SZen~`Sphere^SArgs^Scycle_targets=1^SRelease^N2.06^SScript^Senergy.time_to_max>2&!dot.zen_sphere.ticking&buff.serenity.down^SAbility^Szen_sphere^t^N12^T^SEnabled^B^SName^SBlackout~`Kick^SRelease^N2.06^SScript^S!talent.chi_explosion.enabled&(buff.combo_breaker_bok.up|buff.serenity.up)^SAbility^Sblackout_kick^t^N13^T^SEnabled^B^SName^SChi~`Explosion^SRelease^N2.06^SScript^Stalent.chi_explosion.enabled&chi.current>=3&buff.combo_breaker_ce.react^SAbility^Schi_explosion^t^N14^T^SEnabled^B^SName^STiger~`Palm~`(2)^SRelease^N2.06^SScript^Sbuff.combo_breaker_tp.up&buff.combo_breaker_tp.remains<=2^SAbility^Stiger_palm^t^N15^T^SEnabled^B^SName^SBlackout~`Kick~`(1)^SRelease^N2.06^SScript^S!talent.chi_explosion.enabled&chi.max-chi.current<2^SAbility^Sblackout_kick^t^N16^T^SEnabled^B^SName^SChi~`Explosion~`(1)^SRelease^N2.06^SScript^Stalent.chi_explosion.enabled&chi.current>=3^SAbility^Schi_explosion^t^N17^T^SEnabled^B^SName^SJab^SRelease^N2.06^SScript^Schi.max-chi.current>=2^SAbility^Sjab^t^t^SScript^S^t^^" )
+	Hekili.Default( "@Windwalker, Single Target", "actionLists", 2.20, "^1^T^SEnabled^B^SName^S@Windwalker,~`Single~`Target^SRelease^N2.17^SSpecialization^N269^SActions^T^N1^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SAbility^Schi_brew^SScript^Schi.max-chi.current>=2&((charges=1&recharge_time<=10)|charges=2|target.time_to_die<charges*10)&buff.tigereye_brew.stack<=16^t^N2^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SAbility^Stiger_palm^SScript^Sbuff.tiger_power.remains<=3^t^N3^T^SEnabled^B^SName^STigereye~`Brew^SRelease^N2.06^SAbility^Stigereye_brew^SScript^Sbuff.tigereye_brew_use.down&buff.tigereye_brew.stack=20^t^N4^T^SEnabled^B^SName^SRising~`Sun~`Kick^SRelease^N2.06^SAbility^Srising_sun_kick^SScript^S(debuff.rising_sun_kick.down|debuff.rising_sun_kick.remains<3)^t^N5^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SAbility^Stiger_palm^SScript^Sbuff.tiger_power.down&debuff.rising_sun_kick.remains>1&energy.time_to_max>1^t^N6^T^SEnabled^B^SName^SFists~`of~`Fury^SRelease^N2.06^SAbility^Sfists_of_fury^SScript^Sbuff.tiger_power.remains>cast_time&debuff.rising_sun_kick.remains>cast_time&!buff.serenity.up^t^N7^T^SEnabled^B^SScript^Starget.health.pct<10&cooldown.touch_of_death.remains=0^SAbility^Sfortifying_brew^SRelease^N2.06^SCaption^SToD^SName^SFortifying~`Brew^t^N8^T^SEnabled^B^SName^STouch~`of~`Death^SRelease^N2.06^SAbility^Stouch_of_death^SScript^Starget.health.percent<10^t^N9^T^SEnabled^B^SName^SHurricane~`Strike^SRelease^N2.06^SAbility^Shurricane_strike^SScript^Stalent.hurricane_strike.enabled&energy.time_to_max>cast_time&buff.tiger_power.remains>cast_time&debuff.rising_sun_kick.remains>cast_time&buff.energizing_brew.down^t^N10^T^SEnabled^B^SName^SEnergizing~`Brew^SRelease^N2.06^SAbility^Senergizing_brew^SScript^Scooldown.fists_of_fury.remains>6&(!talent.serenity.enabled|!toggle.cooldowns|(!buff.serenity.up&cooldown.serenity.remains>4))&(energy.current+(energy.regen*gcd)<50)^t^N11^T^SEnabled^B^SName^SRising~`Sun~`Kick~`(1)^SRelease^N2.06^SAbility^Srising_sun_kick^SScript^S!talent.chi_explosion.enabled^t^N12^T^SEnabled^B^SName^SChi~`Wave^SRelease^N2.06^SAbility^Schi_wave^SScript^Senergy.time_to_max>2&buff.serenity.down^t^N13^T^SEnabled^B^SName^SChi~`Burst^SRelease^N2.06^SAbility^Schi_burst^SScript^Stalent.chi_burst.enabled&energy.time_to_max>2&buff.serenity.down^t^N14^T^SEnabled^B^SName^SZen~`Sphere^SArgs^Scycle_targets=1^SRelease^N2.06^SAbility^Szen_sphere^SScript^Senergy.time_to_max>2&!dot.zen_sphere.ticking&buff.serenity.down^t^N15^T^SEnabled^B^SName^SBlackout~`Kick^SRelease^N2.06^SAbility^Sblackout_kick^SScript^S!talent.chi_explosion.enabled&(buff.combo_breaker_bok.up|buff.serenity.up)^t^N16^T^SEnabled^B^SName^SChi~`Explosion^SRelease^N2.06^SAbility^Schi_explosion^SScript^Stalent.chi_explosion.enabled&chi.current>=3&buff.combo_breaker_ce.up&cooldown.fists_of_fury.remains>3^t^N17^T^SEnabled^B^SName^STiger~`Palm~`(2)^SRelease^N2.06^SAbility^Stiger_palm^SScript^Sbuff.combo_breaker_tp.up&buff.combo_breaker_tp.remains<=2^t^N18^T^SEnabled^B^SName^SBlackout~`Kick~`(1)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^S!talent.chi_explosion.enabled&chi.max-chi.current<2^t^N19^T^SEnabled^B^SName^SChi~`Explosion~`(1)^SRelease^N2.06^SAbility^Schi_explosion^SScript^Stalent.chi_explosion.enabled&chi.current>=3^t^N20^T^SEnabled^B^SName^SJab^SRelease^N2.06^SAbility^Sjab^SScript^Schi.max-chi.current>=2^t^N21^T^SEnabled^B^SName^SJab~`(1)^SRelease^N2.06^SAbility^Sjab^SScript^Schi.current<chi.max&talent.chi_explosion.enabled&cooldown.fists_of_fury.remains<=3^t^t^SScript^S^t^^" )
   
-  Hekili.Default( "@Windwalker, AOE", "actionLists", 2.17, "^1^T^SEnabled^B^SName^S@Windwalker,~`AOE^SRelease^N2.13^SSpecialization^N269^SActions^T^N1^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SScript^Sbuff.tiger_power.remains<=3^SAbility^Stiger_palm^t^N2^T^SEnabled^B^SName^SRising~`Sun~`Kick^SRelease^N2.06^SScript^S(debuff.rising_sun_kick.down|debuff.rising_sun_kick.remains<3)^SAbility^Srising_sun_kick^t^N3^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SScript^Sbuff.tiger_power.down&debuff.rising_sun_kick.remains>1&energy.time_to_max>1^SAbility^Stiger_palm^t^N4^T^SEnabled^B^SName^SChi~`Explosion^SRelease^N2.06^SScript^Schi.current>=4^SAbility^Schi_explosion^t^N5^T^SAbility^Srushing_jade_wind^SRelease^N2.06^SName^SRushing~`Jade~`Wind^SEnabled^B^t^N6^T^SEnabled^B^SName^SRising~`Sun~`Kick~`(1)^SRelease^N2.06^SScript^S!talent.rushing_jade_wind.enabled&chi.current=chi.max^SAbility^Srising_sun_kick^t^N7^T^SEnabled^B^SName^SFists~`of~`Fury^SRelease^N2.06^SScript^Stalent.rushing_jade_wind.enabled&energy.time_to_max>cast_time&buff.tiger_power.remains>cast_time&debuff.rising_sun_kick.remains>cast_time&!buff.serenity.up^SAbility^Sfists_of_fury^t^N8^T^SEnabled^B^SName^STouch~`of~`Death^SRelease^N2.06^SScript^Starget.health.percent<10^SAbility^Stouch_of_death^t^N9^T^SEnabled^B^SName^SHurricane~`Strike^SRelease^N2.06^SScript^Stalent.rushing_jade_wind.enabled&talent.hurricane_strike.enabled&energy.time_to_max>cast_time&buff.tiger_power.remains>cast_time&debuff.rising_sun_kick.remains>cast_time&buff.energizing_brew.down^SAbility^Shurricane_strike^t^N10^T^SEnabled^B^SName^SZen~`Sphere^SArgs^Scycle_targets=1^SRelease^N2.06^SScript^S!dot.zen_sphere.ticking^SAbility^Szen_sphere^t^N11^T^SEnabled^B^SName^SChi~`Wave^SRelease^N2.06^SScript^Senergy.time_to_max>2&buff.serenity.down^SAbility^Schi_wave^t^N12^T^SEnabled^B^SName^SChi~`Burst^SRelease^N2.06^SScript^Stalent.chi_burst.enabled&energy.time_to_max>2&buff.serenity.down^SAbility^Schi_burst^t^N13^T^SEnabled^B^SName^SBlackout~`Kick^SRelease^N2.06^SScript^Stalent.rushing_jade_wind.enabled&!talent.chi_explosion.enabled&(buff.combo_breaker_bok.up|buff.serenity.up)^SAbility^Sblackout_kick^t^N14^T^SEnabled^B^SName^STiger~`Palm~`(2)^SRelease^N2.06^SScript^Stalent.rushing_jade_wind.enabled&buff.combo_breaker_tp.up&buff.combo_breaker_tp.remains<=2^SAbility^Stiger_palm^t^N15^T^SEnabled^B^SName^SBlackout~`Kick~`(1)^SRelease^N2.06^SScript^Stalent.rushing_jade_wind.enabled&!talent.chi_explosion.enabled&chi.max-chi.current<2^SAbility^Sblackout_kick^t^N16^T^SEnabled^B^SName^SSpinning~`Crane~`Kick^SRelease^N2.06^SScript^S!talent.rushing_jade_wind.enabled^SAbility^Sspinning_crane_kick^t^N17^T^SEnabled^B^SName^SJab^SRelease^N2.06^SScript^Stalent.rushing_jade_wind.enabled&chi.max-chi.current>=2^SAbility^Sjab^t^t^SScript^S^t^^" )
+  Hekili.Default( "@Windwalker, AOE", "actionLists", 2.20, "^1^T^SEnabled^B^SName^S@Windwalker,~`AOE^SRelease^N2.17^SSpecialization^N269^SActions^T^N1^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SAbility^Schi_brew^SScript^Schi.max-chi.current>=2&((charges=1&recharge_time<=10)|charges=2|target.time_to_die<charges*10)&buff.tigereye_brew.stack<=16^t^N2^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SAbility^Stiger_palm^SScript^Sbuff.tiger_power.remains<=3^t^N3^T^SEnabled^B^SName^STigereye~`Brew^SRelease^N2.06^SAbility^Stigereye_brew^SScript^Sbuff.tigereye_brew_use.down&buff.tigereye_brew.stack=20^t^N4^T^SEnabled^B^SName^SRising~`Sun~`Kick^SRelease^N2.06^SAbility^Srising_sun_kick^SScript^S(debuff.rising_sun_kick.down|debuff.rising_sun_kick.remains<3)^t^N5^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SAbility^Stiger_palm^SScript^Sbuff.tiger_power.down&debuff.rising_sun_kick.remains>1&energy.time_to_max>1^t^N6^T^SEnabled^B^SName^SChi~`Explosion^SRelease^N2.06^SAbility^Schi_explosion^SScript^Schi.current>=4&(cooldown.fists_of_fury.remains>3|!talent.rushing_jade_wind.enabled)^t^N7^T^SRelease^N2.06^SAbility^Srushing_jade_wind^SName^SRushing~`Jade~`Wind^SEnabled^B^t^N8^T^SEnabled^B^SScript^Scooldown.fists_of_fury.remains>6&(!talent.serenity.enabled|!toggle.cooldowns|(!buff.serenity.remains&cooldown.serenity.remains>4))&(energy.current+energy.regen*gcd)<50^SRelease^N2.06^SAbility^Senergizing_brew^SName^SEnergizing~`Brew^t^N9^T^SEnabled^B^SName^SRising~`Sun~`Kick~`(1)^SRelease^N2.06^SAbility^Srising_sun_kick^SScript^S!talent.rushing_jade_wind.enabled&chi.current=chi.max^t^N10^T^SEnabled^B^SName^SFists~`of~`Fury^SRelease^N2.06^SAbility^Sfists_of_fury^SScript^Stalent.rushing_jade_wind.enabled&buff.tiger_power.remains>cast_time&debuff.rising_sun_kick.remains>cast_time&!buff.serenity.up^t^N11^T^SEnabled^B^SScript^Starget.health.percent<10&cooldown.touch_of_death.remains=0^SAbility^Sfortifying_brew^SRelease^N2.06^SName^SFortifying~`Brew^t^N12^T^SEnabled^B^SName^STouch~`of~`Death^SRelease^N2.06^SAbility^Stouch_of_death^SScript^Starget.health.percent<10^t^N13^T^SEnabled^B^SName^SHurricane~`Strike^SRelease^N2.06^SAbility^Shurricane_strike^SScript^Stalent.rushing_jade_wind.enabled&talent.hurricane_strike.enabled&energy.time_to_max>cast_time&buff.tiger_power.remains>cast_time&debuff.rising_sun_kick.remains>cast_time&buff.energizing_brew.down^t^N14^T^SEnabled^B^SName^SZen~`Sphere^SArgs^Scycle_targets=1^SRelease^N2.06^SAbility^Szen_sphere^SScript^S!dot.zen_sphere.ticking^t^N15^T^SEnabled^B^SName^SChi~`Wave^SRelease^N2.06^SAbility^Schi_wave^SScript^Senergy.time_to_max>2&buff.serenity.down^t^N16^T^SEnabled^B^SName^SChi~`Burst^SRelease^N2.06^SAbility^Schi_burst^SScript^Stalent.chi_burst.enabled&energy.time_to_max>2&buff.serenity.down^t^N17^T^SEnabled^B^SName^SBlackout~`Kick^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Stalent.rushing_jade_wind.enabled&!talent.chi_explosion.enabled&(buff.combo_breaker_bok.up|buff.serenity.up)^t^N18^T^SEnabled^B^SName^STiger~`Palm~`(2)^SRelease^N2.06^SAbility^Stiger_palm^SScript^Stalent.rushing_jade_wind.enabled&buff.combo_breaker_tp.up&buff.combo_breaker_tp.remains<=2^t^N19^T^SEnabled^B^SName^SBlackout~`Kick~`(1)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^S(talent.rushing_jade_wind.enabled|active_direct_enemies<3)&!talent.chi_explosion.enabled&chi.max-chi.current<2&(cooldown.fists_of_fury.remains>3|!talent.rushing_jade_wind.enabled)^t^N20^T^SEnabled^B^SName^SSpinning~`Crane~`Kick^SRelease^N2.06^SAbility^Sspinning_crane_kick^SScript^Sactive_direct_enemies>=3&!talent.rushing_jade_wind.enabled^t^N21^T^SEnabled^B^SName^SJab^SRelease^N2.06^SAbility^Sjab^SScript^S(talent.rushing_jade_wind.enabled|active_direct_enemies<3)&chi.max-chi.current>=2^t^N22^T^SEnabled^B^SName^SJab~`(1)^SRelease^N2.06^SAbility^Sjab^SScript^Schi.current<chi.max&talent.chi_explosion.enabled&cooldown.fists_of_fury.remains<=3^t^t^SScript^S^t^^" )
   
-  Hekili.Default( "@Windwalker, Cooldowns", "actionLists", 2.17, "^1^T^SEnabled^B^SName^S@Windwalker,~`Cooldowns^SRelease^N2.13^SSpecialization^N269^SActions^T^N1^T^SEnabled^B^SName^SInvoke~`Xuen,~`the~`White~`Tiger^SRelease^N2.06^SScript^Stalent.invoke_xuen.enabled&time>5^SAbility^Sinvoke_xuen^t^N2^T^SEnabled^B^SName^SBlood~`Fury^SRelease^N2.06^SScript^Sbuff.tigereye_brew_use.up|target.time_to_die<18^SAbility^Sblood_fury^t^N3^T^SEnabled^B^SName^SBerserking^SRelease^N2.06^SScript^Sbuff.tigereye_brew_use.up|target.time_to_die<18^SAbility^Sberserking^t^N4^T^SEnabled^B^SName^SArcane~`Torrent^SRelease^N2.06^SScript^Schi.max-chi.current>=1&(buff.tigereye_brew_use.up|target.time_to_die<18)^SAbility^Sarcane_torrent^t^N5^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SScript^Schi.max-chi.current>=2&((charges=1&recharge_time<=10)|charges=2|target.time_to_die<charges*10)&buff.tigereye_brew.stack<=16^SAbility^Schi_brew^t^N6^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SScript^Sbuff.tiger_power.remains<=3^SAbility^Stiger_palm^t^N7^T^SEnabled^B^SName^STigereye~`Brew^SRelease^N2.06^SScript^Sbuff.tigereye_brew_use.down&buff.tigereye_brew.stack=20^SAbility^Stigereye_brew^t^N8^T^SEnabled^B^SName^STigereye~`Brew~`(1)^SRelease^N2.06^SScript^Sbuff.tigereye_brew_use.down&buff.tigereye_brew.stack>=10&buff.serenity.up^SAbility^Stigereye_brew^t^N9^T^SEnabled^B^SName^STigereye~`Brew~`(2)^SRelease^N2.06^SScript^Sbuff.tigereye_brew_use.down&buff.tigereye_brew.stack>=10&cooldown.fists_of_fury.up&chi.current>=3&debuff.rising_sun_kick.up&buff.tiger_power.up^SAbility^Stigereye_brew^t^N10^T^SEnabled^B^SName^STigereye~`Brew~`(3)^SRelease^N2.06^SScript^Stalent.hurricane_strike.enabled&buff.tigereye_brew_use.down&buff.tigereye_brew.stack>=10&cooldown.hurricane_strike.up&chi.current>=3&debuff.rising_sun_kick.up&buff.tiger_power.up^SAbility^Stigereye_brew^t^N11^T^SEnabled^B^SName^STigereye~`Brew~`(4)^SRelease^N2.06^SScript^Sbuff.tigereye_brew_use.down&chi.current>=2&(buff.tigereye_brew.stack>=16|target.time_to_die<40)&debuff.rising_sun_kick.up&buff.tiger_power.up^SAbility^Stigereye_brew^t^N12^T^SEnabled^B^SName^SRising~`Sun~`Kick^SRelease^N2.06^SScript^S(debuff.rising_sun_kick.down|debuff.rising_sun_kick.remains<3)^SAbility^Srising_sun_kick^t^N13^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SScript^Sbuff.tiger_power.down&debuff.rising_sun_kick.remains>1&energy.time_to_max>1^SAbility^Stiger_palm^t^N14^T^SEnabled^B^SName^SSerenity^SRelease^N2.06^SScript^Stalent.serenity.enabled&chi.current>=2&buff.tiger_power.up&debuff.rising_sun_kick.up^SAbility^Sserenity^t^t^SScript^S^t^^" )
+  Hekili.Default( "@Windwalker, Cooldowns", "actionLists", 2.20, "^1^T^SEnabled^B^SName^S@Windwalker,~`Cooldowns^SRelease^N2.17^SSpecialization^N269^SActions^T^N1^T^SEnabled^B^SName^SInvoke~`Xuen,~`the~`White~`Tiger^SRelease^N2.06^SAbility^Sinvoke_xuen^SScript^Stalent.invoke_xuen.enabled^t^N2^T^SEnabled^B^SName^SBlood~`Fury^SRelease^N2.06^SAbility^Sblood_fury^SScript^Sbuff.tigereye_brew_use.up|target.time_to_die<18^t^N3^T^SEnabled^B^SName^SBerserking^SRelease^N2.06^SAbility^Sberserking^SScript^Sbuff.tigereye_brew_use.up|target.time_to_die<18^t^N4^T^SEnabled^B^SName^SArcane~`Torrent^SRelease^N2.06^SAbility^Sarcane_torrent^SScript^Schi.max-chi.current>=1&(buff.tigereye_brew_use.up|target.time_to_die<18)^t^N5^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SAbility^Schi_brew^SScript^Schi.max-chi.current>=2&((charges=1&recharge_time<=10)|charges=2|target.time_to_die<charges*10)&buff.tigereye_brew.stack<=16^t^N6^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SAbility^Stiger_palm^SScript^Sbuff.tiger_power.remains<=3^t^N7^T^SEnabled^B^SName^STigereye~`Brew^SRelease^N2.06^SAbility^Stigereye_brew^SScript^Sbuff.tigereye_brew_use.down&buff.tigereye_brew.stack=20^t^N8^T^SEnabled^B^SName^STigereye~`Brew~`(1)^SRelease^N2.06^SAbility^Stigereye_brew^SScript^Sbuff.tigereye_brew_use.down&buff.tigereye_brew.stack>=10&buff.serenity.up^t^N9^T^SEnabled^B^SName^STigereye~`Brew~`(2)^SRelease^N2.06^SAbility^Stigereye_brew^SScript^Sbuff.tigereye_brew_use.down&buff.tigereye_brew.stack>=10&cooldown.fists_of_fury.up&chi.current>=3&debuff.rising_sun_kick.up&buff.tiger_power.up^t^N10^T^SEnabled^B^SName^STigereye~`Brew~`(3)^SRelease^N2.06^SAbility^Stigereye_brew^SScript^Stalent.hurricane_strike.enabled&buff.tigereye_brew_use.down&buff.tigereye_brew.stack>=10&cooldown.hurricane_strike.up&chi.current>=3&debuff.rising_sun_kick.up&buff.tiger_power.up^t^N11^T^SEnabled^B^SName^STigereye~`Brew~`(4)^SRelease^N2.06^SAbility^Stigereye_brew^SScript^Sbuff.tigereye_brew_use.down&chi.current>=2&(buff.tigereye_brew.stack>=16|target.time_to_die<40)&debuff.rising_sun_kick.up&buff.tiger_power.up^t^N12^T^SEnabled^B^SName^SRising~`Sun~`Kick^SRelease^N2.06^SAbility^Srising_sun_kick^SScript^S(debuff.rising_sun_kick.down|debuff.rising_sun_kick.remains<3)^t^N13^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SAbility^Stiger_palm^SScript^Sbuff.tiger_power.down&debuff.rising_sun_kick.remains>1&energy.time_to_max>1^t^N14^T^SEnabled^B^SName^SSerenity^SRelease^N2.06^SAbility^Sserenity^SScript^Stalent.serenity.enabled&chi.current>=2&buff.tiger_power.up&debuff.rising_sun_kick.up^t^t^SScript^S^t^^" )
   
   
-  Hekili.Default( "@Brewmaster, Single Target", "actionLists", 2.13, "^1^T^SEnabled^B^SName^SBrewmaster,~`Single~`Target^SRelease^N2.06^SSpecialization^N268^SActions^T^N1^T^SEnabled^B^SName^SBlackout~`Kick^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Sbuff.shuffle.down^t^N2^T^SEnabled^B^SName^SPurifying~`Brew^SRelease^N2.06^SAbility^Spurifying_brew^SScript^S!talent.chi_explosion.enabled&stagger.heavy^t^N3^T^SEnabled^B^SName^SPurifying~`Brew~`(1)^SRelease^N2.06^SAbility^Spurifying_brew^SScript^Sbuff.serenity.up^t^N4^T^SRelease^N2.06^SAbility^Sguard^SName^SGuard^SEnabled^B^t^N5^T^SEnabled^B^SName^SKeg~`Smash^SRelease^N2.06^SAbility^Skeg_smash^SScript^Schi.max-chi.current>=2&!buff.serenity.up^t^N6^T^SEnabled^B^SName^SChi~`Burst^SRelease^N2.06^SAbility^Schi_burst^SScript^Stalent.chi_burst.enabled&energy.time_to_max>3^t^N7^T^SEnabled^B^SName^SChi~`Wave^SRelease^N2.06^SAbility^Schi_wave^SScript^Stalent.chi_wave.enabled&energy.time_to_max>3^t^N8^T^SEnabled^B^SName^SZen~`Sphere^SArgs^Scycle_targets=1^SRelease^N2.06^SAbility^Szen_sphere^SScript^Stalent.zen_sphere.enabled&!dot.zen_sphere.ticking^t^N9^T^SEnabled^B^SName^SChi~`Explosion^SRelease^N2.06^SAbility^Schi_explosion^SScript^Schi.current>=3^t^N10^T^SEnabled^B^SName^SBlackout~`Kick~`(1)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Sbuff.shuffle.remains<=3&cooldown.keg_smash.remains>=gcd^t^N11^T^SEnabled^B^SName^SBlackout~`Kick~`(2)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Sbuff.serenity.up^t^N12^T^SEnabled^B^SName^SBlackout~`Kick~`(3)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Schi.current>=4^t^N13^T^SEnabled^B^SName^SExpel~`Harm^SRelease^N2.06^SAbility^Sexpel_harm^SScript^Schi.max-chi.current>=1&health.current<health.max&cooldown.keg_smash.remains>=gcd^t^N14^T^SEnabled^B^SName^SJab^SRelease^N2.06^SAbility^Sjab^SScript^Schi.max-chi.current>=1&cooldown.keg_smash.remains>=gcd&cooldown.expel_harm.remains>=gcd^t^N15^T^SEnabled^B^SName^SPurifying~`Brew~`(2)^SRelease^N2.06^SAbility^Spurifying_brew^SScript^S!talent.chi_explosion.enabled&stagger.moderate&buff.shuffle.remains>=6^t^N16^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SAbility^Stiger_palm^SScript^S(energy.current+(energy.regen*(cooldown.keg_smash.remains)))>=40^t^N17^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SAbility^Stiger_palm^SScript^Scooldown.keg_smash.remains>=gcd^t^t^SScript^S^t^^" )
+  Hekili.Default( "@Brewmaster, Single Target", "actionLists", 2.20, "^1^T^SEnabled^B^SName^S@Brewmaster,~`Single~`Target^SRelease^N2.13^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SAbility^Schi_brew^SScript^Stalent.chi_brew.enabled&chi.max-chi.current>=2&buff.elusive_brew_stacks.stack<=10^t^N2^T^SEnabled^B^SName^SElusive~`Brew^SRelease^N2.06^SAbility^Selusive_brew^SScript^Sbuff.elusive_brew_stacks.react=15&buff.elusive_brew_activated.down^t^N3^T^SEnabled^B^SName^SBlackout~`Kick^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Sbuff.shuffle.down^t^N4^T^SEnabled^B^SName^SPurifying~`Brew^SRelease^N2.06^SAbility^Spurifying_brew^SScript^Stoggle.mitigation&!talent.chi_explosion.enabled&stagger.heavy^t^N5^T^SEnabled^B^SName^SPurifying~`Brew~`(1)^SRelease^N2.06^SAbility^Spurifying_brew^SScript^Stoggle.mitigation&((!group&health.pct<66)|buff.serenity.up)&stagger.light^t^N6^T^SRelease^N2.06^SAbility^Sguard^SName^SGuard^SEnabled^B^t^N7^T^SEnabled^B^SName^SKeg~`Smash^SRelease^N2.06^SAbility^Skeg_smash^SScript^Schi.max-chi.current>=2&!buff.serenity.up^t^N8^T^SEnabled^B^SName^SChi~`Burst^SRelease^N2.06^SAbility^Schi_burst^SScript^Stalent.chi_burst.enabled&energy.time_to_max>3^t^N9^T^SEnabled^B^SName^SChi~`Wave^SRelease^N2.06^SAbility^Schi_wave^SScript^Stalent.chi_wave.enabled&energy.time_to_max>3^t^N10^T^SEnabled^B^SName^SZen~`Sphere^SArgs^Scycle_targets=1^SRelease^N2.06^SAbility^Szen_sphere^SScript^Stalent.zen_sphere.enabled&!dot.zen_sphere.ticking^t^N11^T^SEnabled^B^SName^SChi~`Explosion^SRelease^N2.06^SAbility^Schi_explosion^SScript^Schi.current>=3^t^N12^T^SEnabled^B^SName^SBlackout~`Kick~`(1)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Sbuff.shuffle.remains<=3&cooldown.keg_smash.remains>=gcd^t^N13^T^SEnabled^B^SName^SBlackout~`Kick~`(2)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Sbuff.serenity.up^t^N14^T^SEnabled^B^SName^SBlackout~`Kick~`(3)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Schi.current>=4^t^N15^T^SEnabled^B^SName^SExpel~`Harm^SRelease^N2.06^SAbility^Sexpel_harm^SScript^Schi.max-chi.current>=1&cooldown.keg_smash.remains>=gcd^t^N16^T^SEnabled^B^SName^SJab^SRelease^N2.06^SAbility^Sjab^SScript^Schi.max-chi.current>=1&cooldown.keg_smash.remains>=gcd&cooldown.expel_harm.remains>=gcd^t^N17^T^SEnabled^B^SName^SPurifying~`Brew~`(2)^SRelease^N2.06^SAbility^Spurifying_brew^SScript^Stoggle.mitigation&!talent.chi_explosion.enabled&stagger.moderate&buff.shuffle.remains>=6^t^N18^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SAbility^Stiger_palm^SScript^S(energy.current+(energy.regen*(cooldown.keg_smash.remains)))>=40^t^N19^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SAbility^Stiger_palm^SScript^Scooldown.keg_smash.remains>=gcd^t^t^SSpecialization^N268^t^^" )
   
-  Hekili.Default( "@Brewmaster, AOE", "actionLists", 2.13, "^1^T^SEnabled^B^SName^SBrewmaster,~`AOE^SRelease^N2.06^SSpecialization^N268^SActions^T^N1^T^SRelease^N2.06^SAbility^Sguard^SName^SGuard^SEnabled^B^t^N2^T^SEnabled^B^SName^SBreath~`of~`Fire^SRelease^N2.06^SAbility^Sbreath_of_fire^SScript^Schi.current>=3&buff.shuffle.remains>=6&dot.breath_of_fire.remains<=gcd^t^N3^T^SEnabled^B^SName^SChi~`Explosion^SRelease^N2.06^SAbility^Schi_explosion^SScript^Schi.current>=4^t^N4^T^SEnabled^B^SName^SRushing~`Jade~`Wind^SRelease^N2.06^SAbility^Srushing_jade_wind^SScript^Schi.max-chi.current>=1&talent.rushing_jade_wind.enabled^t^N5^T^SEnabled^B^SName^SPurifying~`Brew^SRelease^N2.06^SAbility^Spurifying_brew^SScript^S!talent.chi_explosion.enabled&stagger.heavy^t^N6^T^SRelease^N2.06^SAbility^Sguard^SName^SGuard~`(1)^SEnabled^B^t^N7^T^SEnabled^B^SName^SKeg~`Smash^SRelease^N2.06^SAbility^Skeg_smash^SScript^Schi.max-chi.current>=2&!buff.serenity.up^t^N8^T^SEnabled^B^SName^SChi~`Burst^SRelease^N2.06^SAbility^Schi_burst^SScript^Stalent.chi_burst.enabled&energy.time_to_max>3^t^N9^T^SEnabled^B^SName^SChi~`Wave^SRelease^N2.06^SAbility^Schi_wave^SScript^Stalent.chi_wave.enabled&energy.time_to_max>3^t^N10^T^SEnabled^B^SName^SZen~`Sphere^SArgs^Scycle_targets=1^SRelease^N2.06^SAbility^Szen_sphere^SScript^Stalent.zen_sphere.enabled&!dot.zen_sphere.ticking^t^N11^T^SEnabled^B^SName^SBlackout~`Kick^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Stalent.rushing_jade_wind.enabled&buff.shuffle.remains<=3&cooldown.keg_smash.remains>=gcd^t^N12^T^SEnabled^B^SName^SBlackout~`Kick~`(1)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Stalent.rushing_jade_wind.enabled&buff.serenity.up^t^N13^T^SEnabled^B^SName^SBlackout~`Kick~`(2)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Stalent.rushing_jade_wind.enabled&chi.current>=4^t^N14^T^SEnabled^B^SName^SExpel~`Harm^SRelease^N2.06^SAbility^Sexpel_harm^SScript^Schi.max-chi.current>=1&cooldown.keg_smash.remains>=gcd&(energy.current+(energy.regen*(cooldown.keg_smash.remains)))>=40^t^N15^T^SEnabled^B^SName^SSpinning~`Crane~`Kick^SRelease^N2.06^SAbility^Sspinning_crane_kick^SScript^Schi.max-chi.current>=1&!talent.rushing_jade_wind.enabled^t^N16^T^SEnabled^B^SName^SJab^SRelease^N2.06^SAbility^Sjab^SScript^Stalent.rushing_jade_wind.enabled&chi.max-chi.current>=1&cooldown.keg_smash.remains>=gcd&cooldown.expel_harm.remains>=gcd^t^N17^T^SEnabled^B^SName^SPurifying~`Brew~`(1)^SRelease^N2.06^SAbility^Spurifying_brew^SScript^S!talent.chi_explosion.enabled&talent.rushing_jade_wind.enabled&stagger.moderate&buff.shuffle.remains>=6^t^N18^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SAbility^Stiger_palm^SScript^Stalent.rushing_jade_wind.enabled&(energy.current+(energy.regen*(cooldown.keg_smash.remains)))>=40^t^N19^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SAbility^Stiger_palm^SScript^Stalent.rushing_jade_wind.enabled&cooldown.keg_smash.remains>=gcd^t^t^SScript^S^t^^" )
+  Hekili.Default( "@Brewmaster, AOE", "actionLists", 2.20, "^1^T^SEnabled^B^SName^S@Brewmaster,~`AOE^SRelease^N2.13^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SAbility^Schi_brew^SScript^Stalent.chi_brew.enabled&chi.max-chi.current>=2&buff.elusive_brew_stacks.stack<=10^t^N2^T^SEnabled^B^SName^SElusive~`Brew^SRelease^N2.06^SAbility^Selusive_brew^SScript^Sbuff.elusive_brew_stacks.react=15&buff.elusive_brew_activated.down^t^N3^T^SRelease^N2.06^SAbility^Sguard^SName^SGuard^SEnabled^B^t^N4^T^SEnabled^B^SName^SBreath~`of~`Fire^SRelease^N2.06^SAbility^Sbreath_of_fire^SScript^Schi.current>=3&buff.shuffle.remains>=6&dot.breath_of_fire.remains<=gcd^t^N5^T^SEnabled^B^SName^SChi~`Explosion^SRelease^N2.06^SAbility^Schi_explosion^SScript^Schi.current>=4^t^N6^T^SEnabled^B^SName^SRushing~`Jade~`Wind^SRelease^N2.06^SAbility^Srushing_jade_wind^SScript^Schi.max-chi.current>=1&talent.rushing_jade_wind.enabled^t^N7^T^SEnabled^B^SName^SPurifying~`Brew^SRelease^N2.06^SAbility^Spurifying_brew^SScript^Stoggle.mitigation&!talent.chi_explosion.enabled&stagger.heavy^t^N8^T^SRelease^N2.06^SAbility^Sguard^SName^SGuard~`(1)^SEnabled^B^t^N9^T^SEnabled^B^SName^SKeg~`Smash^SRelease^N2.06^SAbility^Skeg_smash^SScript^Schi.max-chi.current>=2&!buff.serenity.up^t^N10^T^SEnabled^B^SName^SChi~`Burst^SRelease^N2.06^SAbility^Schi_burst^SScript^Stalent.chi_burst.enabled&energy.time_to_max>3^t^N11^T^SEnabled^B^SName^SChi~`Wave^SRelease^N2.06^SAbility^Schi_wave^SScript^Stalent.chi_wave.enabled&energy.time_to_max>3^t^N12^T^SEnabled^B^SName^SZen~`Sphere^SArgs^Scycle_targets=1^SRelease^N2.06^SAbility^Szen_sphere^SScript^Stalent.zen_sphere.enabled&!dot.zen_sphere.ticking^t^N13^T^SEnabled^B^SName^SBlackout~`Kick^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Stalent.rushing_jade_wind.enabled&buff.shuffle.remains<=3&cooldown.keg_smash.remains>=gcd^t^N14^T^SEnabled^B^SName^SBlackout~`Kick~`(1)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Stalent.rushing_jade_wind.enabled&buff.serenity.up^t^N15^T^SEnabled^B^SName^SBlackout~`Kick~`(2)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^Stalent.rushing_jade_wind.enabled&chi.current>=4^t^N16^T^SEnabled^B^SName^SExpel~`Harm^SRelease^N2.06^SAbility^Sexpel_harm^SScript^Schi.max-chi.current>=1&cooldown.keg_smash.remains>=gcd&(energy.current+(energy.regen*(cooldown.keg_smash.remains)))>=40^t^N17^T^SEnabled^B^SName^SSpinning~`Crane~`Kick^SRelease^N2.06^SAbility^Sspinning_crane_kick^SScript^Schi.max-chi.current>=1&!talent.rushing_jade_wind.enabled^t^N18^T^SEnabled^B^SName^SJab^SRelease^N2.06^SAbility^Sjab^SScript^Stalent.rushing_jade_wind.enabled&chi.max-chi.current>=1&cooldown.keg_smash.remains>=gcd&cooldown.expel_harm.remains>=gcd^t^N19^T^SEnabled^B^SName^SPurifying~`Brew~`(1)^SRelease^N2.06^SAbility^Spurifying_brew^SScript^Stoggle.mitigation&!talent.chi_explosion.enabled&talent.rushing_jade_wind.enabled&stagger.moderate&buff.shuffle.remains>=6^t^N20^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SAbility^Stiger_palm^SScript^Stalent.rushing_jade_wind.enabled&(energy.current+(energy.regen*(cooldown.keg_smash.remains)))>=40^t^N21^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SAbility^Stiger_palm^SScript^Stalent.rushing_jade_wind.enabled&cooldown.keg_smash.remains>=gcd^t^N22^T^SEnabled^B^SName^STiger~`Palm^SAbility^Stiger_palm^SRelease^N2.06^SScript^Scooldown.keg_smash.remains>=gcd^t^t^SSpecialization^N268^t^^" )
   
-  Hekili.Default( "@Brewmaster, Cooldowns", "actionLists", 2.13, "^1^T^SEnabled^B^SName^SBrewmaster,~`Cooldowns^SRelease^N2.06^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SBlood~`Fury^SRelease^N2.06^SAbility^Sblood_fury^SScript^Senergy.current<=40^t^N2^T^SEnabled^B^SName^SBerserking^SRelease^N2.06^SAbility^Sberserking^SScript^Senergy.current<=40^t^N3^T^SEnabled^B^SName^SArcane~`Torrent^SRelease^N2.06^SAbility^Sarcane_torrent^SScript^Senergy.current<=40^t^N4^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SAbility^Schi_brew^SScript^Stalent.chi_brew.enabled&chi.max-chi.current>=2&buff.elusive_brew_stacks.stack<=10^t^N5^T^SEnabled^B^SName^SDiffuse~`Magic^SRelease^N2.06^SAbility^Sdiffuse_magic^SScript^Sincoming_damage_1500ms>0.20*health.max&buff.fortifying_brew.down^t^N6^T^SEnabled^B^SName^SDampen~`Harm^SRelease^N2.06^SAbility^Sdampen_harm^SScript^Sincoming_damage_1500ms>0.20*health.max&buff.fortifying_brew.down&buff.elusive_brew_activated.down^t^N7^T^SEnabled^B^SName^SFortifying~`Brew^SRelease^N2.06^SAbility^Sfortifying_brew^SScript^Sincoming_damage_1500ms>0.20*health.max&(buff.dampen_harm.down|buff.diffuse_magic.down)&buff.elusive_brew_activated.down^t^N8^T^SEnabled^B^SName^SElusive~`Brew^SRelease^N2.06^SAbility^Selusive_brew^SScript^Sbuff.elusive_brew_stacks.react>=9&(buff.dampen_harm.down|buff.diffuse_magic.down)&buff.elusive_brew_activated.down^t^N9^T^SEnabled^B^SName^SInvoke~`Xuen,~`the~`White~`Tiger^SRelease^N2.06^SAbility^Sinvoke_xuen^SScript^Stalent.invoke_xuen.enabled&time>5^t^N10^T^SEnabled^B^SName^SSerenity^SRelease^N2.06^SAbility^Sserenity^SScript^Stalent.serenity.enabled&energy.current<=40^t^t^SSpecialization^N268^t^^" )
+  Hekili.Default( "@Brewmaster, Cooldowns", "actionLists", 2.20, "^1^T^SEnabled^B^SName^S@Brewmaster,~`Cooldowns^SRelease^N2.13^SSpecialization^N268^SActions^T^N1^T^SEnabled^B^SName^SBlood~`Fury^SRelease^N2.06^SAbility^Sblood_fury^SScript^Senergy.current<=40^t^N2^T^SEnabled^B^SName^SBerserking^SRelease^N2.06^SAbility^Sberserking^SScript^Senergy.current<=40^t^N3^T^SEnabled^B^SName^SArcane~`Torrent^SRelease^N2.06^SAbility^Sarcane_torrent^SScript^Senergy.current<=40^t^N4^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SAbility^Schi_brew^SScript^Stalent.chi_brew.enabled&chi.max-chi.current>=2&buff.elusive_brew_stacks.stack<=10^t^N5^T^SEnabled^B^SName^SInvoke~`Xuen,~`the~`White~`Tiger^SRelease^N2.06^SAbility^Sinvoke_xuen^SScript^Stalent.invoke_xuen.enabled^t^N6^T^SEnabled^B^SName^SSerenity^SRelease^N2.06^SAbility^Sserenity^SScript^Stalent.serenity.enabled&energy.current<=40^t^t^SScript^S^t^^" )
   
+  Hekili.Default( "@Brewmaster, All", "actionLists", 2.20, "^1^T^SEnabled^B^SName^S@Brewmaster,~`All^SRelease^N2.2^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SScript^Stalent.chi_brew.enabled&chi.max-chi>=2&buff.elusive_brew_stacks.stack<=10^SAbility^Schi_brew^t^t^SSpecialization^N268^t^^" )
+  
+  Hekili.Default( "@Brewmaster, Mitigation", "actionLists", 2.20, "^1^T^SEnabled^B^SName^S@Brewmaster,~`Mitigation^SRelease^N2.2^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SDampen~`Harm^SRelease^N2.06^SScript^Stime<2^SAbility^Sdampen_harm^t^N2^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SScript^Stalent.chi_brew.enabled&chi.max-chi.current>=2&buff.elusive_brew_stacks.stack<=10^SAbility^Schi_brew^t^N3^T^SEnabled^B^SName^SDiffuse~`Magic^SRelease^N2.06^SScript^Sincoming_damage_1500ms>0&buff.fortifying_brew.down^SAbility^Sdiffuse_magic^t^N4^T^SEnabled^B^SName^SDampen~`Harm~`(1)^SRelease^N2.06^SScript^Sincoming_damage_1500ms>0&buff.fortifying_brew.down&buff.elusive_brew_activated.down^SAbility^Sdampen_harm^t^N5^T^SEnabled^B^SName^SFortifying~`Brew^SRelease^N2.06^SScript^Sincoming_damage_1500ms>(0.2*health.max)&(buff.dampen_harm.down|buff.diffuse_magic.down)&buff.elusive_brew_activated.down^SAbility^Sfortifying_brew^t^N6^T^SEnabled^B^SName^SElusive~`Brew^SRelease^N2.06^SScript^Sbuff.elusive_brew_stacks.react>=9&(buff.dampen_harm.down|buff.diffuse_magic.down)&buff.elusive_brew_activated.down^SAbility^Selusive_brew^t^t^SSpecialization^N268^t^^" )
+  
+
+  Hekili.Default( "@Monk, Buffs", "actionLists", 2.20, "^1^T^SEnabled^B^SName^SMonk,~`Buffs^SRelease^N2.06^SSpecialization^N0^SActions^T^N1^T^SEnabled^B^SName^SLegacy~`of~`the~`White~`Tiger^SRelease^N2.06^SAbility^Slegacy_of_the_white_tiger^SScript^S!buff.str_agi_int.up|!buff.critical_strike.up^t^t^SScript^S^t^^" )
   
   Hekili.Default( "@Monk, Interrupts", "actionLists", 2.13, "^1^T^SEnabled^B^SName^SMonk,~`Interrupts^SRelease^N2.06^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SSpear~`Hand~`Strike^SRelease^N2.06^SScript^Starget.casting^SAbility^Sspear_hand_strike^t^t^SSpecialization^N0^t^^" )
   
+  Hekili.Default( "@Mistweaver, Crane", "actionLists", 2.20, "^1^T^SEnabled^B^SName^SMistweaver,~`Crane~`Stance^SRelease^N2.06^SScript^S^SActions^T^N1^T^SEnabled^B^SScript^Stoggle.cooldowns^SRelease^N2.06^SName^SInvoke~`Xuen^SAbility^Sinvoke_xuen^SCaption^S^t^N2^T^SEnabled^B^SName^SBreath~`of~`the~`Serpent^SRelease^N2.06^SAbility^Sbreath_of_the_serpent^SScript^Stoggle.cooldowns^t^N3^T^SEnabled^B^SName^SSurging~`Mist^SRelease^N2.06^SCaption^S^SScript^S(health.pct<100|group)&buff.vital_mists.stack=5^SAbility^Ssurging_mist^t^N4^T^SEnabled^B^SName^SChi~`Brew^SRelease^N2.06^SAbility^Schi_brew^SScript^Schi.max-chi.current>=2&((charges=1&recharge_time<=10)|charges=2|target.time_to_die<charges*10)&buff.mana_tea_stacks.stacks<=19^t^N5^T^SEnabled^B^SName^STiger~`Palm^SRelease^N2.06^SScript^Sbuff.tiger_power.remains<=3^SAbility^Stiger_palm^t^N6^T^SEnabled^B^SName^SRising~`Sun~`Kick^SAbility^Srising_sun_kick^SRelease^N2.06^SScript^S(debuff.rising_sun_kick.down|debuff.rising_sun_kick.remains<3)^t^N7^T^SEnabled^B^SName^SBlackout~`Kick^SRelease^N2.06^SScript^Sbuff.cranes_zeal.down^SAbility^Sblackout_kick^t^N8^T^SEnabled^B^SName^STiger~`Palm~`(1)^SRelease^N2.06^SAbility^Stiger_palm^SCaption^S^SScript^Sbuff.tiger_power.down&debuff.rising_sun_kick.remains>1^t^N9^T^SEnabled^B^SName^SChi~`Wave^SRelease^N2.06^SScript^S^SCaption^S^SAbility^Schi_wave^t^N10^T^SEnabled^B^SName^SChi~`Burst^SRelease^N2.06^SScript^S^SCaption^S^SAbility^Schi_burst^t^N11^T^SEnabled^B^SScript^S^SRelease^N2.06^SAbility^Szen_sphere^SName^SZen~`Sphere^SCaption^S^t^N12^T^SEnabled^B^SName^SChi~`Explosion^SRelease^N2.06^SScript^S((!group&chi.current>=3)|chi.current>=4)&buff.combo_breaker_ce.react^SAbility^Schi_explosion^t^N13^T^SEnabled^B^SName^SBlackout~`Kick~`(1)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^S!talent.chi_explosion.enabled&chi.max-chi.current<2^t^N14^T^SEnabled^B^SName^SChi~`Explosion~`(1)^SRelease^N2.06^SAbility^Schi_explosion^SScript^Schi.current>=4|(!group&chi.current>=3)^t^N15^T^SEnabled^B^SName^SSpinning~`Crane~`Kick^SRelease^N2.06^SAbility^Sspinning_crane_kick^SScript^S!talent.rushing_jade_wind.enabled&active_direct_enemies>=3&chi.current<chi.max^t^N16^T^SEnabled^B^SName^SJab^SRelease^N2.06^SAbility^Sjab^SScript^Schi.current<chi.max^t^N17^T^SEnabled^B^SName^SBlackout~`Kick~`(Filler)^SRelease^N2.06^SAbility^Sblackout_kick^SScript^S^t^t^SSpecialization^N270^t^^" )
   
-  Hekili.Default( "@Windwalker, Primary", "displays", 2.13, "^1^T^SPrimary~`Icon~`Size^N50^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^S^Srel^SCENTER^SSpecialization^N269^SSpacing^N5^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^S@Windwalker,~`Cooldowns^SName^SCooldowns^SRelease^N2.06^SScript^Stoggle.cooldowns^t^N2^T^SEnabled^B^SAction~`List^S@Monk,~`Interrupts^SName^SInterrupts^SRelease^N2.06^SScript^Stoggle.interrupts^t^N3^T^SEnabled^B^SAction~`List^S@Windwalker,~`Single~`Target^SName^SSingle~`Target^SRelease^N2.06^SScript^Ssingle|(cleave&active_enemies=1)^t^N4^T^SEnabled^B^SAction~`List^S@Windwalker,~`AOE^SName^SAOE^SRelease^N2.06^SScript^Saoe|(cleave&active_enemies>1)^t^t^SScript^S^SEnabled^B^SFont^SArial~`Narrow^SRelease^N2.13^Sy^N-225^SIcons~`Shown^N5^SName^S@Windwalker,~`Primary^SPvP~`Visibility^Salways^SPrimary~`Caption^Sdefault^Sx^F-6333187512860670^f-46^SAction~`Captions^B^STalent~`Group^N0^t^^" )
+  
+  Hekili.Default( "@Windwalker, Primary", "displays", 2.20, "^1^T^SPrimary~`Icon~`Size^N50^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^S^Srel^SCENTER^SSpecialization^N269^SSpacing^N5^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^S@Monk,~`Buffs^SName^SBuffs^SRelease^N2.06^SScript^S^t^N2^T^SEnabled^B^SAction~`List^S@Windwalker,~`Cooldowns^SName^SCooldowns^SRelease^N2.06^SScript^Stoggle.cooldowns^t^N3^T^SEnabled^B^SAction~`List^S@Monk,~`Interrupts^SName^SInterrupts^SRelease^N2.06^SScript^Stoggle.interrupts^t^N4^T^SEnabled^B^SAction~`List^S@Windwalker,~`Single~`Target^SName^SSingle~`Target^SRelease^N2.06^SScript^Ssingle|(cleave&active_enemies<=3)^t^N5^T^SEnabled^B^SAction~`List^S@Windwalker,~`AOE^SName^SAOE^SRelease^N2.06^SScript^Saoe|(cleave&active_direct_enemies>3)^t^t^SScript^S^SIcons~`Shown^N5^STalent~`Group^N0^SFont^SArial~`Narrow^Sy^N-225^Sx^F-6333187512860670^f-46^SName^S@Windwalker,~`Primary^SPvP~`Visibility^Salways^SPrimary~`Caption^Sdefault^SRelease^N2.13^SAction~`Captions^B^SEnabled^B^t^^" )
 	
 	Hekili.Default( "@Windwalker, AOE", "displays", 2.13, "^1^T^SPrimary~`Icon~`Size^N40^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^S^Srel^SCENTER^SSpecialization^N269^SSpacing^N5^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^S@Windwalker,~`Cooldowns^SName^SCooldowns^SRelease^N2.06^SScript^Stoggle.cooldowns^t^N2^T^SEnabled^B^SAction~`List^S@Windwalker,~`AOE^SName^SAOE^SRelease^N2.06^SScript^S^t^t^SScript^S^SEnabled^B^Sx^F-5746782743035898^f-47^SPrimary~`Caption^Sdefault^Sy^F-6421148443082750^f-45^STalent~`Group^N0^SName^S@Windwalker,~`AOE^SPvP~`Visibility^Salways^SRelease^N2.13^SFont^SArial~`Narrow^SAction~`Captions^B^SIcons~`Shown^N4^t^^" )
   
   
-  Hekili.Default( "@Brewmaster, Primary", "displays", 2.13, "^1^T^SPrimary~`Icon~`Size^N50^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^S^Srel^SCENTER^SSpecialization^N268^SSpacing^N5^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SEnabled^B^SQueues^T^N1^T^SEnabled^B^SAction~`List^S@Monk,~`Interrupts^SName^SInterrupts^SRelease^N2.06^SScript^Stoggle.interrupts^t^N2^T^SEnabled^B^SAction~`List^S@Brewmaster,~`Cooldowns^SName^SCooldowns^SRelease^N2.06^SScript^Stoggle.cooldowns^t^N3^T^SEnabled^B^SAction~`List^S@Brewmaster,~`Single~`Target^SName^SSingle~`Target^SRelease^N2.06^SScript^Ssingle|(cleave&active_enemies=1)^t^N4^T^SEnabled^B^SAction~`List^S@Brewmaster,~`AOE^SName^SAOE^SRelease^N2.06^SScript^Saoe|(cleave&active_enemies>1)^t^t^SScript^S^SFont^SArial~`Narrow^STalent~`Group^N0^Sx^N-90^Sy^N-225^SIcons~`Shown^N5^SName^S@Brewmaster,~`Primary^SPvP~`Visibility^Salways^SPrimary~`Caption^Sdefault^SRelease^N2.13^SAction~`Captions^B^SMaximum~`Time^N30^t^^" )
+  Hekili.Default( "@Brewmaster, Primary", "displays", 2.20, "^1^T^SPrimary~`Icon~`Size^N50^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^S^Srel^SCENTER^SSpecialization^N268^SSpacing^N5^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SEnabled^B^SQueues^T^N1^T^SEnabled^B^SAction~`List^S@Monk,~`Buffs^SName^SBuffs^SRelease^N2.06^SScript^Stime=0^t^N2^T^SEnabled^B^SAction~`List^S@Monk,~`Interrupts^SName^SInterrupts^SRelease^N2.06^SScript^Stoggle.interrupts^t^N3^T^SEnabled^B^SAction~`List^S@Brewmaster,~`All^SName^SAll^SRelease^N2.06^SScript^S^t^N4^T^SEnabled^B^SAction~`List^S@Brewmaster,~`Mitigation^SName^SMitigation^SRelease^N2.06^SScript^Stoggle.mitigation^t^N5^T^SEnabled^B^SAction~`List^S@Brewmaster,~`Cooldowns^SName^SCooldowns^SRelease^N2.06^SScript^Stoggle.cooldowns^t^N6^T^SEnabled^B^SAction~`List^S@Brewmaster,~`Single~`Target^SName^SSingle~`Target^SRelease^N2.06^SScript^Ssingle|(cleave&active_enemies<3)^t^N7^T^SEnabled^B^SAction~`List^S@Brewmaster,~`AOE^SName^SAOE^SRelease^N2.06^SScript^Saoe|(cleave&active_enemies>2)^t^t^SScript^S^SMaximum~`Time^N30^SIcons~`Shown^N5^SPrimary~`Caption^Sdefault^Sy^N-225^STalent~`Group^N0^SName^S@Brewmaster,~`Primary^SPvP~`Visibility^Salways^SRelease^N2.13^Sx^N-90^SAction~`Captions^B^SFont^SArial~`Narrow^t^^" )
   
-  Hekili.Default( "@Brewmaster, AOE", "displays", 2.13, "^1^T^SPrimary~`Icon~`Size^N40^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^S^Srel^SCENTER^SSpecialization^N268^SSpacing^N5^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^S@Brewmaster,~`Cooldowns^SName^SCooldowns^SRelease^N2.11^SScript^Stoggle.cooldowns^t^N2^T^SEnabled^B^SAction~`List^S@Brewmaster,~`AOE^SName^SAOE^SRelease^N2.06^SScript^S^t^t^SScript^S^SEnabled^B^Sx^N-40^SPrimary~`Caption^Stargets^Sy^N-182.5^STalent~`Group^N0^SName^S@Brewmaster,~`AOE^SPvP~`Visibility^Salways^SRelease^N2.13^SFont^SArial~`Narrow^SAction~`Captions^B^SIcons~`Shown^N4^t^^" )
+  Hekili.Default( "@Brewmaster, AOE", "displays", 2.20, "^1^T^SPrimary~`Icon~`Size^N40^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^S^Srel^SCENTER^SSpecialization^N268^SSpacing^N5^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^S@Brewmaster,~`All^SName^SAll^SRelease^N2.06^SScript^S^t^N2^T^SEnabled^B^SAction~`List^S@Brewmaster,~`Mitigation^SName^SMitigation^SRelease^N2.06^SScript^Stoggle.mitigation^t^N3^T^SEnabled^B^SAction~`List^S@Brewmaster,~`Cooldowns^SName^SCooldowns^SRelease^N2.11^SScript^Stoggle.cooldowns^t^N4^T^SEnabled^B^SAction~`List^S@Brewmaster,~`AOE^SName^SAOE^SRelease^N2.06^SScript^S^t^t^SScript^S^STalent~`Group^N0^SIcons~`Shown^N4^Sx^N-40^Sy^N-182.5^SFont^SArial~`Narrow^SName^S@Brewmaster,~`AOE^SPvP~`Visibility^Salways^SRelease^N2.13^SPrimary~`Caption^Stargets^SAction~`Captions^B^SEnabled^B^t^^" )
+  
+  Hekili.Default( "@Mistweaver, Primary", "displays", 2.20, "^1^T^SPrimary~`Icon~`Size^N50^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^SVital~`Mists^SSpecialization^N270^SSpacing^N5^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^S@Monk,~`Buffs^SName^SBuffs^SRelease^N2.06^SScript^S^t^N2^T^SEnabled^B^SAction~`List^S@Monk,~`Interrupts^SName^SInterrupts^SRelease^N2.06^SScript^Stoggle.interrupts^t^N3^T^SEnabled^B^SAction~`List^S@Mistweaver,~`Crane^SName^SCrane~`Stance^SRelease^N2.06^SScript^S^t^t^SScript^Sstance.spirited_crane^SIcons~`Shown^N5^STalent~`Group^N0^SFont^SArial~`Narrow^Sy^N-225^Sx^N-90^SName^SMistweaver,~`Primary^SPvP~`Visibility^Salways^SRelease^N2.06^SPrimary~`Caption^Sbuff^SAction~`Captions^B^SEnabled^B^t^^" )
 	
 	
 end

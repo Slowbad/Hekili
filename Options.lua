@@ -2100,7 +2100,7 @@ function Hekili:SetOption( info, input )
 			return
 		
 		else -- Toggle Names.
-			if trim( input ) == "" then
+			if input:trim() == "" then
 				profile[ option ] = nil
 			end
 			
@@ -2518,21 +2518,42 @@ function Hekili:ImportSimulationCraftActionList( str )
       if times > 0 then
         Hekili:Print("Line " .. line .. ": Converted '" .. v .. "' to '" .. v .. ".current' (" .. times .. "x)." )
       end
+      i, times = i:gsub( '([^_ ])('..v..')$', "%1%2.current" )
+      if times > 0 then
+        Hekili:Print("Line " .. line .. ": Converted '" .. v .. "' to '" .. v .. ".current' at EOL (" .. times .. "x)." )
+      end
     end
     
     i, times = i:gsub( "buff[.](.-)[.](react)([^><=~])", "buff.%1.up%3" )
     if times > 0 then
       Hekili:Print("Line " .. line .. ": Converted unconditional 'X.react' to 'X.up' (" .. times .. "x)." )
     end
+    i, times = i:gsub( "buff[.](.-)[.](react)$", "buff.%1.up" )
+    if times > 0 then
+      Hekili:Print("Line " .. line .. ": Converted unconditional 'X.react' to 'X.up' at EOL (" .. times .. "x)." )
+    end
     
     i, times = i:gsub( "(incoming_damage_%d+[m]?s)([^><=~])", "%1>0%2" )
     if times > 0 then
       Hekili:Print("Line " .. line .. ": Converted unconditional 'incoming_damage_Xms' to 'incoming_damage_Xms>0' (" .. times .. "x)." )
     end
+    i, times = i:gsub( "(incoming_damage_%d+[m]?s)$", "%1>0" )
+    if times > 0 then
+      Hekili:Print("Line " .. line .. ": Converted unconditional 'incoming_damage_Xms' to 'incoming_damage_Xms>0' at EOL(" .. times .. "x)." )
+    end
     
     i, times = i:gsub( "[!]buff.(.-).remains", "!buff.%1.up")
     if times > 0 then
       Hekili:Print("Line " .. line .. ": Converted '!buff.X.remains' to '!buff.X.up' (" .. times .. "x)." )
+    end
+    
+    i, times = i:gsub( "([^_])target([^.])", "%1target.unit%2" )
+    if times > 0 then
+      Hekili:Print("Line " .. line .. ": Converted non-specific 'target' to 'target.unit' (" .. times .. "x)." )
+    end
+    i, times = i:gsub( "([^_])target$", "%1target.unit" )
+    if times > 0 then
+      Hekili:Print("Line " .. line .. ": Converted non-specific 'target' to 'target.unit' at EOL (" .. times .. "x)." )
     end
   
 		local _, commas = i:gsub(",", "")
@@ -2566,11 +2587,25 @@ function Hekili:ImportSimulationCraftActionList( str )
 		-- Action and Modifiers
 		elseif commas >= 1 and condis == 0 then
 			local ability, modifier = i:match("(.-),(.-)$")
-			
+      local conditions = nil
+      
+      if modifier == "moving=1" then
+        Hekili:Print("Line " .. line .. ": Converted 'moving=1' modifier to 'moving' conditional.")
+        conditions = "moving"
+        modifier = ""
+      end
+
+      if modifier:sub(1, 5) == 'sync=' then
+        Hekili:Print("Line " .. line .. ": Converted 'sync=' modifier to 'cooldown.X.remains' conditional.")
+        conditions = "cooldown." .. modifier:sub(6) .. ".remains=0&("..conditions..")"
+        modifier = ""
+      end
+
 			if ability and modifier and self.Abilities[ ability ] then
 				output[#output + 1] = {
-					ability		= ability,
-					modifiers	= modifiers
+					ability = ability,
+					modifiers = modifier,
+          conditions = conditions
 				}
 			else
 				errors[#errors + 1] = i
@@ -2579,12 +2614,24 @@ function Hekili:ImportSimulationCraftActionList( str )
 		-- Action, Modifiers, Conditions
 		elseif commas > 1 and condis == 1 then 
 			local ability, modifiers, conditions = i:match("(.-),(.-),if=(.-)$")	
+
+      if modifiers == "moving=1" then
+        Hekili:Print("Line " .. line .. ": Converted 'moving=1' modifier to 'moving' conditional.")
+        conditions = "moving&("..conditions..")"
+        modifiers = ""
+      end
+      
+      if modifiers:sub(1, 5) == 'sync=' then
+        Hekili:Print("Line " .. line .. ": Converted 'sync=' modifier to 'cooldown.X.remains' conditional.")
+        conditions = "cooldown." .. modifiers:sub(6) .. ".remains=0&("..conditions..")"
+        modifiers = ""
+      end
 			
 			if ability and modifiers and conditions and self.Abilities[ ability ] then
 				output[#output + 1] = {
-					ability		= ability,
+					ability	= ability,
 					modifiers	= modifiers,
-					conditions	= conditions
+					conditions = conditions
 				}
 			else
 				errors[#errors + 1] = i

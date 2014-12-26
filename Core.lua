@@ -77,6 +77,7 @@ function H:OnInitialize()
 	end
 	
 	CheckBrokenImports()
+  if self.CreateClassToggles then self:CreateClassToggles() end
 	self:RestoreDefaults()
 	self:LoadScripts()
 	self:BuildUI()
@@ -113,16 +114,7 @@ function SimToLua( str, assign )
 	
 	-- Replace '|' with ' or '.
 	str = str:gsub("||", " or "):gsub("|", " or ")
-	
-	-- Replace '!' with ' not '.
-	str = str:gsub("!([^=])", " not %1")
-	
-	-- Condense whitespace.
-	str = str:gsub("%s+", " ")
-	
-	-- Condense parenthetical spaces.
-	str = str:gsub("[(][%s+]", "("):gsub("[%s+][)]", ")")
-
+		
 	if not assign then
 		-- Replace assignment '=' with conditional '=='
 		str = str:gsub("=", "==")
@@ -134,9 +126,23 @@ function SimToLua( str, assign )
 		str = str:gsub("!=+", "~=")
 		str = str:gsub("~=+", "~=")
 	end
+  
+	-- Replace '!' with ' not '.
+	-- str = str:gsub("!([^<>~=]+)([<>~=]+)([^ ]+)%s+", " not (%1%2%3)")
+	-- str = str:gsub("!([^<>~=]+)([<>~=]+)(.+)$", " not (%1%2%3)")
+  str = str:gsub("!(.-) ", " not (%1) " )
+  str = str:gsub("!(.-)$", " not (%1)" )
+	str = str:gsub("!([^=])", " not %1")
+
+	-- Condense whitespace.
+	str = str:gsub("%s+", " ")
+	
+	-- Condense parenthetical spaces.
+	str = str:gsub("[(][%s+]", "("):gsub("[%s+][)]", ")")
 	
 	return ( str )
 end
+Hekili.S2L = SimToLua
 
 
 function Hekili:ConvertScript( node, hasModifiers )
@@ -291,7 +297,7 @@ end
 	
 
 
-function Hekili:CheckScript( cat, key, action, override )
+function Hekili:CheckScript( cat, key, action, override, delay )
 	
 	if action then self.State.this_action = action end
 
@@ -307,7 +313,13 @@ function Hekili:CheckScript( cat, key, action, override )
 		return true
 
 	else
+    delay = delay or 0
+    local offset = Hekili.State.offset
+    Hekili.State.offset = offset + delay
+    
 		local success, value = pcall( tblScript.Conditions )
+    
+    Hekili.State.offset = offset
 	
 		if success then
 			return value
@@ -444,6 +456,7 @@ function Hekili:ResetState()
 	
 	s.now = GetTime()
 	s.offset = 0
+  s.delay = 0
 	s.false_start = 0
 	s.cast_start = 0
   
@@ -581,7 +594,14 @@ function H:Advance( time )
 	end
 	
 	s.offset = s.offset + time
-  s.this_delay = 0
+  s.delay = 0
+  
+  for k, cd in pairs( s.cooldown ) do
+    if self.Abilities[ k ].charges and cd.next_charge > 0 and cd.next_charge < s.now + s.offset then
+      cd.next_charge = 0
+      cd.charges = cd.charges + 1
+    end
+  end
 	
 	for k,_ in pairs( self.Resources ) do
 		local resKey = GetResourceName( k )
@@ -653,7 +673,29 @@ function HasRequiredResources( ability )
 	
 end
 Hekili.HRR = HasRequiredResources
-	
+
+
+local function ResourceType( ability )
+
+  local s, action = H.State, H.Abilities[ ability ]
+  
+  if not action then return end
+  
+  if action.spend then
+    if type( action.spend ) == 'number' then
+      return action.spend_type or Hekili.ClassResource
+    
+    elseif type( action.spend ) == 'function' then
+      return select( 2, action.spend( s ) )
+      
+    end
+  end
+  
+  return nil
+
+end
+  
+  
 
 function H:UpdateResources( ability )
 
@@ -748,9 +790,11 @@ local IsUsable = Hekili.IsUsable
 	
 
 -- Needs to be expanded to handle energy regen before Rogue, Monk, Druid will work.
-function WaitTime( action )
+local function WaitTime( action )
 	-- Do a basic check before 
-	local delay = Hekili.State.cooldown[ action ].remains
+  
+  -- Need to ignore the delay for this part.
+	local delay = max( 0, Hekili.State.cooldown[ action ].expires - ( Hekili.State.now + Hekili.State.offset ) )
 
 	if action == 'ascendance' then
 		if Hekili.State.buff.ascendance.up then
@@ -759,7 +803,7 @@ function WaitTime( action )
 	end
   
   local ability = Hekili.Abilities[ action ]
-  
+
   if ability.spend and Hekili.Class == 'MONK' then
     local spend, resource
     
@@ -773,7 +817,7 @@ function WaitTime( action )
     resource = GetResourceName( resource )
     
     if resource == 'focus' or resource == 'energy' and spend > Hekili.State[ resource ].current then
-      delay = max( delay, ( spend - Hekili.State[ resource ].current ) / Hekili.State[ resource ].regen )
+      delay = max( delay, 0.25 + ( ( spend - Hekili.State[ resource ].current ) / Hekili.State[ resource ].regen ) )
     end
   end
 
@@ -846,13 +890,14 @@ function Hekili:ProcessHooks( dispID )
 					end
 					
 					for hookID, hook in ipairs( display.Queues ) do
+          
 					
 						if self.HookVisible[ dispID..':'..hookID ] then
 						
 							local HookPassed = self:CheckScript( 'P', dispID..':'..hookID )
 							
 							if HookPassed then
-							
+  
 								local listID = hook[ 'Action List' ]
 								local list = self.DB.profile.actionLists[ listID ]
 								
@@ -865,16 +910,17 @@ function Hekili:ProcessHooks( dispID )
 											break
 										end
 										
-										local entry	= list.Actions[ actID ]
-										s.this_action	= entry.Ability
-										local wait_time = WaitTime( s.this_action )
-                    s.this_delay = wait_time
-										
 										if self.ActionVisible[ listID..':'..actID ] then
+                    
 											-- Check for commands before checking actual actions.
+                      local entry	= list.Actions[ actID ]
+                      s.this_action	= entry.Ability
+
+                      local wait_time = WaitTime( s.this_action )
+                      s.delay = wait_time
                       
 											if entry.Ability == 'wait' then
-												if self:CheckScript( 'A', listID..':'..actID ) then
+												if self:CheckScript( 'A', listID..':'..actID, nil, nil, wait_time ) then
 													local args = self:GetModifiers( listID, actID )
 													if not args.sec then args.sec = 1 end
 													if args.sec > 0 then
@@ -884,28 +930,32 @@ function Hekili:ProcessHooks( dispID )
 
 												end
 											
-											elseif IsKnown( s.this_action ) and IsUsable( s.this_action ) and wait_time < chosen_wait and HasRequiredResources( s.this_action ) and ( self.Abilities[ s.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and self:CheckScript( 'A', listID..':'..actID ) then
+											elseif IsKnown( s.this_action ) and IsUsable( s.this_action ) and wait_time < chosen_wait and HasRequiredResources( s.this_action ) and ( self.Abilities[ s.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and self:CheckScript( 'A', listID..':'..actID, nil, nil, wait_time ) then
                       
 												chosen_action	= s.this_action
-												chosen_caption	= entry.Caption
-												chosen_wait		= wait_time
+												chosen_caption = entry.Caption
+												chosen_wait	= wait_time
 
-												Queue[i].display		= dispID
-												Queue[i].button		= i
+												Queue[i].display	= dispID
+												Queue[i].button = i
+                        
+                        Queue[i].resource = ResourceType( chosen_action )
 													
-												Queue[i].hook			= hookID
+												Queue[i].hook = hookID
 													
-												Queue[i].actionlist	= listID
-												Queue[i].action		= actID
+												Queue[i].actionlist = listID
+												Queue[i].action = actID
 													
-												Queue[i].alName		= list.Name
-												Queue[i].actName		= s.this_action
+												Queue[i].alName = list.Name
+												Queue[i].actName = s.this_action
 													
-												Queue[i].caption		= chosen_caption
-												Queue[i].wait			= wait_time
+												Queue[i].caption = chosen_caption
+												Queue[i].wait = wait_time
 												
                       end
-										
+                      
+                      s.delay = nil
+                      
 										end
 										
 										actID = actID + 1
@@ -936,24 +986,16 @@ function Hekili:ProcessHooks( dispID )
 
 						-- We really need to make the timing more sophisticated.
 						-- Need to differentiate between abilities being hardcast, abilities off GCD, and GCD instants.
-						local gcd = 0
 						
-						if action.gcdType == 'totem' then
-							gcd = 1.0
-						elseif action.gcdType == 'spell' then
-							gcd = max( 1.0, ( 1.5 * s.spell_haste ) )
-						elseif action.gcdType == 'melee' then
-							gcd = max( 1.0, ( 1.5 * s.melee_haste ) )
-						end
-						
-						-- Start the GCD.
-						s.cooldown[ self.GCD ].expires = s.now + s.offset + gcd
+            -- Start the GCD.
+						s.cooldown[ self.GCD ].expires = s.now + s.offset + ( action.gcdType ~= 'off' and s.gcd or 0 )
 						
 						-- Advance the clock by cast_time.
 						self:Advance( action.cast )
 						
 						-- Put the action on cooldown.  (It's slightly premature, but addresses CD resets like Echo of the Elements.)
 						s.cooldown[ chosen_action ].expires = s.now + s.offset + action.cooldown
+            if self.Abilities[ chosen_action ].charges then s.cooldown[ chosen_action ].charges = s.cooldown[ chosen_action ].charges - 1 end
 						
 						-- Perform the action.
 						RunHandler( chosen_action )
@@ -1029,7 +1071,10 @@ function CheckDisplayCriteria( dispID )
 	elseif not Hekili.Config and not Hekili.Queue[ dispID ] then
 		return false
 		
-	end
+	elseif not Hekili:CheckScript( 'D', dispID ) then
+    return false
+  
+  end
 	
 	return true
 

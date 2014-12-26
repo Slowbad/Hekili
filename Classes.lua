@@ -285,8 +285,15 @@ H.Utils.RunHandler = RunHandler
 
 
 H.Stances = {}
-function H.Utils.AddStance( key, index, id )
-	H.Stances[ key ] = index
+function H.Utils.AddStance( key, ... )
+  local n, specs = select( "#", ... ), { ... }
+  
+	H.Stances[ key ] = H.Stances[ key ] or {}
+  
+  for i = 1, n, 2 do
+    H.Stances[ key ][ specs[ i ] ] = specs[ i + 1 ]
+  end
+  
 end
 
 

@@ -3,6 +3,7 @@
 
 
 local util = Hekili.Utils
+local round = util.Round
 
 
 local invert_direction = {
@@ -113,7 +114,7 @@ end
 
 local SpaceLeft = { "(%()" }
 local SpaceRight = { "(%))" }
-local DoubleSpace = { "(!=)", "(~=)", "(>=*)", "(<=*)", "(&)", "(||)" }
+local DoubleSpace = { "(!=)", "(~=)", "(>=*)", "(<=*)", "(&)", "(||)", "(+)", "(*)", "(-)", "(/)" }
 
 
 local function Format ( Code )

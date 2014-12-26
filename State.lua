@@ -18,10 +18,10 @@ local tblCopy 				= hu.tblCopy
 
 -- This will be our environment table for local functions.
 local state = {
-	now				= 0,
-	offset			= 0,
-	mainhand_speed	= 0,
-	offhand_speed	= 0,
+	now = 0,
+	offset = 0,
+	mainhand_speed = 0,
+	offhand_speed = 0,
 	
 	action			= {},
 	active_dot		= {},
@@ -59,10 +59,10 @@ state.stance = state.seal
 -- Place an ability on cooldown in the simulated game state.
 function H:SetCooldown( action, duration )
 
-	self.State.cooldown[ action ]			= self.State.cooldown[ action ] or {}
+	self.State.cooldown[ action ] = self.State.cooldown[ action ] or {}
 	-- self.State.cooldown[ action ].start	= self.State.now + self.State.offset
-	self.State.cooldown[ action ].duration	= duration
-	self.State.cooldown[ action ].expires	= self.State.now + self.State.offset + duration
+	self.State.cooldown[ action ].duration = duration
+	self.State.cooldown[ action ].expires = self.State.now + self.State.offset + duration
 	
 end
 
@@ -99,10 +99,12 @@ end
 -- Wraps around Buff() to check for an existing buff.
 function H:AddStack( aura, duration, stacks, value )
 
+  local max_stacks = ( H.Auras[ aura ] and H.Auras[ aura ].max_stacks ) and H.Auras[ aura ].max_stacks or 1
+
 	if self.State.buff[ aura ].up then
-		self:Buff( aura, duration, self.State.buff[ aura ].count + stacks, value )
+		self:Buff( aura, duration, min( max_stacks, self.State.buff[ aura ].count + stacks ), value )
 	else
-		self:Buff( aura, duration, stacks, value )
+		self:Buff( aura, duration, min( max_stacks, stacks ), value )
 	end
 
 end
@@ -174,17 +176,17 @@ end
 -- Add a totem to the simulated game state.
 function H:AddTotem( name, elem, duration )
 
-	self.State.totem[ elem ]			= rawget( self.State.totem, elem ) or {}
-	self.State.totem[ elem ].name		= name
-	self.State.totem[ elem ].expires	= self.State.now + self.State.offset + duration
+	self.State.totem[ elem ] = rawget( self.State.totem, elem ) or {}
+	self.State.totem[ elem ].name = name
+	self.State.totem[ elem ].expires = self.State.now + self.State.offset + duration
 	
-	self.State.pet[ elem ]				= rawget( self.State.pet, elem ) or {}
-	self.State.pet[ elem ].name		= name
-	self.State.pet[ elem ].expires		= self.State.now + self.State.offset + duration
+	self.State.pet[ elem ] = rawget( self.State.pet, elem ) or {}
+	self.State.pet[ elem ].name = name
+	self.State.pet[ elem ].expires = self.State.now + self.State.offset + duration
 	
-	self.State.pet[ name ]				= rawget( self.State.pet, name ) or {}
-	self.State.pet[ name ].name		= name
-	self.State.pet[ name ].expires		= self.State.now + self.State.offset + duration
+	self.State.pet[ name ] = rawget( self.State.pet, name ) or {}
+	self.State.pet[ name ].name = name
+	self.State.pet[ name ].expires	= self.State.now + self.State.offset + duration
 
 end
 
@@ -237,9 +239,9 @@ local mt_state	= {
 			-- We haven't tested an ability yet.
 			return 'wait'
     
-    elseif k == 'this_delay' then
+    elseif k == 'delay' then
       return 0
-			
+    
 		elseif k == 'time' then
 			-- Calculate time in combat.
 			if H.combat == 0 and t.false_start == 0 then return 0
@@ -247,10 +249,13 @@ local mt_state	= {
 
 		elseif k == 'time_to_die' then
 			-- Harvest TTD calculation from Hekili.
-			return H.GetTTD() - t.offset
+			return H.GetTTD() - ( t.offset )
 
 		elseif k == 'moving' then
 			return ( GetUnitSpeed('player') > 0 )
+    
+    elseif k == 'group' then
+      return IsInGroup()
 	
 		elseif k == 'level' then
 			return ( UnitLevel('player') or MAX_PLAYER_LEVEL )
@@ -263,6 +268,9 @@ local mt_state	= {
 			
 		elseif k == 'active_enemies' then
 			return max(1, H:NumTargets())
+    
+    elseif k == 'active_direct_enemies' then
+      return max(1, H:NumDirectTargets())
 		
 		elseif k == 'haste' or k == 'spell_haste' then
 			return ( 1 / ( 1 + UnitSpellHaste('player') / 100 ) )
@@ -335,7 +343,7 @@ local mt_state	= {
     
     elseif k == 'recharge_time' then
       if H.Abilities[ t.this_action ].charges then
-        return t.cooldown[ t.this_action ].next_charge - ( t.now + t.offset )
+        return t.cooldown[ t.this_action ].next_charge > t.now and ( t.cooldown[ t.this_action ].next_charge - ( t.now + t.offset ) ) or 0
       end
       return 60
       
@@ -355,6 +363,9 @@ local mt_state	= {
       
       table.insert( t.purge, k )
       return t.k
+    
+    elseif k == 'last_judgment_target' then
+      return 'unknown'
       
 		else
 			-- Check if this is a resource table pre-init.
@@ -515,7 +526,7 @@ local mt_default_pet = {
 			return t[ k ]
 			
 		elseif k == 'remains' then
-			if t.expires <= ( state.now + state.offset) then return 0 end
+			if t.expires <= ( state.now + state.offset ) then return 0 end
 			return ( t.expires - ( state.now + state.offset ) )
 			
 		elseif k == 'up' or k == 'active' then
@@ -605,9 +616,11 @@ Hekili.MT.mt_pets = mt_pets
 
 
 local mt_seals = {
-	__index = function(t, k)
-		if not H.Stances[ k ] or not GetShapeshiftFormInfo( H.Stances[ k ] ) then return false end
-		rawset(t, k, select(3, GetShapeshiftFormInfo( H.Stances[ k ] ) ) )
+	__index = function( t, k )
+    if not H.Stances[ k ] then return false
+    elseif not H.Stances[ k ][ H.SpecializationKey ] then return false
+		elseif not GetShapeshiftFormInfo( H.Stances[ k ][ H.SpecializationKey ] ) then return false end
+		rawset(t, k, select(3, GetShapeshiftFormInfo( H.Stances[ k ][ H.SpecializationKey ] ) ) )
 		return t[k]
 	end
 }
@@ -651,7 +664,7 @@ local mt_toggle = {
 			-- check custom names
 			for i = 1, 5 do
 				if k == H.DB.profile['Toggle '..i..' Name'] then
-					return H.DB.profile['Toggle_'..i]
+					return H.DB.profile['Toggle_'..i] or false
 				end
 			end
 				
@@ -669,6 +682,9 @@ local mt_target = {
 	__index = function(t, k)
 		if k == 'level' then
 			return UnitLevel('target') or UnitLevel('player')
+    
+    elseif k == 'unit' then
+      return UnitGUID( 'target' ) or 'unknown'
 
 		elseif k == 'time_to_die' then
 			return H.GetTTD( UnitGUID( 'target' ) or 0 )
@@ -702,7 +718,7 @@ local mt_target = {
 				local _, _, _, _, _, endCast, _, _, notInterruptible = UnitCastingInfo("target")
  
 				if endCast ~= nil and not notInterruptible then
-          t.k =  (endCast / 1000) > H.State.now + H.State.offset
+          t.k = (endCast / 1000) > H.State.now + H.State.offset
           return t.k
 				end
 
@@ -791,33 +807,31 @@ local mt_default_cooldown = {
 			local start, duration = GetSpellCooldown( t.id )
 			
 			if t.key == 'ascendance' and H.State.buff.ascendance.up then
-				start = H.State.buff.ascendance.expires - H.Auras[ k ].duration
+				start = H.State.buff.ascendance.expires - H.Auras.ascendance.duration
 				duration = H.Abilities[ 'ascendance' ].cooldown
 			end
 			
 			t.duration = duration or 0
 			t.expires = start and ( start + duration ) or 0
       
-      if H.Abilities[ t.key ].charges then
-        local charges, maxCharges, start, duration = GetSpellCharges( t.id )
-        
-        if charges then
-          t.charges = charges
-          t.next_charge = ( charges < maxCharges ) and start + duration or H.State.now + H.State.offset + 60
-        else
-          t.charges = 0
-          t.next_charge = H.State.now + H.State.offset + 60
-        end
+    if H.Abilities[ t.key ].charges then
+      local charges, maxCharges, start, duration = GetSpellCharges( t.id )
+      t.charges = charges or 0
+      if charges and charges < H.Abilities[ t.key ].charges then
+        t.next_charge = start + duration
       else
-        t.charges = t.expires < H.State.now + H.State.offset and 1 or 0
-        t.next_charge = t.expires
+        t.next_charge = 0
       end
+    else
+      t.charges = t.expires < H.State.now + H.State.offset and 1 or 0
+      t.next_charge = t.expires
+    end
 			
 			return t[k]
 		
 		elseif k == 'remains' then
-			if t.expires <= ( state.now + state.offset) then return 0 end
-			return ( t.expires - ( state.now + state.offset ) )
+      if t.expires <= ( state.now + state.offset ) then return 0 end
+      return ( t.expires - ( state.now + state.offset ) )
 			
 		elseif k == 'up' then
 			return ( t.remains == 0 )
@@ -859,6 +873,7 @@ local mt_cooldowns	= {
 		if start then
 			t[k] = {
 				key = k,
+        name = H.Abilities[ k ].name,
 				id = ability,
 				duration = duration,
 				expires = (start + duration)
@@ -866,6 +881,7 @@ local mt_cooldowns	= {
 		else
 			t[k] = {
 				key = k,
+        name = H.Abilities[ k ].name,
 				id = ability,
 				duration = 0,
 				expires = 0
@@ -873,14 +889,21 @@ local mt_cooldowns	= {
 		end
     
     if H.Abilities[ k ].charges then
-      local charges, maxCharges, start, duration = GetSpellCharges( ability )
+      local charges, maxCharges, start, duration = GetSpellCharges( t[k].name )
       t[ k ].charges = charges or 0
-      t[ k ].next_charge = ( start or 0 ) + ( duration or 60 )
+      if charges then
+        if start + duration < H.State.now then
+          t[ k ].next_charge = 0
+        else
+          t[ k ].next_charge = charges < H.Abilities[ k ].charges and ( start + duration ) or 0
+        end
+      else
+        t[ k ].next_charge = 0
+      end
     else
       t[ k ].charges = t[ k ].expires < H.State.now + H.State.offset and 1 or 0
       t[ k ].next_charge = t[ k ].expires
     end
-    
     
 		return t[k]
 	end,
@@ -899,7 +922,7 @@ local mt_resource = {
     elseif k == 'current' then
       -- This accommodates testing energy levels after a delay (i.e., use 'jab' in 3 seconds, conditions need to know energy at that time).
       if t.resource == 'energy' or t.resource == 'focus' then
-        return min( t.max, t.actual + ( t.regen * Hekili.State.this_delay ) )
+        return min( t.max, t.actual + ( t.regen * state.delay ) )
       end
       return t.actual
 		
@@ -950,8 +973,8 @@ local mt_default_aura = {
 			end
       
       if t.key == 'liquid_magma' then
-				t.count	= H.State.cooldown.liquid_magma.remains > 34.5 and 1 or 0
-				t.expires = H.State.cooldown.liquid_magma.expires - 34.5
+				t.count	= H.State.cooldown.liquid_magma.remains > 34 and 1 or 0
+				t.expires = H.State.cooldown.liquid_magma.expires - 34
         t.caster = 'player'
         return t[k]
       end
@@ -1009,9 +1032,8 @@ local mt_default_aura = {
 			return ( t.count == 0 or t.expires <= ( state.now + state.offset ) )
 			
 		elseif k == 'remains' then
-			if t.expires > ( state.now + state.offset) then
+			if t.expires > ( state.now + state.offset ) then
 				return ( t.expires - ( state.now + state.offset ) )
-				
 			else
 				return 0
 				
@@ -1112,9 +1134,9 @@ local mt_buffs	= {
 			t[k] = {
 				key		= k,
 				name	= GetSpellInfo( H.Auras[ 'liquid_magma' ].id ),
-				count	= H.State.cooldown.liquid_magma.remains > 34.5 and 1 or 0,
-				expires = H.State.cooldown.liquid_magma.expires - 34.5
-			}
+				count	= H.State.cooldown.liquid_magma.remains > 34 and 1 or 0,
+				expires = H.State.cooldown.liquid_magma.expires - 34
+      }
 			return t[k]
 		
 		elseif H.Auras[ k ].id < 0 then
@@ -1220,7 +1242,7 @@ local mt_default_totem = {
 			return ( t.expires > ( state.now + state.offset ) )
 
 		elseif k == 'remains' then
-			if t.expires > ( state.now + state.offset) then
+			if t.expires > ( state.now + state.offset ) then
 				return ( t.expires - ( state.now + state.offset ) )
 			else
 				return 0
@@ -1414,7 +1436,7 @@ local mt_default_debuff = {
 			return ( t.count == 0 or t.expires <= ( state.now + state.offset ) )
 		
 		elseif k == 'remains' then
-			if t.expires > ( state.now + state.offset) then
+			if t.expires > ( state.now + state.offset ) then
 				return ( t.expires - ( state.now + state.offset ) )
 		
 			else
@@ -1498,7 +1520,10 @@ local mt_default_action	= {
 			
 		elseif k == 'execute_time' then
 			return max( t.gcd, t.cast )
-			
+	
+    elseif k == 'ready_time' then
+      return WaitTime( t.action )
+  
 		elseif k == 'cast_time' then
 			return H.Abilities[ t.action ].cast
 		
@@ -1559,6 +1584,7 @@ local mt_actions = {
 		
 		t[k] = {
 			action		= k,
+      name      = action.name,
 			base_cast	= action.elem.cast,
 			cooldown	= action.cooldown,
 			gcdType		= action.gcdType
@@ -1600,8 +1626,8 @@ state.purge = {}
 
 
 Hekili.Tables = { "pet", "stat", "toggle", "buff", "race", "spec", "glyph", "talent", "totem", "set_bonus", "target", "debuff", "dot", "cooldown", "action", "active_dot", "perk" }
-Hekili.Values = { "active", "active_enemies", "active_flame_shock", "adds", "agility", "air", "armor", "attack_power", "bonus_armor", "cast_delay", "cast_time", "casting", "cooldown_react", "cooldown_remains", "cooldown_up", "crit_rating", "deficit", "distance", "down", "duration", "earth", "enabled", "energy", "execute_time", "fire", "five", "focus", "four", "gcd", "hardcasts", "haste", "haste_rating", "health", "health_max", "health_pct", "intellect", "level", "mana", "mastery_rating", "mastery_value", "max_nonproc", "max_stack", "maximum_energy", "maximum_focus", "maximum_health", "maximum_mana", "maximum_rage", "maximum_runic", "melee_haste", "miss_react", "moving", "mp5", "multistrike_pct", "multistrike_rating", "one", "pct", "rage", "react", "regen", "remains", "remains", "resilience_rating", "runic", "seal", "spell_haste", "spell_power", "spirit", "stack", "stack_pct", "stacks", "stamina", "strength", "this_action", "three", "tick_damage", "tick_dmg", "tick_time", "ticking", "ticks", "ticks_remain", "time", "time_to_die", "time_to_max", "travel_time", "two", "up", "water", "weapon_dps", "weapon_offhand_dps", "weapon_offhand_speed", "weapon_speed", "single", "aoe", "cleave", "percent" }
+Hekili.Values = { "active", "active_enemies", "active_flame_shock", "adds", "agility", "air", "armor", "attack_power", "bonus_armor", "cast_delay", "cast_time", "casting", "cooldown_react", "cooldown_remains", "cooldown_up", "crit_rating", "deficit", "distance", "down", "duration", "earth", "enabled", "energy", "execute_time", "fire", "five", "focus", "four", "gcd", "hardcasts", "haste", "haste_rating", "health", "health_max", "health_pct", "intellect", "level", "mana", "mastery_rating", "mastery_value", "max_nonproc", "max_stack", "maximum_energy", "maximum_focus", "maximum_health", "maximum_mana", "maximum_rage", "maximum_runic", "melee_haste", "miss_react", "moving", "mp5", "multistrike_pct", "multistrike_rating", "one", "pct", "rage", "react", "regen", "remains", "remains", "resilience_rating", "runic", "seal", "spell_haste", "spell_power", "spirit", "stack", "stack_pct", "stacks", "stamina", "strength", "this_action", "three", "tick_damage", "tick_dmg", "tick_time", "ticking", "ticks", "ticks_remain", "time", "time_to_die", "time_to_max", "travel_time", "two", "up", "water", "weapon_dps", "weapon_offhand_dps", "weapon_offhand_speed", "weapon_speed", "single", "aoe", "cleave", "percent", "last_judgment_target", "unit" }
 
 
-Hekili.State			= state
-Hekili.State.H			= Hekili
+Hekili.State = state
+Hekili.State.H = Hekili

@@ -4,6 +4,7 @@
 ## Author: Hekili
 ## Notes: Hekili with support for in-game modifications.
 ## SavedVariables: HekiliDB
+## OptionalDeps: Masque
 
 embeds.xml
 

@@ -130,7 +130,9 @@ local non_localized_specializations = {
 
   [71] = 'arms',
   [72] = 'fury',
-  [73] = 'protection'
+  [73] = 'protection',
+  
+  [-1] = 'none'
 }
 
 function HU.GetSpecializationKey( specID )

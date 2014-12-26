@@ -12,11 +12,11 @@ function H.Utils.FormatKey( s )
 end
 
 
-if not round then
-	round = function( num, places )
+local function round ( num, places )
 		return tonumber( string.format( "%." .. ( places or 0 ) .. "f", num ) )
 	end
 end
+Hekili.Utils.Round = round
 
 
 -- Hrm.

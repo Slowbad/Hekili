@@ -49,6 +49,7 @@ function Hekili:PLAYER_ENTERING_WORLD()
 		self.State.spec[ k ] = nil
 	end
 	
+  self.SpecializationKey = GetSpecializationKey( self.Specialization )
 	self.State.spec[ GetSpecializationKey( self.Specialization ) ] = true
 	
 	self.GUID = UnitGUID("player")
@@ -82,6 +83,7 @@ end
 function H:ACTIVE_TALENT_GROUP_CHANGED()
 	
 	self.Specialization, self.SpecializationName = GetSpecializationInfo( GetSpecialization() )
+  self.SpecializationKey = GetSpecializationKey( self.Specialization )
 
 	for k,v in pairs( self.State.spec ) do
 		self.State.spec[ k ] = nil
@@ -310,6 +312,12 @@ function H:UNIT_SPELLCAST_SUCCEEDED( _, UID, spell )
 		self.Cast			= self.Cast or {}
 		self.Cast.spell		= spell
 		self.Cast.time		= GetTime()
+    
+    if Hekili.Class == 'PALADIN' then
+      if spell == Hekili.Abilities[ 'judgment' ].name then
+        Hekili.State.last_judgment_target = UnitGUID( 'target' )
+      end
+    end
 		
 		-- (NYI) v1 would accelerate the engine in these cases.
 		-- We may not need that now.
@@ -373,18 +381,18 @@ function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, so
 		-- Aura Tracking
 		if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' then
 			self:TrackDebuff( spellName, destGUID, time, true )
-			self:UpdateTarget( destGUID, time )
+			self:UpdateTarget( destGUID, time, sourceGUID == self.GUID )
 		elseif subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
 			self:TrackDebuff( spellName, destGUID, time )
-			self:UpdateTarget( destGUID, time )
+			self:UpdateTarget( destGUID, time, sourceGUID == self.GUID )
 		elseif subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_MISSED' then
-			self:UpdateTarget( destGUID, time )
+			self:UpdateTarget( destGUID, time, sourceGUID == self.GUID )
 		elseif destGUID and subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL' then
 			self:TrackDebuff( spellName, destGUID )
 		end
 
 		if subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
-			self:UpdateTarget( destGUID, time )
+			self:UpdateTarget( destGUID, time, sourceGUID == self.GUID )
 			-- local resisted, blocked, absorbed = b, c, d
 		end
 

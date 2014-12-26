@@ -6,22 +6,34 @@ local H = Hekili
 
 -- Table to collect enemies that are damaged or debuffed by us or our minions.
 local tCount = 0
+local dtCount = 0
 local targets = {}
 
 Hekili.Targets = targets
 
-function H:UpdateTarget( id, time )
+function H:UpdateTarget( id, time, mine )
 
 	if time then
 		
 		if not targets[id] then
 			tCount = tCount + 1
-		end
-		targets[id]	= time
+      if mine then dtCount = dtCount + 1 end
+      targets[id] = {
+        t = time,
+        dt = mine or false
+      }
+		else
+      targets[id].t = time
+      if mine and targets[id].dt == false then
+        targets[id].dt = true
+        dtCount = dtCount + 1
+      end
+    end
 	
 	else
 		if targets[id] then
 			tCount = max(0, tCount - 1)
+      dtCount = max(0, dtCount - 1)
 			targets[id] = nil
 		end
 	end
@@ -30,6 +42,11 @@ end
 
 function H:NumTargets()
 	return tCount
+end
+
+
+function H:NumDirectTargets()
+  return dtCount
 end
 
 
@@ -151,8 +168,8 @@ end
 function Hekili:Audit()
 	local self = self or Hekili
 	
-	local now			= GetTime()
-	local grace_period	= self.DB.profile['Audit Targets']
+	local now	= GetTime()
+	local grace_period = self.DB.profile['Audit Targets']
 	
 	for aura, targets in pairs( debuffs ) do
 		for unit, aura_info in pairs( targets ) do
@@ -164,7 +181,7 @@ function Hekili:Audit()
 	end
 	
 	for whom, when in pairs( targets ) do
-		if now - when > grace_period then
+		if now - when.t > grace_period then
 			self:UpdateTarget( whom )
 			self.TTD[ whom ] = nil
 		end
