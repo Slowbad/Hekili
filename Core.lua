@@ -635,7 +635,7 @@ function H:Advance( time )
 end
 
 
-function HasRequiredResources( ability )
+local function HasRequiredResources( ability )
 
 	local s, action = H.State, H.Abilities[ ability ]
 	
@@ -672,7 +672,7 @@ function HasRequiredResources( ability )
 	return true
 	
 end
-Hekili.HRR = HasRequiredResources
+Hekili.HasRequiredResources = HasRequiredResources
 
 
 local function ResourceType( ability )

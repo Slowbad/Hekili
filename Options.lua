@@ -2596,8 +2596,8 @@ function Hekili:ImportSimulationCraftActionList( str )
       end
 
       if modifier:sub(1, 5) == 'sync=' then
-        Hekili:Print("Line " .. line .. ": Converted 'sync=' modifier to 'cooldown.X.remains' conditional.")
-        conditions = "cooldown." .. modifier:sub(6) .. ".remains=0&("..conditions..")"
+        Hekili:Print("Line " .. line .. ": Converted 'sync=' modifier to 'action.X.ready' conditional.")
+        conditions = "action." .. modifier:sub(6) .. ".ready&("..conditions..")"
         modifier = ""
       end
 
@@ -2622,8 +2622,8 @@ function Hekili:ImportSimulationCraftActionList( str )
       end
       
       if modifiers:sub(1, 5) == 'sync=' then
-        Hekili:Print("Line " .. line .. ": Converted 'sync=' modifier to 'cooldown.X.remains' conditional.")
-        conditions = "cooldown." .. modifiers:sub(6) .. ".remains=0&("..conditions..")"
+        Hekili:Print("Line " .. line .. ": Converted 'sync=' modifier to 'action.X.ready' conditional.")
+        conditions = "action." .. modifiers:sub(6) .. ".ready&("..conditions..")"
         modifiers = ""
       end
 			
