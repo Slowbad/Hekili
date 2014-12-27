@@ -648,7 +648,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
     } )
   
   AddHandler( 'life_cocoon', function ()
-    H:Buff( 'target', 'life_cocoon', 12 )
+    H:Buff( 'life_cocoon', 12 )
   end )
   
   ModifyAbility( 'life_cocoon', 'cooldown', function ( x )
@@ -703,7 +703,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
     } )
   
   AddHandler( 'renewing_mist', function ()
-    H:Buff( 'target', 'renewing_mist', 18 )
+    H:Buff( 'renewing_mist', 18 )
     H:Gain( 1, 'chi' )
   end )
   
@@ -749,7 +749,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
     } )
   
   AddAbility( 'soothing_mist', function ()
-    H:Buff( 'target', 'soothing_mist', 8 )
+    H:Buff( 'soothing_mist', 8 )
   end )
   
   
@@ -1092,7 +1092,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
     } )
   
   AddHandler( 'ring_of_peace', function ()
-    H:Buff( 'target', 'ring_of_peace', 8 )
+    H:Buff( 'ring_of_peace', 8 )
   end )
   
   
@@ -1157,7 +1157,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
     } )
   
   AddHandler( 'zen_sphere', function ()
-    H:Buff( 'target', 'zen_sphere', 16 )
+    H:Buff( 'zen_sphere', 16 )
   end )
 
   
