@@ -130,6 +130,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
   AddAura( 'light_stagger', 124275, 'unit', 'player' )
   AddAura( 'mana_tea_stacks', 115867, 'duration', 120, 'max_stacks', 15 )
   AddAura( 'mana_tea_activated', 115294 )
+  AddAura( 'power_strikes', 129914 )
   AddAura( 'moderate_stagger', 124274, 'duration', 10, 'unit', 'player' )
   AddAura( 'rising_sun_kick', 130320 )
   AddAura( 'rushing_jade_wind', 116847 )
@@ -257,7 +258,11 @@ if (select(2, UnitClass('player')) == 'MONK') then
 	
 	AddHandler( 'crackling_jade_lightning', function ()
 		if spec.mistweaver then H:Gain( 1, "chi" ) end -- need to fix up for channeling.
-	end )
+    if buff.power_strikes.up then
+      H:Gain( 1, 'chi' )
+      H:RemoveBuff( 'power_strikes' )
+    end
+  end )
 	
 	
 	AddAbility( 'expel_harm', 115072,
@@ -281,6 +286,10 @@ if (select(2, UnitClass('player')) == 'MONK') then
   
   AddHandler( 'expel_harm', function ()
     H:Gain( 1, 'chi' )
+    if buff.power_strikes.up then
+      H:Gain( 1, 'chi' )
+      H:RemoveBuff( 'power_strikes' )
+    end
   end )
 
 
@@ -314,6 +323,10 @@ if (select(2, UnitClass('player')) == 'MONK') then
   
   AddHandler( 'jab', function ()
     H:Gain( spec.windwalker and 2 or 1, 'chi' )
+    if buff.power_strikes.up then
+      H:Gain( 1, 'chi' )
+      H:RemoveBuff( 'power_strikes' )
+    end
   end )
   
   
@@ -346,7 +359,13 @@ if (select(2, UnitClass('player')) == 'MONK') then
   AddHandler( 'spinning_crane_kick', function ()
     H:Buff( 'spinning_crane_kick', ( perk.empowered_spinning_crane_kick.enabled and 1.125 or 2.25 ) * haste )
     H:SetCooldown( H.GCD, ( perk.empowered_spinning_crane_kick.enabled and 1.125 or 2.25 ) * haste )
-    if active_enemies >= 3 then H:Gain( 1, 'chi' ) end
+    if active_enemies >= 3 then
+      H:Gain( 1, 'chi' )
+      if buff.power_strikes.up then
+        H:Gain( 1, 'chi' )
+        H:RemoveBuff( 'power_strikes' )
+      end
+    end
   end )
   
   
@@ -1111,7 +1130,13 @@ if (select(2, UnitClass('player')) == 'MONK') then
     } )
   
   AddHandler( 'rushing_jade_wind', function ()
-    if active_enemies >= 3 then H:Gain( 1, 'chi' ) end
+    if active_enemies >= 3 then
+      H:Gain( 1, 'chi' )
+      if buff.power_strikes.up then
+        H:Gain( 1, 'chi' )
+        H:RemoveBuff( 'power_strikes' )
+      end
+    end
     H:Buff( 'rushing_jade_wind', 6 )
   end )
   
