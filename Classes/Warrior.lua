@@ -2,6 +2,17 @@
 -- August 2014
 
 
+local addon, ns = ...
+local Hekili = _G[ addon ]
+
+local state = ns.state
+
+local addResource = ns.addResource
+local addTalent = ns.addTalent
+local addGlyph = ns.addGlyph
+
+-- ...
+
 local AbilityMods, AddHandler = Hekili.Utils.AbilityMods, Hekili.Utils.AddHandler
 
 -- This table gets loaded only if there's a supported class/specialization.
@@ -126,6 +137,18 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 	AddPerk( "improved_heroic_throw"    , 157479 )
 	AddPerk( "improved_recklessness"    , 176051 )
 	
+  
+  -- Hook: runHandler
+  ns.class.hooks.runHandler = function( key )
+
+    local ability = ns.class.abilities[ key ]
+
+  	if not ability.passive and state.nextMH < 0 then
+      state.nextMH = state.now + state.offset - 0.01
+      state.nextOH = state.now + state.offset + 0.99
+    end
+    
+	end
 
 	
 	-- Abilities.
@@ -674,8 +697,25 @@ if (select(2, UnitClass("player")) == "WARRIOR") then
 		H:ConsumeStack( 'bloodsurge' )
 	end )
 	
-	function Hekili:RestoreDefaults()
+	setHook( "COMBAT_LOG_EVENT_UNFILTERED", function( ... )
 	
-	end
-
+    local subtype = select( 3, ... )
+    local offhand = select( 22, ... )
+    local multistrike = select( 23, ... )
+    
+    if subtype:sub(1, 5) == 'SWING' and not multistrike then
+      local mainhandSpeed, offhandSpeed = UnitAttackSpeed( 'player' )
+		
+		if offhand == false or self.State.offhand_speed == 0 then
+			state.lastMH = time
+			state.nextMH = time + mainhandSpeed
+			state.lastSwing = 'MH'
+		else
+			state.lastOH = time
+			state.nextOH = time + offhandSpeed
+			state.lastSwing = 'OH'
+		end
+		
+	end )
+  
 end

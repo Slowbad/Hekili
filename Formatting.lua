@@ -1,3 +1,9 @@
+-- Formatting.lua
+-- Modified from For all Indents and Purposes, info below.
+
+local addon, ns = ...
+local Hekili = _G[ addon ]
+
 --[[ For all Indents and Purposes
 Copyright (c) 2007 Kristofer Karlsson <kristofer.karlsson@gmail.com>
 
@@ -33,8 +39,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -- ColorTable should map TokenIDs and string Token values to color codes.
 -- @see lib.Tokens
 
-local lib = {};
-Hekili.Format = lib;
+local lib = ns.lib.Format;
+
+local modf = math.modf
 
 local UPDATE_INTERVAL = 0.2; -- Time to wait after last keypress before updating
 
@@ -111,6 +118,7 @@ do
 			return true;
 		end
 	end
+
 	--- @return True if successfully disabled for this editbox.
 	function lib:Disable ()
 		if ( not Enabled[ self ] ) then
@@ -146,6 +154,7 @@ do
 			return self:faiap_OnTextChanged( ... );
 		end
 	end
+
 	--- Forces a re-indent for this editbox on tab.
 	local function OnTabPressed ( self, ... )
 		if ( self.faiap_OnTabPressed ) then
@@ -153,6 +162,7 @@ do
 		end
 		return lib.Update( self, true );
 	end
+
 	--- @return Cached plain text contents.
 	local function GetCodeCached ( self )
 		local Code = CodeCache[ self ];
@@ -162,6 +172,7 @@ do
 		end
 		return Code;
 	end
+
 	--- @return Un-colored text as if FAIAP wasn't there.
 	-- @param Raw  True to return fully formatted contents.
 	local function GetText( self, Raw )
@@ -171,6 +182,7 @@ do
 			return GetCodeCached( self );
 		end
 	end
+
 	--- Clears cached contents if set directly.
 	-- This is necessary because OnTextChanged won't fire immediately or if the
 	-- edit box is hidden.
@@ -178,22 +190,26 @@ do
 		CodeCache[ self ] = nil;
 		return SetTextBackup( self, ... );
 	end
+
 	local function Insert ( self, ... )
 		CodeCache[ self ] = nil;
 		return InsertBackup( self, ... );
 	end
+
 	--- @return Cursor position within un-colored text.
 	local function GetCursorPosition ( self, ... )
 		local _, Cursor = lib.StripColors( GetTextBackup( self ),
 			GetCursorPositionBackup( self, ... ) );
 		return Cursor;
 	end
+
 	--- Sets the cursor position relative to un-colored text.
 	local function SetCursorPosition ( self, Cursor, ... )
 		local _, Cursor = lib.FormatCode( GetCodeCached( self ),
 			nil, self.faiap_colorTable, Cursor );
 		return SetCursorPositionBackup( self, Cursor, ... );
 	end
+
 	--- Highlights a substring relative to un-colored text.
 	local function HighlightText ( self, Start, End, ... )
 		if ( Start ~= End and ( Start or End ) ) then
@@ -209,6 +225,7 @@ do
 		end
 		return HighlightTextBackup( self, Start, End, ... );
 	end
+
 	--- Updates the code a moment after the user quits typing.
 	local function UpdaterOnFinished ( Updater )
 		return lib.Update( Updater.EditBox );
@@ -218,6 +235,7 @@ do
 		self[ "faiap_"..Handler ] = self:GetScript( Handler );
 		self:SetScript( Handler, Script );
 	end
+
 	--- Enables syntax highlighting or auto-indentation on this edit box.
 	-- Can be run again to change the TabWidth or ColorTable.
 	-- @param TabWidth  Tab width to indent code by, or nil for no indentation.
@@ -266,9 +284,6 @@ do
 		return lib.Update( self, not SuppressIndent );
 	end
 end
-
-
-
 
 -- Token types
 lib.Tokens = {}; --- Token names to TokenTypeIDs, used to define custom ColorTables.
@@ -358,11 +373,13 @@ local BYTE_TILDE = strbyte( "~" );
 local Linebreaks = {
 	[ BYTE_CR ] = true;
 	[ BYTE_LF ] = true;
-};
+}
+
 local Whitespace = {
 	[ BYTE_SPACE ] = true;
 	[ BYTE_TAB ] = true;
-};
+}
+
 --- Mapping of bytes to the only tokens they can represent, or true if indeterminate
 local TokenBytes = {
 	[ BYTE_ASTERISK ] = TK_MULTIPLY;
@@ -388,7 +405,7 @@ local TokenBytes = {
 	[ BYTE_SINGLE_QUOTE ] = true;
 	[ BYTE_SLASH ] = TK_DIVIDE;
 	[ BYTE_TILDE ] = true;
-};
+}
 
 local strfind = string.find;
 --- Reads the next Lua identifier from its beginning.
@@ -406,6 +423,7 @@ local function NextNumberDecPart ( Text, Pos )
 	local _, End = strfind( Text, "^%d+", Pos );
 	return TK_NUMBER, End and End + 1 or Pos;
 end
+
 --- Reads the next scientific e notation exponent beginning after the 'e'.
 local function NextNumberExponentPart ( Text, Pos )
 	local Byte = strbyte( Text, Pos );
@@ -421,6 +439,7 @@ local function NextNumberExponentPart ( Text, Pos )
 	end
 	return NextNumberDecPart( Text, Pos );
 end
+
 --- Reads the fractional part of a number beginning after the decimal.
 local function NextNumberFractionPart ( Text, Pos )
 	local _, Pos = NextNumberDecPart( Text, Pos );
@@ -430,11 +449,13 @@ local function NextNumberFractionPart ( Text, Pos )
 		return TK_NUMBER, Pos;
 	end
 end
+
 --- Reads all following hex digits.
 local function NextNumberHexPart ( Text, Pos )
 	local _, End = strfind( Text, "^%x+", Pos );
 	return TK_NUMBER, End and End + 1 or Pos;
 end
+
 --- Reads the next number from its beginning.
 local function NextNumber ( Text, Pos )
 	if ( strfind( Text, "^0[Xx]", Pos ) ) then
@@ -458,6 +479,7 @@ local function NextLongStringStart ( Text, Pos )
 		return End + 1, End - Start - 1;
 	end
 end
+
 --- Reads the next long string beginning after its opening brackets.
 local function NextLongString ( Text, Pos, EqualsCount )
 	local _, End = strfind( Text, "]"..( "=" ):rep( EqualsCount ).."]", Pos, true );
@@ -596,10 +618,12 @@ local Keywords = {
 	[ "function" ] = true;
 	[ "return" ] = true;
 	[ "end" ] = true;
-};
-local IndentOpen = { 0, 1 };
-local IndentClose = { -1, 0 };
-local IndentBoth = { -1, 1 };
+}
+
+local IndentOpen = { 0, 1 }
+local IndentClose = { -1, 0 }
+local IndentBoth = { -1, 1 }
+
 local Indents = {
 	[ "do" ] = IndentOpen;
 	[ "then" ] = IndentOpen;
@@ -617,13 +641,13 @@ local Indents = {
 	[ TK_RIGHTCURLY ] = IndentClose;
 
 	[ "else" ] = IndentBoth;
-};
+}
 
+local strrep, strsub = string.rep, string.sub
+local tinsert = table.insert
+local TERMINATOR = "|r"
+local Buffer = {}
 
-local strrep, strsub = string.rep, string.sub;
-local tinsert = table.insert;
-local TERMINATOR = "|r";
-local Buffer = {};
 --- Syntax highlights and indents a string of Lua code.
 -- @param CursorOld  Optional cursor position to keep track of.
 -- @see lib.Enable
@@ -734,7 +758,8 @@ function lib:ColorString ( String, ColorTable )
 			and ( PassedIndent or not TabWidth or TokenType ~= TK_WHITESPACE )
 		) then
 			PassedIndent = true; -- Passed leading whitespace
-			local Token = strsub( String, Pos, PosNext - 1 );			local Token = strsub( String, Pos, PosNext - 1 );
+			local Token = strsub( String, Pos, PosNext - 1 )
+      local Token = strsub( String, Pos, PosNext - 1 );
 
 			local ColorCode;
 			if ( ColorTable ) then -- Add coloring
@@ -767,4 +792,36 @@ function lib:ColorString ( String, ColorTable )
 	end
 
 	return table.concat( Buffer )
+end
+
+local COLOR_NUMBERS = '|cFFFFD100'
+local COLOR_TRUE = '|cFF00FF00'
+local COLOR_FALSE = '|cFFFF0000'
+local COLOR_STRING = '|cFF008888'
+local COLOR_DEFAULT = '|cFFFFFFFF'
+local COLOR_NORMAL = '|r'
+
+function ns.formatValue( value )
+	if type( value ) == 'number' then
+		-- Check for decimal places.
+		if select(2, modf( value )) ~= 0 then
+			return COLOR_NUMBERS .. round( value, 2 ) .. COLOR_NORMAL
+		else
+			return COLOR_NUMBERS .. value .. COLOR_NORMAL
+		end
+	
+	elseif type( value ) == 'boolean' then
+		if value then
+			return COLOR_TRUE .. tostring( value ) .. COLOR_NORMAL
+		else
+			return COLOR_FALSE .. tostring( value ) .. COLOR_NORMAL
+		end
+	
+	elseif type( value ) == 'string' then
+		return COLOR_STRING .. value .. COLOR_NORMAL
+		
+	end
+	
+	return COLOR_DEFAULT .. tostring( value ) .. COLOR_NORMAL
+
 end

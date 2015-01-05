@@ -4,7 +4,7 @@
 ## Author: Hekili
 ## Notes: Priority helper for Shamans, Paladins, and Monks with support for in-game modifications.
 ## SavedVariables: HekiliDB
-## OptionalDeps: Masque
+## OptionalDeps: Masque SpellFlash SpellFlashCore
 
 embeds.xml
 
@@ -14,13 +14,14 @@ Formatting.lua
 MultilineEditor.lua
 Constants.lua
 State.lua
+Events.lua
 Classes.lua
 Classes\Monk.lua
 Classes\Paladin.lua
 Classes\Shaman.lua
 # Classes\Warrior.lua
-Events.lua
 Targets.lua
 Options.lua
 UI.lua
+Scripts.lua
 Core.lua

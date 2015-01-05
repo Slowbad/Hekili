@@ -1,39 +1,76 @@
 -- Constants.lua
 -- June 2014
 
-local H = Hekili
-local HU = Hekili.Utils
-
--- Adding this to the globals, since it's a possible return value from GetSpellInfo() regarding power costs.
-if not SPELL_POWER_HEALTH then SPELL_POWER_HEALTH = -2 end
-
-local resource_t = {
-	[SPELL_POWER_HEALTH] = "health",
-	[SPELL_POWER_MANA] = "mana",
-	[SPELL_POWER_RAGE] = "rage",
-	[4] = "combo_points", -- 4
-	[SPELL_POWER_FOCUS] = "focus",
-	[SPELL_POWER_ENERGY] = "energy",
-	[SPELL_POWER_RUNES] = "runes",
-	[SPELL_POWER_RUNIC_POWER] = "runic_power",
-	[SPELL_POWER_SOUL_SHARDS] = "soul_shards",
-	[SPELL_POWER_ECLIPSE] = "eclipse",
-	[SPELL_POWER_HOLY_POWER] = "holy_power",
-	[SPELL_POWER_ALTERNATE_POWER] = "alternate_power",
-	[SPELL_POWER_CHI] = "chi",
-	[SPELL_POWER_SHADOW_ORBS] = "shadow_orbs",
-	[SPELL_POWER_BURNING_EMBERS] = "burning_embers",
-	[SPELL_POWER_DEMONIC_FURY] = "demonic_fury"
-}
-HU.Resources = resource_t
+local addon, ns = ...
+local Hekili = _G[ addon ]
 
 
-function HU.GetResourceName( key )
-	return resource_t[key]
+-- Class Localization
+ns.getLocalClass = function ( class )
+  
+  if not ns.player.sex then ns.player.sex = UnitSex( 'player' ) end
+  
+  return ns.player.sex == 1 and LOCALIZED_CLASS_NAMES_MALE[ class ] or LOCALIZED_CLASS_NAMES_FEMALE[ class ]
+  
 end
 
 
-local specialization_t = {
+local InverseDirection = {
+	LEFT = 'RIGHT',
+	RIGHT = 'LEFT',
+	TOP = 'BOTTOM',
+	BOTTOM = 'TOP'
+}
+
+ns.getInverseDirection = function ( dir )
+
+  return InverseDirection[ dir ] or dir
+  
+end
+
+
+local ClassIDs = {}
+
+for i = 1, GetNumClasses() do
+  local classDisplayName, classTag = GetClassInfo( i )
+  
+  ClassIDs[ classTag ] = i
+end
+
+ns.getClassID = function( class )
+
+  return ClassIDs[ class ] or -1
+  
+end
+
+
+local Resources = {
+  health = -2,
+  mana = SPELL_POWER_MANA,
+  rage = SPELL_POWER_RAGE,
+  combo_points = 4,
+  focus = SPELL_POWER_FOCUS,
+  energy = SPELL_POWER_ENERGY,
+  runes = SPELL_POWER_RUNES,
+  runic_power = SPELL_POWER_RUNIC_POWER,
+  soul_shards = SPELL_POWER_SOUL_SHARDS,
+  eclipse = SPELL_POWER_ECLIPSE,
+  holy_power = SPELL_POWER_HOLY_POWER,
+  alternate_power = SPELL_POWER_ALTERNATE_POWER,
+  chi = SPELL_POWER_CHI,
+  shadow_orbs = SPELL_POWER_SHADOW_ORBS,
+  burning_embers = SPELL_POWER_BURNING_EMBERS,
+  demonic_fury = SPELL_POWER_DEMONIC_FURY,
+}
+
+ns.getResourceID = function ( key )
+
+  return Resources[ key ]
+
+end
+
+
+local Specializations = {
 	death_knight_blood = 250,
 	death_knight_frost = 251,
 	death_knight_unholy = 252,
@@ -80,13 +117,12 @@ local specialization_t = {
 	warrior_protection = 73
 }
 
-
-function HU.GetSpecializationIDByKey( key )
-	return specialization_t[ key ]
+ns.getSpecializationID = function ( key )
+  return Specializations[ key ] or -1
 end
 
 
-local non_localized_specializations = {
+local SpecializationKeys = {
   [250] = 'blood',
   [251] = 'frost',
   [252] = 'unholy',
@@ -131,10 +167,13 @@ local non_localized_specializations = {
   [71] = 'arms',
   [72] = 'fury',
   [73] = 'protection',
-  
-  [-1] = 'none'
 }
 
-function HU.GetSpecializationKey( specID )
-  return non_localized_specializations[ specID ]
+ns.getSpecializationKey = function ( id )
+  return SpecializationKeys[ id ] or 'none'
+end
+
+
+ns.getSpecializationID = function ( index )
+  return GetSpecializationInfo( index or GetSpecialization() or 0 )
 end

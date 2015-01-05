@@ -1,11 +1,15 @@
+-- MultilineEditor.lua
 -- Revised MultiLineEditBox, to allow for my own tweaks.
+
+local addon, ns = ...
+local Hekili = _G[ addon ]
+
 local Type, Version = "HekiliCustomEditor", 1
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local pairs = pairs
-local round = Hekili.Utils.Round
 
 -- WoW APIs
 local GetCursorInfo, GetSpellInfo, ClearCursor = GetCursorInfo, GetSpellInfo, ClearCursor
@@ -13,7 +17,8 @@ local CreateFrame, UIParent = CreateFrame, UIParent
 local _G = _G
 
 -- local utilities
-local Unpacks = Hekili.Utils.Unpacks
+local multiUnpack = ns.multiUnpack
+local formatValue = ns.lib.formatValue
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script
@@ -240,9 +245,9 @@ local function GenerateDiagnosticTooltip(widget, event)
 		if actID then
 			action = Hekili.DB.profile.actionLists[ listID ].Actions[ actID ].Ability
 			
-			local result, warning = Hekili:CheckScript( 'A', listID..':'..actID, action )
+			local result, warning = ns.checkScript( 'A', listID..':'..actID, action )
 
-			GameTooltip:AddDoubleLine( "Shown", Hekili.Utils.FormatValue( result ), 1, 1, 1, 1, 1, 1 )
+			GameTooltip:AddDoubleLine( "Shown", ns.formatValue( result ), 1, 1, 1, 1, 1, 1 )
 
 			if warning then
 				GameTooltip:AddLine( warning, 1, 1, 1 )
@@ -255,9 +260,9 @@ local function GenerateDiagnosticTooltip(widget, event)
 		local dispID = tonumber( path[2]:match( "^D(%d+)" ) )
 		
 		if path[3] == 'Criteria' then
-			local result, warning = Hekili:CheckScript( 'D', dispID )
+			local result, warning = ns.checkScript( 'D', dispID )
 			
-			GameTooltip:AddDoubleLine( "Shown", Hekili.Utils.FormatValue( result ), 1, 1, 1, 1, 1, 1 )
+			GameTooltip:AddDoubleLine( "Shown", ns.formatValue( result ), 1, 1, 1, 1, 1, 1 )
 			
 			if warning then
 				GameTooltip:AddLine( warning, 1, 1, 1 )
@@ -265,9 +270,9 @@ local function GenerateDiagnosticTooltip(widget, event)
 		else
 			local prioID = tonumber( path[3]:match( "^P(%d+)" ) )
 			
-			local result, warning	 = Hekili:CheckScript( 'P', dispID..':'..prioID )
+			local result, warning	 = ns.checkScript( 'P', dispID..':'..prioID )
 
-			GameTooltip:AddDoubleLine( "Shown", Hekili.Utils.FormatValue( result ), 1, 1, 1, 1, 1, 1 )
+			GameTooltip:AddDoubleLine( "Shown", ns.formatValue( result ), 1, 1, 1, 1, 1, 1 )
 
 			if warning then
 				GameTooltip:AddLine( warning, 1, 1, 1 )
@@ -283,7 +288,7 @@ local function GenerateDiagnosticTooltip(widget, event)
 	
 		GameTooltip:AddLine( "Values" )
 		for k, v in pairs( arg ) do
-			GameTooltip:AddDoubleLine( k, Hekili.Utils.FormatValue( v ), 1, 1, 1, 1, 1, 1 )
+			GameTooltip:AddDoubleLine( k, ns.formatValue( v ), 1, 1, 1, 1, 1, 1 )
 		end
 	end
 	
@@ -558,8 +563,10 @@ local function Constructor()
 	editBox:SetScript("OnTextChanged", OnTextChanged)
 	editBox:SetScript("OnTextSet", OnTextSet)
 	editBox:SetScript("OnEditFocusGained", OnEditFocusGained)
-	if Hekili.Format then
-		local T = Hekili.Format.Tokens;
+  
+	if ns.lib.Format then
+		local T = ns.lib.Format.Tokens;
+    
 		local SyntaxColors = {};
 		--- Assigns a color to multiple tokens at once.
 		local function Color ( Code, ... )
@@ -577,16 +584,18 @@ local function Constructor()
 			T.CONCAT, T.VARARG, T.ASSIGNMENT, T.PERIOD, T.COMMA, T.SEMICOLON, T.COLON, T.SIZE,
 			T.EQUALITY, T.NOTEQUAL, T.LT, T.LTE, T.GT, T.GTE )
 
-		Color( "|cFFB2FF66", Unpacks( Hekili.Tables, Hekili.Keys, Hekili.Values ) )
+		Color( "|cFFB2FF66", unpack( ns.keys ) )
 		
 		Color( "|cffFFFF00", T.NUMBER )
 		Color( "|cff888888", T.STRING, T.STRING_LONG )
 		Color( "|cff55cc55", T.COMMENT_SHORT, T.COMMENT_LONG )
+    
 		Color( "|cff55ddcc", -- Minimal standard Lua functions
 			"assert", "error", "ipairs", "next", "pairs", "pcall", "print", "select",
 			"tonumber", "tostring", "type", "unpack",
 			-- Libraries
 			"bit", "coroutine", "math", "string", "table" )
+      
 		Color( "|cffddaaff", -- Some of WoW's aliases for standard Lua functions
 			-- math
 			"abs", "ceil", "floor", "max", "min",
@@ -596,7 +605,8 @@ local function Constructor()
 			"strupper", "tostringall",
 			-- table
 			"sort", "tinsert", "tremove", "wipe" )
-		Hekili.Format.Enable( editBox, 4, SyntaxColors, true )
+      
+		ns.lib.Format.Enable( editBox, 4, SyntaxColors, true )
 	end
 	
 	scrollFrame:SetScrollChild(editBox)

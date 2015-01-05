@@ -1,11 +1,37 @@
 -- Classes.lua
 -- July 2014
 
--- Basically, all the setup or shared attributes can stay in this file.  Anything class-specific should get moved to Classes\<classname>.lua.
+
+local addon, ns = ...
+local Hekili = _G[ addon ]
+
+local class = ns.class
+local state = ns.state
+
+local getResourceID = ns.getResourceID
+local getSpecializationKey = ns.getSpecializationKey
 
 
-local H = Hekili
-local GetResourceName = H.Utils.GetResourceName
+
+ns.initializeClassModule = function()
+  -- do nothing, overwrite this stub with a class module.
+end
+
+
+ns.addHook = function( hook, func )
+
+  class.hooks[ hook ] = func
+
+end
+
+
+ns.callHook = function( hook, ... )
+
+  if class.hooks[ hook ] then
+    class.hooks[ hook ] ( ... )
+  end
+
+end
 
 
 -- Metatable to return modified information about an ability, if available.
@@ -20,281 +46,330 @@ local mt_modifiers = {
 }
 
 
--- New model requires splitting spells into categories.
-H.Abilities		= {}
-H.Auras			= {}
-H.Glyphs		= {}
-H.Talents		= {}
+ns.setClass = function( name ) class.file = name end
 
 
-H.Keys			= setmetatable( {}, {
-	__newindex = function(t, k, v)
-		for i = 1, #t do
-			if t[i] == v then return t[i] end
-		end
-		rawset(t, k, v)
+local function storeAbilityElements( key, values )
+
+  local ability = class.abilities[ key ]
+	
+	if not ability then
+    ns.Error( "storeAbilityElements( " .. key .. " ) - no such ability in abilities table." )
+    return
+  end
+	
+  for k, v in pairs( values ) do
+    ability.elem[ k ] = type( v ) == 'function' and setfenv( v, state ) or v
 	end
-} )
+
+end
+ns.storeAbilityElements = storeAbilityElements
 
 
+local function modifyElement( t, k, elem, value )
+	
+  local entry = class[ t ][ k ]
+  
+  if not entry then
+    ns.Error( "modifyElement() - no such key '" .. k .. "' in '" .. t .. "' table." )
+    return
+  end
 
-function Hekili.Utils.AddAbility( key, ... )
+  if type( value ) == 'function' then
+    entry.mods[ elem ] = setfenv( value, ns.state )
+  else
+    entry.elem[ elem ] = value
+  end
+
+end
+ns.modifyElement = modifyElement
+
+
+-- Wrapper for the ability table.
+local function modifyAbility( k, elem, value )
+  
+  modifyElement( 'abilities', k, elem, value )
+
+end
+ns.modifyAbility = modifyAbility
+
+
+local function addAbility( key, values, ... )
 	
-	local num = select( "#", ... )
+  if not values.id then
+    ns.Error( "addAbility( " .. key .. " ) - values table is missing 'id' element." )
+    return
+  end
+  
+	local name = GetSpellInfo( values.id )
+	if not name and values.id > 0 then
+    ns.Error( "addAbility( " .. key .. " ) - unable to get name of spell #" .. values.id .. "." )
+    return
+  end
 	
-	if num < 2 then return end
-	
-	local id, values = select( 1, ...), select( num, ... )
-	values.id = id
-	
-	local name = GetSpellInfo( id )
-	if not name and id > 0 then return end
-	
-	H.Abilities[ key ] = setmetatable( {
+  class.abilities[ key ] = setmetatable( {
 		name	= name,
 		elem	= {}, -- storage for each attribute
 		mods	= {}  -- storage for attribute modifiers
 	}, mt_modifiers )
 	
-	for i = 1, num - 1 do
-		H.Abilities[ select( i, ... ) ] = H.Abilities[ key ]
-	end
-	
-	H.Keys = H.Keys or {}
-	H.Keys[ #H.Keys+1 ] = key
-	
-	AbilityElements( key, values )
+  class.abilities[ values.id ] = class.abilities[ key ]
+  
+  for i = 1, select( "#", ... ) do
+    class.abilities[ select( i, ... ) ] = class.abilities[ key ]
+  end
+
+
+  ns.commitKey( key )
+
+  storeAbilityElements( key, values )
+
+  class.searchAbilities[ key ] = '|T' .. ( GetSpellTexture( values.id ) or 'Interface\\ICONS\\Spell_Nature_BloodLust' ) .. ':O|t ' .. class.abilities[ key ].name
 	
 end
-local AddAbility = Hekili.Utils.AddAbility
-
-	
-function AbilityElements( key, values )
-	local ability = H.Abilities[ key ]
-	
-	if not ability then return end
-	
-	for k,v in pairs( values ) do
-		ability.elem[k] = v
-		--[[  if k == 'id' then ability[k] = v
-		else ability.elem[k] = v end ]]
-	end
-
-end
+ns.addAbility = addAbility
 
 
--- Modify
--- If 'value' is a function, it will be used as a modifier.
--- If 'value' is a raw value, it will replace the base element.
-function Modify( tab, key, elem, value )
-	local entry = H[tab][key]
-	if not entry then return end
-	
-	if type( value ) == 'function' then
-		entry.mods[elem] = setfenv( value, Hekili.State )
-	else
-		entry.elem[elem] = value
-	end
-end
+local storeAuraElements = function( key, ... )
 
+  local aura = class.auras[ key ]
+  
+  if not aura then
+    ns.Error( "storeAuraElements() - no aura '" .. key .. "' in auras table." )
+    return
+  end
 
--- Wrapper for the ability table.
-function Hekili.Utils.ModifyAbility( key, elem, value )
-	Modify( 'Abilities', key, elem, value )
-end
-
-
-H.Perks = {}
-function Hekili.Utils.AddPerk( key, id )
-	local name = GetSpellInfo(id)
-	
-	if name then
-		H.Perks[ key ] = {
-			id = id,
-			key = key,
-			name = name
-		}
-	end
-	
-	H.Keys[ #H.Keys + 1 ] = key
-end
-			
-
-
-function Hekili.Utils.AuraElements( key, ... )
-	local args, aura = { ... }, H.Auras[ key ]
-	
-	if not aura then return end
-	
-	for i = 1, #args, 2 do
-		local k, v = args[i], args[i+1]
-		
-		if k and v then
-			if k == 'id' then aura[k] = v
-			else aura.elem[k] = v end
-		end
-	end
+  for i = 1, select( "#", ... ), 2 do
+    local k, v = select( i, ... ), select( i+1, ... )
+    
+    if k and v then
+      if k == 'id' then aura[k] = v
+      else aura.elem[k] = v end
+    end
+  end
 
 end
-local AuraElements = Hekili.Utils.AuraElements
+ns.storeAuraElements = storeAuraElements
 
 
-function Hekili.Utils.AddAura( key, id, ... )
-	local name = id > 0 and GetSpellInfo( id ) or nil
-	
-	H.Auras[ key ] = setmetatable( {
+local function modifyAura( key, elem, func )
+
+	modifyElement( 'auras', key, elem, func )
+
+end
+ns.modifyAura = modifyAura
+
+
+local function addAura( key, id, ... )
+
+  local name = GetSpellInfo( id )
+  
+  class.auras[ key ] = setmetatable( {
 		id		= id,
 		key		= key,
 		name	= name,
 		elem	= {},
 		mods	= {}
 	}, mt_modifiers )
+  
+  ns.commitKey( key )
 	
-	H.Keys = H.Keys or {}
-	H.Keys[ #H.Keys+1 ] = key
-
 	-- Allow reference by ID as well.
-	H.Auras[ id ] = H.Auras[ key ]
+  class.auras[ id ] = class.auras[ key ]
 	
 	-- Add the elements, front-loading defaults and just overriding them if something else is specified.
-	AuraElements( key, 'duration', 30, 'max_stacks', 1, ... )
+  storeAuraElements( key, 'duration', 30, 'max_stacks', 1, ... )
 	
 end
-local AddAura = Hekili.Utils.AddAura
+ns.addAura = addAura
 
 
-function Hekili.Utils.ModifyAura( key, elem, func )
-	Modify( 'Auras', key, elem, func )
-end
+local function addGlyph( key, id )
 
+  local name = GetSpellInfo( id )
 
-function Hekili.Utils.AddTalent( key, id )
-	local name = GetSpellInfo( id )
-	
-	if not name then return end
-
-	H.Talents[ key ] = {
-		id		= id,
-		name	= name
-	}
-	
-	H.Keys = H.Keys or {}
-	H.Keys[ #H.Keys+1 ] = key
-
-end
-
-
-function Hekili.Utils.AddGlyph( key, id )
-	local name = GetSpellInfo( id )
-	
-	if not name then return end
-
-	H.Glyphs[ key ] = {
-		id		= id,
-		name	= name
-	}
-
-	H.Keys = H.Keys or {}
-	H.Keys[ #H.Keys+1 ] = key
-
-end
-
-
-H.Resources		= {}
-function Hekili.Utils.AddResource( resource, primary )
-
-	H.Resources[ resource ] = true
-	
-	if primary or not Hekili.ClassResource then Hekili.ClassResource = resource end
-
-	H.Keys = H.Keys or {}
-	H.Keys[ #H.Keys+1 ] = GetResourceName( resource )
-	
-end
-
-
-H.Gear			= {}
-function Hekili.Utils.AddItemSet( name, ... )
-
-	local arg = { ... }
-
-	H.Gear[ name ] = H.Gear[ name ] or {}
-	
-	for i,v in ipairs(arg) do
-		H.Gear[ name ][v] = 1
-	end
-	
-	H.Keys = H.Keys or {}
-	H.Keys[ #H.Keys+1 ] = name
-
-end
-local AddItemSet = Hekili.Utils.AddItemSet
-
-
-H.MetaGem		= {}
-function AddMeta( ... )
-
-	for i,v in ipairs( ... ) do
-		H.MetaGem[ v ] = 1
-	end
-
-end
-H.Utils.AddMeta = AddMeta
-
-
-function Hekili.Utils.SetGCD( key )
-
-	H.GCD = key
-
-end
-
-
-function AddHandler( ability, f )
-	local ab = Hekili.Abilities[ ability ]
-	
-	if not ab then return end
-	
-	ab.elem[ 'handler' ] = setfenv( f, Hekili.State )
-end
-H.Utils.AddHandler = AddHandler
-
-
-function RunHandler( ability )
-	local ab = H.Abilities[ ability ]
-	
-	if not ab then return end
-	
-	if ab.elem[ 'handler' ] then
-		ab.elem[ 'handler' ] ()
-	end
-	
-	if ab.hostile and H.combat == 0 then
-		Hekili.State.false_start = Hekili.State.now + Hekili.State.offset
-	end
-	
-	Hekili.State.cast_start = 0
-	
-	if select(2, UnitClass( 'PLAYER' ) ) == 'WARRIOR' and ( not ab.elem.passive ) and s.nextMH < 0 then
-		local s = Hekili.State
-		s.nextMH = s.now + s.offset - 0.01
-		s.nextOH = s.now + s.offset + 0.99
-	end
-	
-end
-H.Utils.RunHandler = RunHandler
-
-
-H.Stances = {}
-function H.Utils.AddStance( key, ... )
-  local n, specs = select( "#", ... ), { ... }
-  
-	H.Stances[ key ] = H.Stances[ key ] or {}
-  
-  for i = 1, n, 2 do
-    H.Stances[ key ][ specs[ i ] ] = specs[ i + 1 ]
+  if not name then
+    ns.Error( "addGlyph() - unable to get glyph name from id#" .. id .. "." )
+    return
   end
   
+  class.glyphs[ key ] = {
+    id = id,
+    name = name
+  }
+  
+  ns.commitKey( key )
+
 end
+ns.addGlyph = addGlyph  
+
+
+local function addPerk( key, id )
+
+  local name = GetSpellInfo( id )
+  
+  if not name then
+    ns.Error( "addPerk( " .. key .. " ) - unable to get perk name from id#" .. id .. "." )
+    return
+  end
+  
+  class.perks[ key ] = {
+    id = id,
+    key = key,
+    name = name
+  }
+
+  ns.commitKey( key )
+
+end
+ns.addPerk = addPerk
+
+
+local function addTalent( key, id, ... )
+	
+  local name = GetSpellInfo( id )
+	
+	if not name then
+    ns.Error( "addTalent() - unable to get talent name from id #" .. id .. "." )
+    return
+  end
+
+  class.talents[ key ] = {
+		id		= id,
+		name	= name
+	}
+  
+  ns.commitKey( key )
+
+end
+ns.addTalent = addTalent
+
+
+local function addResource( resource, primary )
+
+  class.resources[ resource ] = true
+  
+  if primary or #class.resources == 1 then class.primaryResource = resource end
+  
+  ns.commitKey( resource )
+	
+end
+ns.addResource = addResource
+
+
+local function removeResource( resource )
+
+  class.resources[ resource ] = nil
+  if class.primaryResource == resource then class.primaryResource = nil end
+
+end
+ns.removeResource = removeResource
+
+
+local function addGearSet( name, ... )
+
+  class.gearsets[ name ] = class.gearsets[ name ] or {}
+  
+  for i = 1, select( '#', ... ) do
+    class.gearsets[ name ][ select( i, ... ) ] = 1
+  end
+  
+  ns.commitKey( name )
+
+end
+ns.addGearSet = addGearSet
+
+
+local function setGCD( key )
+
+  class.gcd = key
+
+end
+ns.setGCD = setGCD
+
+
+local function addHandler( key, func )
+
+  local ability = class.abilities[ key ]
+  
+  if not ability then
+    ns.Error( "addHandler() attempting to store handler for non-existant ability '" .. key .. "'." )
+    return
+  end
+  
+  ability.elem[ 'handler' ] = setfenv( func, state )
+
+end
+ns.addHandler = addHandler
+
+
+local function runHandler( key )
+
+  local ability = class.abilities[ key ]
+  
+  if not ability then
+    -- ns.Error( "runHandler() attempting to run handler for non-existant ability '" .. key .. "'." )
+    return
+  end
+  
+	if ability.elem[ 'handler' ] then
+		ability.elem[ 'handler' ] ()
+	end
+	
+  if not ability.passive and state.time == 0 then
+    state.false_start = state.now + state.offset
+  end
+  
+	state.cast_start = 0
+  
+  ns.callHook( 'runHandler', key )
+
+end
+ns.runHandler = runHandler
+
+
+local function addStance( key, ... )
+  
+  class.stances[ key ] = class.stances[ key ] or {}
+  
+  for i = 1, select( '#', ... ), 2 do
+    class.stances[ key ][ select( i, ... ) ] = select( i + 1, ... )
+  end
+  
+  ns.commitKey( key )
+  
+end
+ns.addStance = addStance
+
+
+ns.specializationChanged = function()
+
+	for k, _ in pairs( state.spec ) do
+		state.spec[ k ] = nil
+	end
+
+  state.spec.id, state.spec.name = GetSpecializationInfo( GetSpecialization() )
+  state.spec.key = getSpecializationKey( state.spec.id )
+	state.spec[ state.spec.key ] = true
+  
+  state.GUID = UnitGUID( 'player' )
+
+	ns.updateGlyphs()
+	ns.updateTalents()
+	ns.updateGear()
+	
+  ns.callHook( 'specializationChanged' )
+	ns.cacheCriteria()
+
+  for i, v in ipairs( ns.queue ) do
+    for j = 1, #v do
+      ns.queue[i][j] = nil
+    end
+    ns.queue[i] = nil
+  end
+
+end
+
 
 
 ------------------------------
@@ -302,232 +377,234 @@ end
 ------------------------------
 
 -- Bloodlust.
-AddAura( 'ancient_hysteria', 90355, 'duration', 40 )
-AddAura( 'bloodlust', 2825 , 'duration', 40 )
-AddAura( 'heroism', 32182, 'duration', 40 )
-AddAura( 'time_warp', 80353, 'duration', 40 )
+addAura( 'ancient_hysteria', 90355, 'duration', 40 )
+addAura( 'bloodlust', 2825 , 'duration', 40 )
+addAura( 'heroism', 32182, 'duration', 40 )
+addAura( 'time_warp', 80353, 'duration', 40 )
 
 -- Sated.
-AddAura( 'exhaustion', 57723, 'duration', 600 )
-AddAura( 'insanity', 95809, 'duration', 600 )
-AddAura( 'sated', 57724, 'duration', 600 )
-AddAura( 'temporal_displacement', 80354, 'duration', 600 )
+addAura( 'exhaustion', 57723, 'duration', 600 )
+addAura( 'insanity', 95809, 'duration', 600 )
+addAura( 'sated', 57724, 'duration', 600 )
+addAura( 'temporal_displacement', 80354, 'duration', 600 )
 
 -- Enchants.
-AddAura( 'dancing_steel', 104434, 'duration', 12, 'max_stacks', 2 )
+addAura( 'dancing_steel', 104434, 'duration', 12, 'max_stacks', 2 )
 
 -- Potions.
-AddAura( 'jade_serpent_potion', 105702, 'duration', 25 )
-AddAura( 'mogu_power_potion', 105706, 'duration', 25 )
-AddAura( 'virmens_bite_potion', 105697, 'duration', 25 )
+addAura( 'jade_serpent_potion', 105702, 'duration', 25 )
+addAura( 'mogu_power_potion', 105706, 'duration', 25 )
+addAura( 'virmens_bite_potion', 105697, 'duration', 25 )
 
 -- Trinkets.
-AddAura( 'dextrous', 146308, 'duration', 20 )
-AddAura( 'vicious', 148903, 'duration', 10 )
+addAura( 'dextrous', 146308, 'duration', 20 )
+addAura( 'vicious', 148903, 'duration', 10 )
 
 
 -- Raid Buffs
-AddAura( 'attack_power_multiplier', -3, 'duration', 3600 )
-AddAura( 'critical_strike', -6, 'duration', 3600 )
-AddAura( 'haste', -4, 'duration', 3600 )
-AddAura( 'mastery', -7, 'duration', 3600 )
-AddAura( 'multistrike', -8, 'duration', 3600 )
-AddAura( 'spell_power_multiplier', -5, 'duration', 3600 )
-AddAura( 'stamina', -2, 'duration', 3600 )
-AddAura( 'str_agi_int', -1, 'duration', 3600 )
-AddAura( 'versatility', -9, 'duration', 3600 )
-
-
--- Meta Gems (for crit dmg bonus)
-AddItemSet( 'crit_bonus_meta', 76885, 76888, 76886, 76884 )
+addAura( 'attack_power_multiplier', -3, 'duration', 3600 )
+addAura( 'critical_strike', -6, 'duration', 3600 )
+addAura( 'haste', -4, 'duration', 3600 )
+addAura( 'mastery', -7, 'duration', 3600 )
+addAura( 'multistrike', -8, 'duration', 3600 )
+addAura( 'spell_power_multiplier', -5, 'duration', 3600 )
+addAura( 'stamina', -2, 'duration', 3600 )
+addAura( 'str_agi_int', -1, 'duration', 3600 )
+addAura( 'versatility', -9, 'duration', 3600 )
 
 
 -- Racials.
 -- AddSpell( 26297,	"berserking",	10 )
-AddAbility( 'berserking', 26297,
+addAbility( 'berserking',
 			{
+        id = 26297,
 				spend = 0,
 				cast = 0,
 				gcdType = 'off',
 				cooldown = 180
 			} )
 
-AddHandler( 'berserking', function ()
-	H:Buff( 'berserking' )
+addHandler( 'berserking', function ()
+	applyBuff( 'berserking' )
 end )
 
-AddAura( 'berserking', 26297, 'duration', 10 )
+addAura( 'berserking', 26297, 'duration', 10 )
 
 
 -- AddSpell( 20572,	"blood_fury",	15 )
-AddAbility( 'blood_fury', 20572,
+addAbility( 'blood_fury',
 			{
+        id = 20572,
 				spend = 0,
 				cast = 0,
 				gcdType = 'off',
 				cooldown = 120
 			} )
 			
-AddHandler( 'blood_fury', function ()
-	H:Buff( 'blood_fury', 15 )
+addHandler( 'blood_fury', function ()
+	applyBuff( 'blood_fury', 15 )
 end )
 
-AddAura( 'blood_fury', 20572, 'duration', 15 )
+addAura( 'blood_fury', 20572, 'duration', 15 )
 
 
-AddAbility( 'arcane_torrent', 28730, 50613, 80483, 129597, 155145, 25046, 69179,
-  {
+addAbility( 'arcane_torrent', {
+    id = 28730,
     spend = 0,
     cast = 0,
     gcdType = 'spell',
     cooldown = 120
-  } )
+  }, 50613, 80483, 129597, 155145, 25046, 69179 )
 
-AddHandler( 'arcane_torrent', function ()
-  if Hekili.Resources[ SPELL_POWER_MANA ] then H:Gain( 0.03, SPELL_POWER_MANA ) end
-  H:Interrupt( 'target' )
+addHandler( 'arcane_torrent', function ()
+
+  if mana then gain( 0.03 * mana.max, "mana" ) end
+  interrupt()
   
-  if class.death_knight then H:Gain( 20, "runic_power" )
-  elseif class.hunter then H:Gain( 15, "focus" )
-  elseif class.monk then H:Gain( 1, "chi" )
-  elseif class.paladin then H:Gain( 1, "holy_power" )
-  elseif class.rogue then H:Gain( 15, "energy" )
-  elseif class.warrior then H:Gain( 15, "rage" )
-  end
+  if class.death_knight then gain( 20, "runic_power" )
+  elseif class.hunter then gain( 15, "focus" )
+  elseif class.monk then gain( 1, "chi" )
+  elseif class.paladin then gain( 1, "holy_power" )
+  elseif class.rogue then gain( 15, "energy" )
+  elseif class.warrior then gain( 15, "rage" ) end
+  
 end )
 
 
 -- Special Instructions
-AddAbility( 'wait', -1,
-			{
-				spend = 0,
-				cast = 0,
-				gcdType = 'off',
-				cooldown = 0
-			} )
-H.Abilities[ 'wait' ].name = 'Wait'
+addAbility( 'wait', {
+    id = -1,
+    name = 'Wait',
+    spend = 0,
+    cast = 0,
+    gcdType = 'off',
+    cooldown = 0
+  } )
 
 
 
+-- DEFAULTS
 
-
-
-
-
-
-
-Hekili.Defaults = {}
-
-function Hekili.Default( name, category, version, import )
+ns.storeDefault = function( name, category, version, import )
 	
 	if not ( name and category and version and import ) then
 		return
 	end
 	
-	Hekili.Defaults[ #Hekili.Defaults + 1 ] = {
+  class.defaults[ #class.defaults + 1 ] = {
 		name	= name,
 		type	= category,
 		version = version,
 		import	= import:gsub("([^|])|([^|])", "%1||%2")
 	}
+  
 end
 
 
--- Restores the defaults if they're not present.
-function Hekili:RestoreDefaults( category )
+ns.restoreDefaults = function( category )
 
-	if not category or category == 'actionLists' then
-		for i = 1, #self.Defaults do
-			local proto = self.Defaults[i]
-			
-			if proto.type == 'actionLists' then
-				local found = false
-				for j = 1, #self.DB.profile.actionLists do
-					if self.DB.profile.actionLists[j].Name == proto.name then
-						found = true
-						break
-					end
-				end
-				
-				if not found then
-					local import = Hekili:DeserializeActionList( proto.import )
-					index = #self.DB.profile.actionLists + 1
-					if import and type( import ) == 'table' then
-						self.DB.profile.actionLists[ index ] = import
-						self.DB.profile.actionLists[ index ].Name = proto.name
-						self.DB.profile.actionLists[ index ].Release = proto.version
-					else
-						Hekili:Print("Error importing " .. proto.name .. ".")
-					end
-				end
+  local profile = Hekili.DB.profile
+  
+  -- By default, restore action lists.
+  if not category or category == 'actionLists' then
+    for i, default in ipairs( class.defaults ) do
+      if default.type == 'actionLists' then
+        local reload = true
+        local index
+        
+        for j, list in ipairs( profile.actionLists ) do
+          if list.Name == default.name and list.Default then
+            reload = ( list.Release < default.version )
+            index = j
+            break
+          end
+        end
+        
+        if reload then
+          local import = ns.deserializeActionList( default.import )
+          
+          if import and type( import ) == 'table' then
+            import.Name = default.name
+            import.Release = default.version
+            import.Default = true
+            if not index then index = #profile.actionLists + 1 end
+            ns.Error( "rD() - putting " .. default.name .. " at index " .. index .. "." )
+            profile.actionLists[ index ] = import
+          else
+            ns.Error( "restoreDefaults() - unable to import actionList " .. default.name .. "." )
+          end
+        end
 			end
-		
 		end
 	end
 	
-	-- Only rebuild displays if there are 0.
-	if ( #self.DB.profile.displays == 0 and not category ) or category == 'displays' then
-		for i = 1, #self.Defaults do
-			local proto = self.Defaults[i]
-			
-			if proto.type == 'displays' then
-				local found = false
-				for j = 1, #self.DB.profile.displays do
-					if self.DB.profile.displays[j].Name == proto.name then
-						found = true
+	
+  if not category or category == 'displays' then
+		for i, default in ipairs( class.defaults ) do
+			if default.type == 'displays' then
+				local reload = true
+        local index
+        
+				for j = 1, #profile.displays do
+					if profile.displays[j].Name == default.name and profile.displays[j].Default then
+            index = j
+            reload = ( profile.displays[j].Release < default.version )
 						break
 					end
 				end
 				
-				if not found then
-					local import = Hekili:DeserializeDisplay( proto.import )
-					index = #self.DB.profile.displays + 1
+				if reload then
+          ns.Error( "restoreDefaults() - didn't find " .. default.name .. "." )
+					local import = ns.deserializeDisplay( default.import )
 					
 					if import and type( import ) == 'table' then
-						self.DB.profile.displays[ index ] = import
-						self.DB.profile.displays[ index ].Name = proto.name
-						self.DB.profile.displays[ index ].Release = proto.version
+            import.Name = default.name
+            import.Release = default.version
+            import.Default = true
+            if not index then index = #profile.displays + 1 end
+            profile.displays[ index ] = import
 					
-						for j, prio in ipairs( self.DB.profile.displays[ index ].Queues ) do
-							if type( prio['Action List'] ) == 'string' then
-								for k, list in ipairs( self.DB.profile.actionLists ) do
-									if list.Name == prio['Action List'] then
-										prio['Action List'] = k
+            for j, hook in ipairs( profile.displays[ #profile.displays ].Queues ) do
+              if type( hook['Action List'] ) == 'string' then
+                for k, list in ipairs( profile.actionLists ) do
+                  if list.Name == hook['Action List'] then
+										hook['Action List'] = k
 										break
 									end
 								end
-								if type( prio['Action List'] ) == 'string' then
+                
+                if type( hook['Action List'] ) == 'string' then
 									-- The list wasn't found.
-									prio['Action List'] = 0
+									hook['Action List'] = 0
 								end
 							end
 						end
 					else
-						Hekili:Print("Error importing " .. proto.name .. ".")
+						ns.Error( "restoreDefaults() - unable to import '" .. default.name .. "' display." )
 					end
 				end
 			end
 		end
 	end
 	
-	self:RefreshOptions()
-	self:LoadScripts()
+  ns.refreshOptions()
+  ns.loadScripts()
 	
 end
 
 
--- Loads the default action lists if they're not present.
-function Hekili:IsDefault( name, category )
+ns.isDefault = function( name, category )
 
 	if not name or not category then
-		return nil
+		return false
 	end
-	
-	for i, default in ipairs( self.Defaults ) do
+  
+	for i, default in ipairs( class.defaults ) do
 		if default.type == category and default.name == name then
 			return true, i
 		end
 	end
 	
 	return false
+
 end

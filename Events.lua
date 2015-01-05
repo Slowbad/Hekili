@@ -1,178 +1,157 @@
 -- Events.lua
 -- June 2014
 
-local H = Hekili
+local addon, ns = ...
+local Hekili = _G[ addon ]
 
-local FormatKey = H.Utils.FormatKey
-local GetSpecializationInfo = H.Utils.GetSpecializationInfo
-local GetSpecializationKey = H.Utils.GetSpecializationKey
+local class = ns.class
+local state = ns.state
+local TTD = ns.TTD
+
+local formatKey = ns.formatKey
+local getSpecializationInfo = ns.getSpecializationInfo
+local getSpecializationKey = ns.getSpecializationKey
+
+local match = string.match
+
+-- Abandoning AceEvent in favor of darkend's solution from:
+-- http://andydote.co.uk/2014/11/23/good-design-in-warcraft-addons.html
+-- This should be a bit friendlier for our modules.
 
 
-function Hekili:UPDATE_BINDINGS()
-	self:RefreshBindings()
+local events = CreateFrame( "Frame" )
+local handlers = {}
+
+
+function ns.StartEventHandler()
+  
+  events:SetScript( "OnEvent", function( self, event, ... )
+
+    local eventHandlers = handlers[ event ]
+    
+    if not eventHandlers then return end
+    
+    for i, handler in pairs( eventHandlers ) do
+      handler( event, ... )
+    end
+    
+  end )
+
 end
 
 
-function Hekili:CacheDurableDisplayCriteria()
-	
-	self.DisplayVisible		= {}
-	self.HookVisible	= {}
-	self.ListVisible		= {}
-	self.ActionVisible		= {}
-	
-	for i, display in ipairs( self.DB.profile.displays ) do
-		self.DisplayVisible[ i ] = display.Enabled and ( display.Specialization == 0 or display.Specialization == self.Specialization ) and ( display['Talent Group'] == 0 or display['Talent Group'] == GetActiveSpecGroup() )
+function ns.StopEventHandler()
 
-		for j, priority in ipairs( display.Queues ) do
-			self.HookVisible[ i..':'..j ] = priority.Enabled and priority['Action List'] ~= 0
+  events:SetScript( "OnEvent", nil )
+
+end
+
+
+ns.RegisterEvent = function( event, handler )
+
+  handlers[ event ] = handlers[ event ] or {}
+  table.insert( handlers[ event ], handler )
+  
+  events:RegisterEvent( event )
+
+end
+local RegisterEvent = ns.RegisterEvent
+
+
+-- FIND A BETTER HOME
+ns.cacheCriteria = function()
+
+  for key, group in pairs( ns.visible ) do
+    for key in pairs( group ) do
+      group[ key ] = nil
+    end
+  end
+  
+  for i, display in ipairs( Hekili.DB.profile.displays ) do
+    ns.visible.display[ i ] = display.Enabled and ( display.Specialization == 0 or display.Specialization == state.spec.id ) and ( display['Talent Group'] == 0 or display['Talent Group'] == GetActiveSpecGroup() )
+
+		for j, hook in ipairs( display.Queues ) do
+			ns.visible.hook[ i..':'..j ] = hook.Enabled and hook['Action List'] ~= 0
 		end
 	end
 	
-	for i, list in ipairs( self.DB.profile.actionLists ) do
-		if list.Enabled == nil then list.Enabled = true end
-
-		self.ListVisible[ i ] = list.Enabled and ( list.Specialization == 0 or list.Specialization == self.Specialization )
+	for i, list in ipairs( Hekili.DB.profile.actionLists ) do
+		
+    if list.Enabled == nil then list.Enabled = true end
+    
+    ns.visible.list[ i ] = list.Enabled and ( list.Specialization == 0 or list.Specialization == state.spec.id )
 		
 		for j, action in ipairs( list.Actions ) do
-			self.ActionVisible[ i..':'..j ] = action.Enabled and action.Ability
+			ns.visible.action[ i..':'..j ] = action.Enabled and action.Ability
 		end
 	end
 	
 end
 
 
-function Hekili:PLAYER_ENTERING_WORLD()
-	self.Class = select(2, UnitClass( 'player' ) )
-	self.Specialization, self.SpecializationName = GetSpecializationInfo( GetSpecialization() )
-	
-	for k,v in pairs( self.State.spec ) do
-		self.State.spec[ k ] = nil
+RegisterEvent( "UPDATE_BINDINGS", function () ns.refreshBindings() end )
+RegisterEvent( "PLAYER_ENTERING_WORLD", function () ns.specializationChanged() end )
+RegisterEvent( "ACTIVE_TALENT_GROUP_CHANGED", function () ns.specializationChanged() end )
+RegisterEvent( "PLAYER_SPECIALIZATION_CHANGED", function ( _, unit )
+  if unit == 'player' then
+    ns.specializationChanged()
+  end
+end )
+
+
+ns.updateTalents = function ()
+
+	for k, _ in pairs( state.talent ) do
+		state.talent[k].enabled = false
 	end
 	
-  self.SpecializationKey = GetSpecializationKey( self.Specialization )
-	self.State.spec[ GetSpecializationKey( self.Specialization ) ] = true
-	
-	self.GUID = UnitGUID("player")
-
-	if self.SetClassModifiers then self:SetClassModifiers() end
-	self:UpdateGlyphs()
-	self:UpdateTalents()
-	
-	self:CacheDurableDisplayCriteria()
-
-	self:UpdateGear()
-	
-	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-end
-
-
-
-
-function H:PLAYER_LOGOUT()
-	--
-end
-
-
--- Was used to force a refresh on trackers.
--- Trackers not planned for v2.  Use WeakAuras!
-function H:PLAYER_TARGET_CHANGED( _ )
-	--
-end
-
-
-function H:ACTIVE_TALENT_GROUP_CHANGED()
-	
-	self.Specialization, self.SpecializationName = GetSpecializationInfo( GetSpecialization() )
-  self.SpecializationKey = GetSpecializationKey( self.Specialization )
-
-	for k,v in pairs( self.State.spec ) do
-		self.State.spec[ k ] = nil
-	end
-	
-	self.State.spec[ GetSpecializationKey( self.Specialization ) ] = true
-	
-	if self.SetClassModifiers then self:SetClassModifiers() end
-
-	self:UpdateGlyphs()
-	self:UpdateTalents()
-
-	self:CacheDurableDisplayCriteria()
-	
-	for k,v in pairs( self.Queue ) do
-		for i = 1, #v do
-			self.Queue[k][i] = nil
-		end
-		self.Queue[k] = nil
-	end
-	
-end
-
-
-function H:PLAYER_SPECIALIZATION_CHANGED( _, unit )
-	
-	if unit == 'player' then
-		H:ACTIVE_TALENT_GROUP_CHANGED()
-	end
-
-end
-
-
-function H:UpdateTalents()
-
-	for k,_ in pairs( self.State.talent ) do
-		self.State.talent[k] = nil
-	end
-	
-	local group = GetActiveSpecGroup()
+  local specGroup = GetActiveSpecGroup()
 	
 	for i = 1, MAX_TALENT_TIERS do
 		for j = 1, NUM_TALENT_COLUMNS do
-			local _, name, _, enabled = GetTalentInfo( i, j, group )
+			local _, name, _, enabled = GetTalentInfo( i, j, specGroup )
 		
-			for k,v in pairs( self.Talents ) do
+			for k, v in pairs( ns.class.talents ) do
 				if name == v.name then
-					self.State.talent[ k ] = { enabled = enabled }
+          if rawget( state.talent, k ) then state.talent[ k ].enabled = enabled
+          else state.talent[ k ] = { enabled = enabled } end
 					break
 				end
 			end
 		end
 	end
 	
-	for k,_ in pairs( self.State.perk ) do
-		self.State.perk[k] = nil
+	for k,_ in pairs( state.perk ) do
+		state.perk[k].enabled = false
 	end
 	
-	for k,v in pairs( self.Perks ) do
+	for k, v in pairs( ns.class.perks ) do
 		if IsSpellKnown( v.id ) then
-			self.State.perk[ k ] = { enabled = true }
-		else
-			self.State.perk[ k ] = { enabled = false }
+      if rawget( state.perk, k ) then state.perk[ k ].enabled = true
+      else state.perk[ k ] = { enabled = true } end
 		end
 	end
 	
 end
 
 
-function H:PLAYER_TALENT_UPDATE()
-
-	H:UpdateTalents()
-
-end
+RegisterEvent( "PLAYER_TALENT_UPDATE", function () ns.updateTalents() end )
 
 
-function H:UpdateGlyphs()
+ns.updateGlyphs = function ()
 
-	for k,_ in pairs( self.State.glyph ) do
-		self.State.glyph[k] = nil
+	for k, _ in pairs( state.glyph ) do
+		state.glyph[k].enabled = false
 	end
 	
 	for i=1, NUM_GLYPH_SLOTS do
 		local enabled, _, _, gID = GetGlyphSocketInfo(i)
 		
-		for k,v in pairs( self.Glyphs ) do
+		for k,v in pairs( class.glyphs ) do
 			if gID == v.id then
 				if enabled and v.name then
-					self.State.glyph[ k ] = { enabled = true }
+          if rawget( state.glyph, k ) then state.glyph[ k ].enabled = true
+          else state.glyph[ k ] = { enabled = true } end
 					break
 				end
 			end
@@ -182,339 +161,221 @@ function H:UpdateGlyphs()
 end
 
 
-function H:GLYPH_ADDED()
-	self:UpdateGlyphs()
-end
-H.GLYPH_REMOVED = H.GLYPH_ADDED
-H.GLYPH_UPDATED = H.GLYPH_ADDED
+RegisterEvent( "GLYPH_ADDED", function () ns.updateGlyphs() end )
+RegisterEvent( "GLYPH_REMOVED", function () ns.updateGlyphs() end )
+RegisterEvent( "GLYPH_UPDATED", function () ns.updateGlyphs() end )
 
 
-function H:ENCOUNTER_START()
-	self.Boss			= true
-end
+RegisterEvent( "ENCOUNTER_START", function () state.boss = true end )
+RegisterEvent( "ENCOUNTER_END", function () state.boss = false end )
 
 
-function H:ENCOUNTER_END()
-	self.Boss			= false
-end
+local gearInitialized = false
+ns.updateGear = function ()
 
-
-local InitialGearUpdate = false
-function H:UpdateGear()
-
-	local self = self or Hekili
-
-	for k,_ in pairs( self.State.set_bonus ) do
-		self.State.set_bonus[k] = 0
-	end
+  for k, _ in pairs( state.set_bonus ) do
+    state.set_bonus[ k ] = 0
+  end
 	
-	for set_name, items in pairs( self.Gear ) do
-		for item, _ in pairs( items ) do
-			local iName = GetItemInfo( item )
-			
-			if IsEquippedItem(iName) then
-				self.State.set_bonus[set_name] = self.State.set_bonus[set_name] + 1
+  for set, items in pairs( class.gearsets ) do
+    for item, _ in pairs( items ) do
+      local itemName = GetItemInfo( item )
+      
+      if IsEquippedItem( GetItemInfo( item ) ) then
+        state.set_bonus[ set ] = state.set_bonus[ set ] + 1
 			end
 		end
 	end
 
-	local g1, g2, g3 = GetInventoryItemGems(1)
-	if (g1 and self.MetaGem[g1]) or (g2 and self.MetaGem[g2]) or (g3 and self.MetaGem[g3]) then
-		self.State.crit_meta = true
-	else
-		self.State.crit_meta = false
-	end
-
-	Hekili.Tooltip:SetOwner( UIParent, "ANCHOR_NONE") 
-	Hekili.Tooltip:ClearLines()
+	ns.Tooltip:SetOwner( UIParent, "ANCHOR_NONE") 
+	ns.Tooltip:ClearLines()
 	
 	local MH = GetInventoryItemLink( "player", 16 )
 	
 	if MH then
-		Hekili.Tooltip:SetInventoryItem( "player", 16 )
-		local lines = Hekili.Tooltip:NumLines()
+		ns.Tooltip:SetInventoryItem( "player", 16 )
+		local lines = ns.Tooltip:NumLines()
 
 		for i = 2, lines do
-			line = _G["HekiliTooltipTextRight"..i]:GetText()
+			line = _G[ "HekiliTooltipTextRight"..i ]:GetText()
 
 			if line then
-				local speed = tonumber( line:match("%d[.,]%d+") )
+				local speed = tonumber( line:match( "%d[.,]%d+" ) )
 				
 				if speed then
-					self.State.mainhand_speed = speed
+          state.mainhand_speed = speed
 					break
 				end
 			end
 		end	
 		
-		InitialGearUpdate = true
+		gearInitialized = true
 	else
-		self.State.mainhand_speed = 0
-		
+		state.mainhand_speed = 0		
 	end
 	
-	Hekili.Tooltip:ClearLines()
+	ns.Tooltip:ClearLines()
 	
 	if OffhandHasWeapon() then
-		Hekili.Tooltip:SetInventoryItem( "player", 17 )
-		local lines = Hekili.Tooltip:NumLines()
+		ns.Tooltip:SetInventoryItem( "player", 17 )
+		local lines = ns.Tooltip:NumLines()
 
 		for i = 2, lines do
-			line = _G["HekiliTooltipTextRight"..i]:GetText()
+			line = _G[ "HekiliTooltipTextRight"..i ]:GetText()
 
 			if line then
-				local speed = tonumber( line:match("%d[.,]%d+") )
+				local speed = tonumber( line:match( "%d[.,]%d+" ) )
 				
 				if speed then
-					self.State.offhand_speed = speed
+					state.offhand_speed = speed
 					break
 				end
 			end
 		end		
 	else
-		self.State.offhand_speed = 0
+		state.offhand_speed = 0
 	end
 	
-	Hekili.Tooltip:Hide()
+	ns.Tooltip:Hide()
 
-	if not InitialGearUpdate then
-		C_Timer.After( 3, Hekili.UpdateGear )
+	if not gearInitialized then
+		C_Timer.After( 3, ns.updateGear )
 	end
 	
 end
 
 
-function H:PLAYER_EQUIPMENT_CHANGED()
-	-- (NYI) we want to update any cached info about our gear.
-	H:UpdateGear()
-end
+RegisterEvent( "PLAYER_EQUIPMENT_CHANGED", function() ns.updateGear() end )
 
 
-function H:PLAYER_REGEN_DISABLED()
-	self.combat			= GetTime()
-end
+RegisterEvent( "PLAYER_REGEN_DISABLED", function () state.combat = GetTime() end )
+RegisterEvent( "PLAYER_REGEN_ENABLED", function () state.combat = 0 end )
 
 
-function H:PLAYER_REGEN_ENABLED()
-	self.combat			= 0
-end
+RegisterEvent( "UNIT_SPELLCAST_SUCCEEDED", function( _, unit, spell, _, spellID )
+  
+  if unit == 'player' then
+    state.player.lastcast = spell
+    state.player.casttime = GetTime()
+  end
+  
+end )
 
-
-function H:UPDATE_BINDINGS()
-	self:RefreshBindings()
-	-- (NYI) Save keybindings from the configuration interface.
-end
-
-
-function H:UNIT_SPELLCAST_SUCCEEDED( _, UID, spell )
-
-	if UID == 'player' then
-		self.Cast			= self.Cast or {}
-		self.Cast.spell		= spell
-		self.Cast.time		= GetTime()
-    
-    if Hekili.Class == 'PALADIN' then
-      if spell == Hekili.Abilities[ 'judgment' ].name then
-        Hekili.State.last_judgment_target = UnitGUID( 'target' )
-      end
-    end
-		
-		-- (NYI) v1 would accelerate the engine in these cases.
-		-- We may not need that now.
-	end
-
-end
-
-
-Hekili.Swing = {
-	MH = 0,
-	nextMH = 0,
-	OH = 0,
-	nextOH = 0
-}
 
 -- Use dots/debuffs to count active targets.
 -- Track dot power (until 6.0) for snapshotting.
 -- Note that this was ported from an unreleased version of Hekili, and is currently only counting damaged enemies.
-function Hekili:COMBAT_LOG_EVENT_UNFILTERED(event, _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName, _, amount, interrupt, a, b, c, d, offhand, multistrike, ... )
+RegisterEvent( "COMBAT_LOG_EVENT_UNFILTERED", function( event, _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName, _, amount, interrupt, a, b, c, d, offhand, multistrike, ... )
 
-	if subtype == 'UNIT_DIED' or subtype == 'UNIT_DESTROYED' and self:KnownTarget( destGUID ) then
-		self:Eliminate( destGUID )
+	if subtype == 'UNIT_DIED' or subtype == 'UNIT_DESTROYED' and ns.isTarget( destGUID ) then
+		ns.eliminateUnit( destGUID )
 		return
 	end
 
-	-- Hekili: v1 Tracking System
-	if subtype == 'SPELL_SUMMON' and sourceGUID == self.GUID then
-		self:UpdateMinion( destGUID, time )
+	if subtype == 'SPELL_SUMMON' and sourceGUID == state.GUID then
+		ns.updateMinion( destGUID, time )
 		return
 	end
 
-	if sourceGUID ~= self.GUID and not self:IsMinion( sourceGUID ) then
+	if sourceGUID ~= state.GUID and not ns.isMinion( sourceGUID ) then
 		return
 	end
 
 	local hostile = ( bit.band( destFlags, COMBATLOG_OBJECT_REACTION_FRIENDLY ) == 0 )
-
-	local time = GetTime()
-	
-	if self.Class == 'WARRIOR' and subtype:sub(1, 5) == 'SWING' and not multistrike then
-		local mainhandSpeed, offhandSpeed = UnitAttackSpeed( 'player' )
-		local Swing = self.Swing
-		
-		if offhand == false or self.State.offhand_speed == 0 then
-			Swing.MH		= time
-			Swing.nextMH	= time + mainhandSpeed
-			Swing.last		= 'MH'
-		else
-			Swing.OH		= time
-			Swing.nextOH	= time + offhandSpeed
-			Swing.last		= 'OH'
-		end
-		
-		return
-	end
-	
+	local time = GetTime()	
 	
 	-- Player/Minion Event
 	if hostile and sourceGUID ~= destGUID then
 		
 		-- Aura Tracking
 		if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' then
-			self:TrackDebuff( spellName, destGUID, time, true )
-			self:UpdateTarget( destGUID, time, sourceGUID == self.GUID )
+			ns.trackDebuff( spellName, destGUID, time, true )
+			ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
+    
 		elseif subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
-			self:TrackDebuff( spellName, destGUID, time )
-			self:UpdateTarget( destGUID, time, sourceGUID == self.GUID )
+			ns.trackDebuff( spellName, destGUID, time )
+			ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
+      
 		elseif subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_MISSED' then
-			self:UpdateTarget( destGUID, time, sourceGUID == self.GUID )
+			ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
+      
 		elseif destGUID and subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL' then
-			self:TrackDebuff( spellName, destGUID )
+			ns.trackDebuff( spellName, destGUID )
+      
 		end
 
 		if subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
-			self:UpdateTarget( destGUID, time, sourceGUID == self.GUID )
-			-- local resisted, blocked, absorbed = b, c, d
-		end
+			ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
 
+    end
+    
 	end
-					
+  
+  -- This is dumb.  Just let modules used the event handler.
+  ns.callHook( "COMBAT_LOG_EVENT_UNFILTERED", event, nil, subtype, nil, sourceGUID, sourceName, nil, nil, destGUID, destName, destFlags, nil, spellID, spellName, nil, amount, interrupt, a, b, c, d, offhand, multistrike, ... )
 	
-end
+end )
 
 
 
--- Borrowed TTD linear regression model from 'Nemo' by soulwhip (with permission).
-function H.InitTTD( UID )
-	H.TTD = H.TTD or {}
-	
-	if UID then
-		local uid = UnitGUID( UID )
-		H.TTD[ uid ] = H.TTD[ uid ] or {}
-		H.TTD[ uid ].n = 1
-		H.TTD[ uid ].timeSum = GetTime()
-		H.TTD[ uid ].healthSum = UnitHealth( UID ) or 0
-		H.TTD[ uid ].timeMean = H.TTD[ uid ].timeSum * H.TTD[ uid ].timeSum
-		H.TTD[ uid ].healthMean = H.TTD[ uid ].timeSum * H.TTD[ uid ].healthSum
-		H.TTD[ uid ].GUID = uid
-		H.TTD[ uid ].name = UnitName( UID )
-		H.TTD[ uid ].sec = 300
-	end
-end
+RegisterEvent( "UNIT_COMBAT", function( event, unitID, action, descriptor, damage, damageType )
 
+  if unitID == 'player' and action == 'WOUND' and damage > 0 then
+    ns.storeDamage( GetTime(), damage, damageType )
+  end
 
-function H.GetTTD( uid )
-	if not H.TTD or not H.TTD[ uid ] then return 300 end
-
-	if H.TTD[ uid ].sec then
-		return H.TTD[ uid ].sec
-	else
-		return 300
-	end
-end
+end )
 
 
 -- Time to die calculations.
-function H:UNIT_HEALTH( _, UID )
+RegisterEvent( "UNIT_HEALTH", function( _, unit )
 
-	local uid = UnitGUID( UID )
+	local GUID = UnitGUID( unit )
 	
-	if not self:KnownTarget( uid ) then
+	if not ns.isTarget( GUID ) then
 		return
 	end
 	
-	if not H.TTD or not H.TTD[ uid ] then H.InitTTD( UID ) end
+	if not TTD or not TTD[ GUID ] then ns.initTTD( unit ) end
 
-	if ( H.TTD[ uid ].GUID ~= uid and not UnitIsFriend('player', UID ) ) then
-		H.InitTTD( UID )
+	if not TTD[ GUID ] and not UnitIsFriend( 'player', unit ) then
+		ns.initTTD( unit )
 	end
 	
-	if ( UnitHealth( UID ) == UnitHealthMax( UID ) ) then
-		H.InitTTD( UID )
+	if ( UnitHealth( unit ) == UnitHealthMax( unit ) ) then
+		ns.initTTD( unit )
 		return
 	end
 
 	local now = GetTime()
 	
-	if ( not H.TTD[ uid ].n ) then H.InitTTD( UID ) end
+	if ( not TTD[ GUID ].n ) then ns.initTTD( unit ) end
+  
+  local ttd = TTD[ GUID ]
 	
-	H.TTD[ uid ].n				= H.TTD[ uid ].n + 1
-	H.TTD[ uid ].timeSum		= H.TTD[ uid ].timeSum + now
-	H.TTD[ uid ].healthSum		= H.TTD[ uid ].healthSum + UnitHealth( UID )
-	H.TTD[ uid ].timeMean		= H.TTD[ uid ].timeMean + (now * now)
-	H.TTD[ uid ].healthMean	= H.TTD[ uid ].healthMean + (now * UnitHealth( UID ))
+	ttd.n = ttd.n + 1
+	ttd.timeSum = ttd.timeSum + now
+	ttd.healthSum = ttd.healthSum + UnitHealth( unit )
+	ttd.timeMean = ttd.timeMean + (now * now)
+	ttd.healthMean = ttd.healthMean + (now * UnitHealth( unit ))
 	
-	local difference	= (H.TTD[ uid ].healthSum * H.TTD[ uid ].timeMean - H.TTD[ uid ].healthMean * H.TTD[ uid ].timeSum)
-	local projectedTTD	= nil
+	local difference = ( ttd.healthSum * ttd.timeMean - ttd.healthMean * ttd.timeSum)
+	local projectedTTD = nil
 	
 	if difference > 0 then
-		local divisor = ( H.TTD[ uid ].healthSum * H.TTD[ uid ].timeSum ) - ( H.TTD[ uid ].healthMean * H.TTD[ uid ].n )
+		local divisor = ( ttd.healthSum * ttd.timeSum ) - ( ttd.healthMean * ttd.n )
 		projectedTTD = 0
 		if divisor > 0 then
 			projectedTTD = difference / divisor - now
 		end
 	end
 
-	if not projectedTTD or projectedTTD < 0 or H.TTD[ uid ].n < 3 then
+	if not projectedTTD or projectedTTD < 0 or ttd.n < 3 then
 		return
 	else
 		projectedTTD = ceil(projectedTTD)
 	end
 
-	H.TTD[ uid ].sec = projectedTTD
+	ttd.sec = projectedTTD
 	
-end
-
-
-H.IncomingDamage = {}
-
-function H:UNIT_COMBAT( event, unitID, action, descriptor, damage, damageType )
-
-  if unitID == 'player' and action == 'WOUND' and damage > 0 then
-    local dmg = {
-      t = GetTime(),
-      damage = damage,
-      damageType = damageType
-    }
-    
-    table.insert( H.IncomingDamage, dmg )
-  end
-
-end
-
-
-function Hekili.DamageInLast( t )
-
-  local dmg = 0
-  local start = GetTime() - min( t, 15 )
-  
-  for k, v in pairs( H.IncomingDamage ) do
-  
-    if v.t > start then
-      dmg = dmg + v.damage
-    end
-      
-  end
-  
-  return dmg
-
-end
+end )
