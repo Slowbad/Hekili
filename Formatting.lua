@@ -42,6 +42,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 local lib = ns.lib.Format;
 
 local modf = math.modf
+local round = ns.round
 
 local UPDATE_INTERVAL = 0.2; -- Time to wait after last keypress before updating
 
