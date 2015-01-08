@@ -475,7 +475,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
         cast = 0,
         gcdType = 'melee',
         cooldown = 90,
-        usable = function() return target.health.pct < 10 or buff.death_note.up or IsUsableSpell( class.abilities[ 'touch_of_death' ].name ) end
+        usable = function() return buff.death_note.up end
       } )
     
     addHandler( 'touch_of_death', function ()
