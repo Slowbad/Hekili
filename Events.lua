@@ -90,6 +90,7 @@ end
 
 
 RegisterEvent( "UPDATE_BINDINGS", function () ns.refreshBindings() end )
+RegisterEvent( "DISPLAY_SIZE_CHANGED", function () ns.buildUI() end )
 RegisterEvent( "PLAYER_ENTERING_WORLD", function () ns.specializationChanged() end )
 RegisterEvent( "ACTIVE_TALENT_GROUP_CHANGED", function () ns.specializationChanged() end )
 RegisterEvent( "PLAYER_SPECIALIZATION_CHANGED", function ( _, unit )

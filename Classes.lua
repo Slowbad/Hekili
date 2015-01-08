@@ -561,7 +561,32 @@ ns.restoreDefaults = function( category )
             import.Name = default.name
             import.Release = default.version
             import.Default = true
-            if not index then index = #profile.displays + 1 end
+            
+            if index then
+              local existing = profile.displays[index]
+              import.Enabled = existing.Enabled
+              import['Use SpellFlash'] = existing['Use SpellFlash']
+              import['SpellFlash Color'] = existing['SpellFlash Color']
+              import['PvE Visibility'] = existing['PvE Visibility']
+              import['PvE Visibility'] = existing['PvE Visibility']
+              import.x = existing.x
+              import.y = existing.y
+              import.rel = existing.rel
+              import['Icons Shown'] = existing['Icons Shown']
+              import['Spacing'] = existing['Spacing']
+              import['Queue Direction'] = existing['Queue Direction']
+              import['Primary Icon Size'] = existing['Primary Icon Size']
+              import['Queued Icon Size'] = existing['Queued Icon Size']
+              import['Font'] = existing['Font']
+              import['Primary Font Size'] = existing['Primary Font Size']
+              import['Queued Font Size'] = existing['Queued Font Size']
+              import['Action Captions'] = existing['Action Captions']
+              import['Primary Caption'] = existing['Primary Caption']
+              import['Primary Caption Aura'] = existing['Primary Caption Aura']
+            else
+              index = #profile.displays + 1
+            end
+            
             profile.displays[ index ] = import
 					
             for j, hook in ipairs( profile.displays[ #profile.displays ].Queues ) do

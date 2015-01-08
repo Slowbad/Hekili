@@ -32,7 +32,7 @@ function ns.buildUI()
 	end
 	
 	ns.UI.Buttons	= ns.UI.Buttons or {}
-	
+  
 	for dispID, display in ipairs( Hekili.DB.profile.displays ) do
 		ns.UI.Buttons[dispID] = ns.UI.Buttons[dispID] or {}
 		
@@ -189,6 +189,11 @@ function Hekili:CreateButton( display, ID )
 	end
 	local btnDirection	= disp['Queue Direction']
 	local btnSpacing	= disp['Spacing']
+
+  local scaleFactor = 1
+  if GetCVar( "UseUIScale" ) == 1 then
+    scaleFactor = GetScreenHeight() / select( GetCurrentResolution(), GetScreenResolutions() ):match("%d+x(%d+)")
+  end
 	
 	button:SetFrameStrata( "LOW" )
 	button:SetFrameLevel( 100 - display )
@@ -197,7 +202,7 @@ function Hekili:CreateButton( display, ID )
 	button:SetMovable( not self.DB.profile.Locked )
 	button:SetClampedToScreen( true )
 	
-	button:SetSize( btnSize, btnSize )
+	button:SetSize( scaleFactor * btnSize, scaleFactor * btnSize )
 	
 	if not button.Texture then
 		button.Texture = button:CreateTexture(nil, "LOW")
@@ -208,7 +213,7 @@ function Hekili:CreateButton( display, ID )
 	
 	if display == 1 and ID == 1 then
 		button.Notification = button.Notification or button:CreateFontString("HekiliNotification", "OVERLAY")
-		button.Notification:SetSize( disp['Primary Icon Size'] * 2 + disp["Spacing"], disp['Primary Icon Size'] )
+		button.Notification:SetSize( scaleFactor * disp['Primary Icon Size'] * 2 + disp["Spacing"], scaleFactor * disp['Primary Icon Size'] )
 		button.Notification:ClearAllPoints()
 		button.Notification:SetPoint( btnDirection, name, getInverseDirection( btnDirection ), 0, 0 )
 		button.Notification:SetJustifyV( "CENTER" )
@@ -218,7 +223,7 @@ function Hekili:CreateButton( display, ID )
 	end
 	
 	button.Caption = button.Caption or button:CreateFontString(name.."Caption", "OVERLAY" )
-	button.Caption:SetSize( button:GetWidth(), button:GetHeight() / 2)
+	button.Caption:SetSize( scaleFactor * button:GetWidth(), scaleFactor * button:GetHeight() / 2)
 	button.Caption:SetPoint( "BOTTOM", button, "BOTTOM" )
 	button.Caption:SetJustifyV( "BOTTOM" )
 	button.Caption:SetTextColor(1, 1, 1, 1)

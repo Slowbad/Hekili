@@ -494,7 +494,7 @@ function Hekili:UpdateDisplays()
 
 								elseif display['Primary Caption'] == 'ratio' then
 									if display['Primary Caption Aura'] then
-										if ns.numDebuffs( display['Primary Caption Aura'] ) > 0 or targets > 1 then
+										if ns.numDebuffs( display['Primary Caption Aura'] ) > 1 or targets > 1 then
 											button.Caption:SetText( ns.numDebuffs( display['Primary Caption Aura'] ) .. ' / ' .. targColor .. targets .. '|r' )
 										else
 											button.Caption:SetJustifyH('CENTER')
@@ -510,7 +510,7 @@ function Hekili:UpdateDisplays()
                       if targets > 1 then cap = cap .. ' / ' .. targColor .. targets .. '|r' end
                       button.Caption:SetText( cap )
                     else
-                      if targets > 1 then button.Caption:SetText( '0 / ' .. targColor .. targets .. '|r' )
+                      if targets > 1 then button.Caption:SetText( targColor .. targets .. '|r' )
                       else
                         button.Caption:SetJustifyH('CENTER')
                         button.Caption:SetText(caption)

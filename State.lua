@@ -1122,7 +1122,8 @@ local mt_buffs = {
 		
 		elseif class.auras[ k ].id < 0 then
 			local id = -1 * class.auras[ k ].id
-			local name, _, _, duration, expires, spellID = GetRaidBuffTrayAuraInfo( id )
+			local name, _, _, duration, expires, spellID, slot = GetRaidBuffTrayAuraInfo( id )
+      
 			t[k] = {
 				key = k, name = name, count = name and 1 or 0, expires = name and ( expires > 0 and expires or 3600 ) or 0
 			}
