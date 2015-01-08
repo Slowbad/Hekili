@@ -153,18 +153,16 @@ ns.newDisplayOption = function( key )
 			['Name'] = {
 				type = 'input',
 				name = 'Name',
-				desc = 'Rename this display.  Names beginning with @ are reserved for default displays.',
+				desc = 'Rename this display.',
 				order = 20,
 				validate = function(info, val)
 					local key = tonumber( info[2]:match("^D(%d+)") )
-					for i, display in pairs( Hekili.DB.profile.displays) do
+					for i, display in pairs( Hekili.DB.profile.displays ) do
 						if i ~= key and display.Name == val then
 							return "That display name is already in use."
-						elseif i ~= key and val:sub(1, 1) == "@" then
-							return "The @ character is reserved for Hekili default action lists."
 						end
-						return true
 					end
+          return true
 				end,
 				width = 'double',
 			},
@@ -580,17 +578,12 @@ ns.newDisplayOption = function( key )
 						order = 11,
 						validate = function(info, val)
 							if val == '' then return true end
-							if match(val, "@") then
-								Hekili:Print("The @ character is reserved for default action lists.")
-								return "The @ character is reserved for default action lists."
-							else
-								for k,v in ipairs(Hekili.DB.profile.displays) do
-									if val == v.Name then
-										Hekili:Print("That name is already in use.")
-										return "That name is already in use."
-									end
-								end
-							end
+              for k,v in ipairs(Hekili.DB.profile.displays) do
+                if val == v.Name then
+                  Hekili:Print("That name is already in use.")
+                  return "That name is already in use."
+                end
+              end
 							return true
 						end,
 						width = 'full',
@@ -708,14 +701,12 @@ ns.newHookOption = function( display, key )
 				order = 03,
 				validate = function(info, val)
 					local key = tonumber(info[2])
-					for i, display in pairs( Hekili.DB.profile.displays) do
-						if i ~= key and display.Name == val then
-							return "That display name is already in use."
-						elseif i ~= key and val:match("@") then
-							return "The @ character is reserved for Hekili default action lists."
+					for i, hook in pairs( Hekili.DB.profile.displays[display].Queues ) do
+						if i ~= key and hook.Name == val then
+							return "That hook name is already in use."
 						end
-						return true
 					end
+					return true
 				end,
 				width = 'double'
 			},
@@ -859,12 +850,14 @@ ns.newActionListOption = function( index )
 			Name = {
 				type = "input",
 				name = "Name",
-				desc = "Enter a unique name for this action list.  Names beginning with @ are reserved for default action lists.",
+				desc = "Enter a unique name for this action list.",
 				validate = function(info, val)
-					if val:sub(1, 1) == "@" then
-						return "The @ character is reserved for default action lists."
+					for i, list in pairs( Hekili.DB.profile.actionLists ) do
+						if list.Name == val and index ~= i then
+							return "That action list name is already in use."
+						end
 					end
-					return true
+          return true
 				end,
 				order = 3,
 				width = "full",
@@ -902,16 +895,11 @@ ns.newActionListOption = function( index )
 						order = 32,
 						validate = function(info, val)
 							if val == '' then return true end
-							if val:sub(1, 1) == "@" then
-								Hekili:Print("The @ character is reserved for default action lists.")
-								return "The @ character is reserved for default action lists."
-							else
-								for k,v in ipairs(Hekili.DB.profile.actionLists) do
-									if val == v.Name then
-										Hekili:Print("That name is already in use.")
-										return "That name is already in use."
-									end
-								end
+              for k,v in ipairs(Hekili.DB.profile.actionLists) do
+                if val == v.Name then
+                  Hekili:Print("That name is already in use.")
+                  return "That name is already in use."
+                end
 							end
 							return true
 						end,
@@ -1182,14 +1170,12 @@ ns.newActionOption = function( aList, index )
 				validate = function(info, val)
 					local listIdx = tonumber( match( info[2], "^L(%d+)" ) )
 					
-					for i, action in pairs( Hekili.DB.profile.actionLists[ aList ].Actions) do
-						if action.Name == val then
+					for i, action in pairs( Hekili.DB.profile.actionLists[ aList ].Actions ) do
+						if action.Name == val and i ~= listIdx then
 							return "That action name is already in use."
-						elseif val:match("@") then
-							return "The @ character is reserved for addon defaults."
 						end
-						return true
 					end
+          return true
 				end,
 			},
 			Ability = {
@@ -1407,17 +1393,12 @@ function Hekili:GetOptions()
 						width = 'full',
 						validate = function(info, val)
 										if val == '' then return true end
-										if match(val, "@") then
-											Hekili:Print("The @ character is reserved for default action lists.")
-											return "The @ character is reserved for default action lists."
-										else
-											for k,v in pairs(Hekili.DB.profile.displays) do
-												if val == v.name then
-													Hekili:Print("That name is already in use.")
-													return "That name is already in use."
-												end
-											end
-										end
+                    for k,v in pairs(Hekili.DB.profile.displays) do
+                      if val == v.name then
+                        Hekili:Print("That name is already in use.")
+                        return "That name is already in use."
+                      end
+                    end
 										return true
 									end,
 						order = 1
@@ -1547,12 +1528,7 @@ function Hekili:GetOptions()
 						desc = "Enter a name for this action list and press ENTER.",
 						width = "full",
 						validate = function(info, val)
-										if val == '' then return true
-										elseif match(val, "@") then
-											Hekili:Print("The @ character is reserved for default action lists.")
-											return "The @ character is reserved for default action lists."
-										end
-										
+										if val == '' then return true	end
 										for k,v in pairs(Hekili.DB.profile.actionLists) do
 											if val == v.Name then
 												Hekili:Print("That name is already in use.")
@@ -2449,6 +2425,7 @@ function Hekili:SetOption( info, input, ... )
 					
 					profile.actionLists[ index ] = tableCopy( list )
 					profile.actionLists[ index ].Name = input
+          profile.actionLists[ index ].Default = false
 					
 					Rebuild = true
 					

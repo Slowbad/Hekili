@@ -513,8 +513,8 @@ ns.restoreDefaults = function( category )
         local index
         
         for j, list in ipairs( profile.actionLists ) do
-          if list.Name == default.name and list.Default then
-            reload = ( list.Release < default.version )
+          if list.Name == default.name then
+            reload = list.Default and ( list.Release < default.version )
             index = j
             break
           end
@@ -545,10 +545,10 @@ ns.restoreDefaults = function( category )
 				local reload = true
         local index
         
-				for j = 1, #profile.displays do
-					if profile.displays[j].Name == default.name and profile.displays[j].Default then
+				for j, display in ipairs( profile.displays ) do
+					if display.Name == default.name then
             index = j
-            reload = ( profile.displays[j].Release < default.version )
+            reload = display.Default and ( display.Release < default.version )
 						break
 					end
 				end

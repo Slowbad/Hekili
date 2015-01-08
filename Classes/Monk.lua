@@ -482,6 +482,16 @@ if (select(2, UnitClass('player')) == 'MONK') then
       if buff.serenity.up then gain( 3, 'chi' ) end
     end )
     
+    modifyAbility( 'touch_of_death', 'spend', function ( x )
+      if glyph.touch_of_death.enabled then return 0 end
+      return x
+    end )
+    
+    modifyAbility( 'touch_of_death', 'cooldown', function ( x )
+      if glyph.touch_of_death.enabled then return x + 120 end
+      return x
+    end )
+    
     
     addAbility( 'breath_of_fire',
       {

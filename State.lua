@@ -1870,7 +1870,7 @@ ns.hasRequiredResources = function( ability )
 		elseif type( action.spend ) == 'function' then
 			spend, resource = action.spend()
 		end
-
+    
     if resource == 'focus' or resource == 'energy' then
       -- Thought: We'll already delay CD based on time to get energy/focus.
       -- So let's leave it alone.
@@ -1914,7 +1914,7 @@ ns.timeToReady = function( action )
     elseif type( ability.spend ) == 'function' then
       spend, resource = ability.spend()
     end
-    
+   
     if spend > state[ resource ].current then
       if resource == 'focus' or resource == 'energy' then
         delay = max( delay, 0.1 + ( ( spend - state[ resource ].current ) / state[ resource ].regen ) )

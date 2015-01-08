@@ -109,7 +109,7 @@ function Hekili:Run( ... )
     func = func[ select( i, ... ) ]
   end
   
-  return func( select( fn + 1, ... ) )
+  return func( select( fn, ... ) )
 
 end
 
