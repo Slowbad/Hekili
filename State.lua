@@ -1411,7 +1411,7 @@ local mt_default_action = {
       return ns.timeToReady( t.action )
     
     elseif k == 'ready' then
-      return ns.timeToReady( t.action ) == 0
+      return ns.isUsable( t.action ) and ns.timeToReady( t.action ) == 0
   
 		elseif k == 'cast_time' then
 			return class.abilities[ t.action ].cast

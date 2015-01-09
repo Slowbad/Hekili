@@ -985,11 +985,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
         gcdType = 'spell',
         cooldown = 180
       } )
-    
-    addHandler( 'zen_meditation', function ()
-      applyBuff( 'zen_meditation', 8 )
-    end )
-        
+      
       
     addAbility( 'breath_of_the_serpent',
       {

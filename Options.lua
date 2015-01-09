@@ -1291,18 +1291,29 @@ function Hekili:GetOptions()
 									'Please report bugs to hekili.tcn@gmail.com / @Hekili808 on Twitter / Hekili on MMO-C.\n',
 						order = 0,
 					},
+          gettingStarted = {
+            type = 'description',
+            name = "|cFFFFD100Getting Started|r\n\n" ..
+              "By default, this addon shows two displays.  The lower display is a hybrid display that will display a single-target, cleave, or AOE priority list depending on the number of targets that have been detected.  The upper display will show an AOE priority list, assuming a certain number of targets.\n\n" ..
+              "For greater control over the primary display, you may want to adjust the |cFFFFD100Mode Switch|r settings found in the |cFFFFD100Filters and Keybinds|r section of the options.  You can bind a key that will manually swap the primary display between fixed, single-target mode, automatic mode, or fixed AOE mode.\n\n" ..
+              "Additionally, by default, most major cooldowns are excluded from the action lists.  To enable them, it is strongly recommend that you bind a key in the |cFFFFD100Filters and Keybinds|r section for |cFFFFD100Show Cooldowns|r.  This will enable you to tell the addon when you do (or do not) want to have your cooldowns recommended.\n\n" ..
+              "Finally, there are many options that can be changed on a per-display basis.  Check the |cFFFFD100Displays|r section, click the display in question, and check the |cFFFFD100UI and Style|r section to explore the available options for customization.\n",
+            order = 1,
+          },
           whatsNew = {
             type = 'description',
             name = "|cFFFFD100What's New!|r\n\n" ..
-              "|cFFFF0000ALPHA|r - The addon has undergone a major code cleanup and there may be some residual bugs that need to be caught.  If anything does not appear to be working as intended, please report the issue through the ticket interface on CurseForge or contact Hekili using any of the contact methods above.\n\n" ..
               "|cFF00C0FFDefaults|r - The names of the default displays and action lists have been changed.  They no longer begin with @, and if a display or action list is a default, its name will be in |cFF00C0FFblue|r.  Default lists and displays are automatically updated whenever you update the addon.\n\n" ..
               "|cFFFFD100SpellFlash Support|r - At user request, minimal SpellFlash support has been implemented.  If you have SpellFlash (or SpellFlashCore) installed, you will find an option for 'Use SpellFlash' on each display.  You can specify the color that display will flash when highlighting an entry.  If two or more lists are recommending the same ability, the addon will use the color of the first display.\n\n" ..
-              "|cFFFFD100Minimum Targets|r - Displays now have an option labeled 'Force Minimum Targets'.  When action lists are processed in this display, the addon will always assume there are at least this many targets.  This purpose of this function is to prevent AOE displays from appearing very bizarre when there are not enough targets for the action list to function properly.  If a display is forced to act as though there are 3 targets but fewer than 3 targets are actually detected, the number of targets will be displayed in |cFFFF0000red|r.\n\n" ..
-              "|cFFFFD100Mode Switch|r - The behavior of the 'Mode' keybind has evolved.  Instead of toggling from single to cleave to AOE and back, you can set the switch type to Auto or Manual.  If set to Auto, pressing the Mode keybind will change the Current Mode between Automatic or Single Target.  If set to Manual, pressing the Mode keybind will change the Current Mode between Single Target and AOE.  This allows you to trust the addon regarding the number of active targets (Auto), or to manually choose between single target and AOE.\n\n" ..
-              "|cFFFFD100Action Lists|r - Literally every single action list has been updated.  Because of the volume of changes, there may be bugs that I have not been able to locate before posting this |cFFFF0000ALPHA|r release.  Please report any issues that you find.  When reporting an issue, please be sure to note your class, specialization, level, talents, glyphs, current settings (mode, CDs, etc.), and any steps to reproduce the issue.  Screenshots help as well!\n\n" ..
-              "|cFF00FF00THANK YOU|r for testing this alpha release of Hekili.",
-            order = 1
+              "|cFFFFD100Minimum Targets|r - Displays now have an option labeled 'Force Minimum Targets'.  When action lists are processed in this display, the addon will always assume there are at least this many targets.  This purpose of this function is to prevent AOE displays from appearing very bizarre when there are not enough targets for the action list to function properly.  If a display is forced to act as though there are 3 targets but fewer than 3 targets are actually detected, the number of targets will be displayed in |cFFFF0000red|r.\n",
+            order = 2
           },
+          endCap = { -- just here to trigger scrolling if needed.
+            type = 'description',
+            name = ' ',
+            order = 3
+          }
+          
         }
       },
 			general = {
