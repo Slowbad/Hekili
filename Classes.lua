@@ -348,9 +348,11 @@ ns.specializationChanged = function()
 		state.spec[ k ] = nil
 	end
 
-  state.spec.id, state.spec.name = GetSpecializationInfo( GetSpecialization() )
-  state.spec.key = getSpecializationKey( state.spec.id )
-	state.spec[ state.spec.key ] = true
+  if GetSpecialization() then
+    state.spec.id, state.spec.name = GetSpecializationInfo( GetSpecialization() )
+    state.spec.key = getSpecializationKey( state.spec.id )
+    state.spec[ state.spec.key ] = true
+  end
   
   state.GUID = UnitGUID( 'player' )
 

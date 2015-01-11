@@ -122,6 +122,7 @@ end
 
 function Hekili:OnEnable()
 
+  ns.specializationChanged()
   ns.StartEventHandler()
 	buildUI()
 
@@ -165,6 +166,7 @@ local s_textures = setmetatable( {},
 	} )
 
 -- Insert textures that don't work well with predictions.@
+s_textures[GetSpellInfo(157676)] = 'Interface\\Icons\\ability_monk_chiexplosion' -- Chi Explosion
 s_textures[GetSpellInfo(115356)] = 'Interface\\Icons\\ability_skyreach_four_wind'	-- Windstrike
 s_textures[GetSpellInfo(114074)] = 'Interface\\Icons\\Spell_Fire_SoulBurn'			-- Lava Beam
 s_textures[GetSpellInfo(421)] = 'Interface\\Icons\\Spell_Nature_ChainLightning'	-- Chain Lightning
@@ -238,7 +240,7 @@ function Hekili:ProcessHooks( dispID )
                       local entry = list.Actions[ actID ]
                       state.this_action = entry.Ability
 
-                      local wait_time = timeToReady( state.this_action )
+                      local wait_time = isKnown( state.this_action ) and timeToReady( state.this_action ) or 999
                       state.delay = wait_time
                       
 											if entry.Ability == 'wait' then

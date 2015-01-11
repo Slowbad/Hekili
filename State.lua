@@ -236,6 +236,45 @@ state.spend = spend
 -- UGLY METATABLES BELOW THIS POINT --
 --------------------------------------
 ns.metatables = {}
+local metafunctions = {
+  state = {},
+  spec = {},
+  stat = {},
+  default_pet = {},
+  pet = {},
+  stance = {},
+  toggle = {},
+  target = {},
+  target_health = {},
+  default_cooldown = {},
+  cooldown = {},
+  resource = {},
+  default_aura = {},
+  buff = {},
+  default_glyph = {},
+  glyph = {},
+  talent = {},
+  perk = {},
+  active_dot = {},
+  default_totem = {},
+  totem = {},
+  set_bonus = {},
+  default_debuff = {},
+  debuff = {},
+  default_action = {},
+  action = {}
+}
+
+ns.addMetaFunction = function( t, k, func )
+  
+  if metafunctions[ t ] then
+    metafunctions[ t ][ k ] = setfenv( func, state )
+    return
+  end
+  
+  ns.Error( "addMetaFunction() - no such table '" .. t .. "' for key '" .. k .. "'." )
+
+end
 
 
 -- Returns false instead of nil when a key is not found.
@@ -253,7 +292,10 @@ local mt_state = {
 		-- Handling these with metamethods allows us to emulate SimC syntax for the in-game editor.
 		-- It also means if we actually assign a value, the related metamethod gets nuked.
 
-		if k == 'this_action' then
+		if metafunctions.state[ k ] then
+      return metafunctions.state[ k ]()
+      
+    elseif k == 'this_action' then
 			-- We haven't tested an ability yet.
 			return 'wait'
     
@@ -669,7 +711,7 @@ local mt_toggle = {
 				end
 			end
 				
-			return error("UNK: " .. k)
+			return false
 			
 		end
 	end
@@ -1408,7 +1450,7 @@ local mt_default_action = {
 			return max( t.gcd, t.cast )
 	
     elseif k == 'ready_time' then
-      return ns.timeToReady( t.action )
+      return ns.isUsable( t.action ) and ns.timeToReady( t.action ) or 999
     
     elseif k == 'ready' then
       return ns.isUsable( t.action ) and ns.timeToReady( t.action ) == 0
@@ -1551,6 +1593,7 @@ state.reset = function()
     state.debuff[ k ].v1 = nil
     state.debuff[ k ].v2 = nil
     state.debuff[ k ].v3 = nil
+    state.debuff[ k ].unit = class.auras[ k ].unit or nil
 	end
 	
 	for k in pairs( state.pet ) do
@@ -1914,6 +1957,8 @@ ns.timeToReady = function( action )
     elseif type( ability.spend ) == 'function' then
       spend, resource = ability.spend()
     end
+    
+    if resource == 'energy' then Hekili.lastenergy = action end
    
     if spend > state[ resource ].current then
       if resource == 'focus' or resource == 'energy' then

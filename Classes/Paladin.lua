@@ -18,6 +18,7 @@ local modifyAura = ns.modifyAura
 
 local addGearSet = ns.addGearSet
 local addGlyph = ns.addGlyph
+local addMetaFunction = ns.addMetaFunction
 local addTalent = ns.addTalent
 local addPerk = ns.addPerk
 local addResource = ns.addResource
@@ -48,24 +49,31 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     addTalent( 'speed_of_light', 85499 )
     addTalent( 'long_arm_of_the_law', 87172 )
     addTalent( 'pursuit_of_justice', 26023 )
+    
     addTalent( 'fist_of_justice', 105593 )
     addTalent( 'repentance', 200066 )
     addTalent( 'blinding_light', 115750 )
+    
     addTalent( 'selfless_healer', 85804 )
     addTalent( 'eternal_flame', 114163 )
     addTalent( 'sacred_shield', 20925 )
+    
     addTalent( 'hand_of_purity', 114039 )
     addTalent( 'unbreakable_spirit', 114154 )
     addTalent( 'clemency', 105622 )
+    
     addTalent( 'holy_avenger', 105809 )
     addTalent( 'sanctified_wrath', 53376 )
     addTalent( 'divine_purpose', 86172 )
+    
     addTalent( 'holy_prism', 114165 )
     addTalent( 'lights_hammer', 114158 )
     addTalent( 'execution_sentence', 114157 )
+    
     addTalent( 'empowered_seals', 152263 )
     addTalent( 'seraphim', 152262 )
     addTalent( 'final_verdict', 157048 )
+    addTalent( 'holy_shield', 152261 )
 
     -- Glyphs.
     addGlyph( 'ardent_defender', 159548 )
@@ -120,7 +128,10 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     addGlyph( 'word_of_glory', 54936 )
     
     -- Player Buffs.
+    addAura( 'ardent_defender', 31850 )
     addAura( 'avenging_wrath', 31884 )
+    addAura( 'bastion_of_power', 144569 )
+    addAura( 'bastion_of_glory', 114637, 'max_stack', 5 )
     addAura( 'blazing_contempt', 166831 )
     addAura( 'blessing_of_kings', 20217 )
     addAura( 'blessing_of_might', 19740 )
@@ -128,8 +139,12 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     addAura( 'divine_protection', 498 )
     addAura( 'divine_purpose', 90174 )
     addAura( 'divine_shield', 642 )
+    addAura( 'eternal_flame', 156322 )
     addAura( 'execution_sentence', 114157 )
+    addAura( 'forbearance', 25771, 'unit', 'player' )
     addAura( 'final_verdict', 157048 )
+    addAura( 'grand_crusader', 85043 )
+    addAura( 'guardian_of_ancient_kings', 86659 )
     addAura( 'hand_of_freedom', 1044 )
     addAura( 'hand_of_protection', 1022 )
     addAura( 'hand_of_sacrifice', 6940 )
@@ -137,10 +152,12 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     addAura( 'liadrins_righteousness', 156989, 'duration', 20  )
     addAura( 'maraads_truth', 156990, 'duration', 20  )
     addAura( 'righteous_fury', 25780 )
+    addAura( 'sacred_shield', 20925, 'fullscan', true )
     addAura( 'seal_of_command', 105361 )
     addAura( 'seal_of_insight', 20165 )
     addAura( 'selfless_healer', 114250 )
     addAura( 'seraphim', 152262 )
+    addAura( 'shield_of_the_righteous', 132403 )
     addAura( 'turalyons_justice', 156987, 'duration', 20 )
     addAura( 'uthers_insight', 156988, 'duration', 20 )
 
@@ -149,6 +166,9 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     addPerk( 'empowered_hammer_of_wrath', 157496 )
     addPerk( 'enhanced_hand_of_sacrifice', 157493 )
     addPerk( 'improved_forbearance', 157482 )
+    addPerk( 'empowered_avengers_shield', 157485 )
+    addPerk( 'improved_block', 157488 )
+    addPerk( 'improved_consecration', 157486 )
     
     -- Stances.
     addStance( 'truth', 'protection', 1, 'retribution', 1 )
@@ -162,9 +182,41 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     -- Gear Sets
     addGearSet( 'tier17', 115565, 115566, 115567, 115568, 115569 )
 
-
     -- Seals are stances.
     state.seal = state.stance
+
+    addMetaFunction( 'state', 'time_to_hpg', function ()
+      local t = action.hammer_of_wrath.ready_time
+      
+      if action.crusader_strike.ready_time < t then t = action.crusader_strike.ready_time end
+      if spec.retribution and action.exorcism.ready_time < t then t = action.exorcism.ready_time end
+      if action.judgment.ready_time < t then t = action.judgment.ready_time end
+      
+      return t
+    end )
+    
+    addHook( "onInitialize", function ()
+      local found, empty = false, nil
+      
+      for i = 1, 5 do
+        if not empty and Hekili.DB.profile[ 'Toggle ' ..i.. ' Name' ] == nil then
+          empty = i
+        elseif Hekili.DB.profile[ 'Toggle ' ..i.. ' Name' ] == 'mitigation' then
+          found = i
+          break
+        end
+      end
+      
+      if not found and empty then
+        Hekili.DB.profile[ 'Toggle ' ..empty.. ' Name' ] = 'mitigation'
+        found = empty
+      end
+      
+      if type( found ) == 'number' then
+        Hekili.DB.profile[ 'Toggle_' .. found ] = Hekili.DB.profile[ 'Toggle_' .. found ] == nil and true or Hekili.DB.profile[ 'Toggle_' .. found ]
+      end
+    end )
+      
     
     
     RegisterEvent( "UNIT_SPELLCAST_SUCCEEDED", function( _, unit, spell, _, spellID )
@@ -175,6 +227,29 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
       
     end )
 
+    
+    addAbility( 'avengers_shield',
+      {
+        id = 31935,
+        spend = 0.07,
+        spend_type = 'mana',
+        cast = 0,
+        gcdType = 'spell',
+        cooldown = 15
+      } )
+    
+    modifyAbility( 'avengers_shield', 'cooldown', function ( x )
+      return x * haste
+    end )
+    
+    addHandler( 'avengers_shield', function ()
+      if buff.grand_crusader.up then
+        gain( 1, 'holy_power' )
+        removeBuff( 'grand_crusader' )
+      end
+      interrupt()
+    end )
+    
     
     addAbility( 'avenging_wrath', 
       {
@@ -244,6 +319,93 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     addHandler( 'crusader_strike', function ()
       gain( buff.holy_avenger.up and 3 or 1, 'holy_power' )
     end )
+    
+    
+    addAbility( 'divine_protection',
+      {
+        id = 498,
+        spend = 0.035,
+        cast = 0,
+        gcdType = 'off',
+        cooldown = 30
+      } )
+    
+    addHandler( 'divine_protection', function ()
+      applyBuff( 'divine_protection', 8 )
+    end )
+    
+    
+    addAbility( 'guardian_of_ancient_kings',
+      {
+        id = 86659,
+        spend = 0,
+        cast = 0,
+        gcdType = 'off',
+        cooldown = 180,
+        usable = function() return not debuff.forbearance.up end
+      } )
+      
+    addHandler( 'guardian_of_ancient_kings', function ()
+      applyDebuff( 'player', 'forbearance', perk.improved_forbearance.enabled and 30 or 60 )
+      applyBuff( 'guardian_of_ancient_kings', 8 )
+    end )
+
+
+    addAbility( 'ardent_defender',
+      {
+        id = 31850,
+        spend = 0,
+        cast = 0,
+        gcdType = 'off',
+        cooldown = 180,
+        usable = function() return not debuff.forbearance.up end
+      } )
+    
+    addHandler( 'ardent_defender', function ()
+      applyBuff( 'ardent_defender', 10 )
+    end )
+    
+    
+    addAbility( 'eternal_flame',
+      {
+        id = 114163,
+        spend = 1,
+        spend_type = 'holy_power',
+        cast = 0,
+        gcdType = 'off',
+        cooldown = 0
+      } )
+    
+    modifyAbility( 'eternal_flame', 'spend', function ( x )
+      if buff.bastion_of_power.up then return 0 end
+      return max( x, min( 3, holy_power.current ) )
+    end )
+    
+    addHandler( 'eternal_flame', function ()
+      applyBuff( 'eternal_flame', 30 )
+    end )
+    
+    
+    addAbility( 'shield_of_the_righteous',
+      {
+        id = 53600,
+        spend = 3,
+        spend_type = 'holy_power',
+        cast = 0,
+        gcdType = 'off',
+        cooldown = 1.5
+      } )
+    
+    modifyAbility( 'shield_of_the_righteous', 'cooldown', function ( x )
+      return x * haste
+    end )
+    
+    addHandler( 'shield_of_the_righteous', function ()
+      applyBuff( 'shield_of_the_righteous', 3 )
+      addStack( 'bastion_of_glory', 20, 1 )
+      if buff.bastion_of_glory.stack >= 3 then applyBuff( 'bastion_of_power', 20 ) end
+    end )
+    
     
     addAbility( 'divine_storm',
       {
@@ -338,7 +500,26 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
       if not talent.final_verdict.enabled then return 999 end
       return x
     end )
-
+    
+    
+    addAbility( 'flash_of_light',
+      {
+        id = 19750,
+        spend = 0.20,
+        spend_type = 'mana',
+        cast = 1.5,
+        gcdType = 'spell',
+        cooldown = 0
+      } )
+    
+    modifyAbility( 'flash_of_light', 'spend', function ( x )
+      return x * max( 0, ( 1 - ( 0.35 * buff.selfless_healer.stack ) ) )
+    end )
+    
+    modifyAbility( 'flash_of_light', 'cast', function ( x )
+      return x * max( 0, ( 1 - ( 0.35 * buff.selfless_healer.stack ) ) )
+    end )
+    
     
     addAbility( 'hammer_of_the_righteous',
       {
@@ -383,6 +564,22 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     end )
     
     
+    addAbility( 'harsh_word',
+      {
+        id = 136494,
+        spend = 1,
+        spend_type = 'holy_power',
+        cast = 0,
+        gcdType = 'off',
+        cooldown = 0,
+        usable = function () return glyph.harsh_words.enabled end
+      } )
+    
+    modifyAbility( 'harsh_word', 'spend', function ( x )
+      return max( x, min( 3, holy_power.current ) )
+    end )
+    
+    
     addAbility( 'holy_avenger',
       {
         id = 105809,
@@ -416,6 +613,36 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     modifyAbility( 'holy_prism', 'cooldown', function( x )
       if not talent.holy_prism.enabled then return 999 end
       return x
+    end )
+    
+    
+    addAbility( 'holy_wrath',
+      {
+        id = 119072,
+        spend = 0.05,
+        spend_type = 'mana',
+        cast = 0,
+        gcdType = 'spell',
+        cooldown = 15
+      } )
+    
+    modifyAbility( 'holy_wrath', 'cooldown', function( x )
+      return x * haste
+    end )
+    
+    
+    addAbility( 'consecration',
+      {
+        id = 26573,
+        spend = 0.07,
+        spend_type = 'mana',
+        cast = 0,
+        gcdType = 'spell',
+        cooldown = 9
+      } )
+    
+    modifyAbility( 'consecration', 'cooldown', function( x )
+      return x * haste
     end )
     
 
@@ -474,6 +701,35 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     
     addHandler( 'rebuke', function ()
       interrupt()
+    end )
+    
+    
+    addAbility( 'sacred_shield',
+      {
+        id = 20925,
+        spend = 0,
+        cast = 0,
+        gcdType = 'spell',
+        cooldown = 6
+      } )
+    
+    addHandler( 'sacred_shield', function ()
+      applyBuff( 'sacred_shield', 30 )
+    end )
+    
+    
+    addAbility( 'seal_of_insight',
+      {
+        id = 20165,
+        spend = 0,
+        cast = 0,
+        gcdType = 'spell',
+        cooldown = 0,
+        usable = function() return not seal.insight end
+      } )
+    
+    addHandler( 'seal_of_insight', function ()
+      setStance( 'insight' )
     end )
     
     
