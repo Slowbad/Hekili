@@ -1345,7 +1345,7 @@ ns.metatables.mt_set_bonuses = mt_set_bonuses
 local mt_default_debuff = {
 	__index = function(t, k)
 		if k == 'count' or k == 'expires' or k == 'v1' or k == 'v2' or k == 'v3' then
-      local unit = t.unit or 'target'
+      local unit = rawget( t, unit ) or 'target'
 			local name, _, _, count, _, _, expires, _, _, _, _, _, _, _, v1, v2, v3 = UnitDebuff( unit, class.auras[ t.key ].name, nil, 'PLAYER' )
 			
 			if name then
