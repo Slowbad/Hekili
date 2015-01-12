@@ -1821,8 +1821,10 @@ end
 
 ns.isKnown = function( sID )
 
-	if type(sID) ~= 'number' then sID = class.abilities[ sID ].id end
-	if not sID or sID < 0 then return false end
+	if type(sID) ~= 'number' then sID = class.abilities[ sID ].id or nil end
+  
+  if not sID then return false -- no ability
+  elseif sID < 0 then return true end -- fake ability (i.e., wait)
 	
 	local ability = class.abilities[ sID ]
   
