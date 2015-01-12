@@ -1158,7 +1158,7 @@ local mt_buffs = {
 		
 		if k == 'liquid_magma' then
 			t[k] = {
-				key = k, name = GetSpellInfo( class.auras[ 'liquid_magma' ].id ), count = state.cooldown.liquid_magma.remains > 34 and 1 or 0, expires = state.cooldown.liquid_magma.expires - 34
+				key = k, name = class.auras[ 'liquid_magma' ].name, count = state.cooldown.liquid_magma.remains > 34 and 1 or 0, expires = state.cooldown.liquid_magma.expires - 34
       }
 			return t[k]
 		
@@ -1173,15 +1173,25 @@ local mt_buffs = {
 		
 		end
 		
-		local name, _, _, count, _, _, expires, caster = UnitBuff( 'player', class.auras[ k ].name )
+		local name, _, _, duration, _, spellID, expires, caster = UnitBuff( 'player', class.auras[ k ].name )
 
 		if name then
-			count = max(1, count)
 			if expires == 0 then expires = state.now + 3600 end
-		end
+		else
+			t[k] = {
+				key = k, id = class.auras[ k ].id, name = name, count = 0, expires = 0, applied = 0, caster = 'unknown'
+			}
+      return t[k]
+    end
 		
 		t[k] = {
-			key = k, name = name, count = count or 0, expires = expires or 0, caster = caster
+			key = k,
+      id = spellID,
+      name = name,
+      count = 1,
+      expires = expires,
+      applied = expires - duration,
+      caster = caster
 		}
 		return ( t[k] )
 			
