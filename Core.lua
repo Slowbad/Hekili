@@ -131,9 +131,6 @@ function Hekili:OnEnable()
 	-- May want to refresh configuration options, key bindings.
 	if self.DB.profile.Enabled then
 
-    if ns.MasqueGroup then ns.MasqueGroup:ReSkin()
-		end
-		
 		for i = 1, #self.DB.profile.displays do
 			self:ProcessHooks( i )
 		end

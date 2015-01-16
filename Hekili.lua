@@ -12,7 +12,6 @@ ns.lib = {
   AceConfigDialog = LibStub( "AceConfigDialog-3.0" ),
   Format = {}, -- filled by Formatting.lua
   LibDualSpec = LibStub( "LibDualSpec-1.0" ),
-  Masque = LibStub( "Masque", true ),
   RangeCheck = LibStub( "LibRangeCheck-2.0" ),
   SpellFlash = SpellFlash or SpellFlashCore,
   SpellRange = LibStub( "SpellRange-1.0" ),

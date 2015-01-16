@@ -4,7 +4,7 @@
 ## Author: Hekili
 ## Notes: Priority helper for Shamans, Paladins, and Monks with support for in-game modifications.
 ## SavedVariables: HekiliDB
-## OptionalDeps: Masque SpellFlash SpellFlashCore
+## OptionalDeps: Masque, SpellFlash, SpellFlashCore
 
 embeds.xml
 

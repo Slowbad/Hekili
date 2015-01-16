@@ -10,16 +10,18 @@ local getInverseDirection = ns.getInverseDirection
 local multiUnpack = ns.multiUnpack
 local round = ns.round
 
-
-if ns.lib.Masque then
-  ns.MasqueGroup = ns.lib.Masque:Group( addon )
-  if not ns.MasqueGroup then ns.lib.Masque = nil end
-end
+local Masque, MasqueGroup
 
 
 -- Builds and maintains the visible UI elements.
 -- Buttons (as frames) are never deleted, but should get reused effectively.
 function ns.buildUI()
+
+  if not Masque then
+    Masque = LibStub( "Masque", true )
+    
+    if Masque then MasqueGroup = Masque:Group( addon ) end
+  end
 
 	ns.cacheCriteria()
 	
@@ -51,12 +53,12 @@ function ns.buildUI()
 				ns.UI.Buttons[dispID][i]:Show()
 			end
 			
-			if ns.MasqueGroup then ns.MasqueGroup:AddButton( ns.UI.Buttons[dispID][i], { Icon = ns.UI.Buttons[dispID][i].Texture, Cooldown = ns.UI.Buttons[dispID][i].Cooldown } ) end	
+			if MasqueGroup then MasqueGroup:AddButton( ns.UI.Buttons[dispID][i], { Icon = ns.UI.Buttons[dispID][i].Texture, Cooldown = ns.UI.Buttons[dispID][i].Cooldown } ) end	
 		end
 		
 	end
 
-	if ns.MasqueGroup then ns.MasqueGroup:ReSkin() end
+	if MasqueGroup then MasqueGroup:ReSkin() end
 	
 	-- Check for a display that has been removed.
 	for display, buttons in ipairs( ns.UI.Buttons ) do
