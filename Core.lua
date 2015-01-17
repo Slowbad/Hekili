@@ -367,14 +367,14 @@ function CheckDisplayCriteria( dispID )
 	local display = Hekili.DB.profile.displays[ dispID ]
 	local _, zoneType = IsInInstance()
 	
-	if not ns.visible.display[ dispID ] then
+	if C_PetBattles.IsInBattle() or not ns.visible.display[ dispID ] then
 		return false
 		
 	elseif not pvpZones[ zoneType ] and display['PvE Visibility'] ~= 'always' then
 		if display['PvE Visibility'] == 'combat' and ( not UnitAffectingCombat('player') and not UnitCanAttack('player', 'target') ) then
 			return false
 			
-		elseif display['PvE Visibility'] == 'target' and not UnitCanAttack('player', 'target') then
+		elseif display['PvE Visibility'] == 'target' and ( UnitIsDead( 'target' ) or not UnitCanAttack( 'player', 'target' ) ) then
 			return false
 			
 		elseif display['PvE Visibility'] == 'zzz' and not pvpZones[ zoneType ] then
@@ -386,7 +386,7 @@ function CheckDisplayCriteria( dispID )
 		if display['PvP Visibility'] == 'combat' and ( not UnitAffectingCombat('player') and not UnitCanAttack('player', 'target') ) then
 			return false
 			
-		elseif display['PvP Visibility'] == 'target' and not UnitCanAttack('player', 'target') then
+		elseif display['PvP Visibility'] == 'target' and ( UnitIsDead( 'target' ) or not UnitCanAttack( 'player', 'target' ) ) then
 			return false
 		
 		elseif display['PvP Visibility'] == 'zzz' then
