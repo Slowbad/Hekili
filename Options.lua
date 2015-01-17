@@ -2251,14 +2251,14 @@ function Hekili:SetOption( info, input, ... )
     
     elseif option == 'Switch Type' then
       if input == 0 then
+        if profile['Mode Status'] == 1 or profile['Mode Status'] == 2 then
         -- Check that the current mode is supported.
-        if self.DB.profile['Mode Status'] == 1 or self.DB.profile['Mode Status'] == 2 then
-          self.DB.profile['Mode Status'] = 0
+          profile['Mode Status'] = 0
           self:Print("Switch type updated; reverting to single-target.")
         end
-      elseif input == 2 then
-        if self.DB.profile['Mode Status'] == 3 then
-          self.DB.profile['Mode Status'] = 0
+      elseif input == 1 then
+        if profile['Mode Status'] == 1 or profile['Mode Status'] == 3 then
+          profile['Mode Status'] = 0
           self:Print("Switch type updated; reverting to single-target.")
         end
       end
