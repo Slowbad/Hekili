@@ -190,10 +190,11 @@ function Hekili:ProcessHooks( dispID )
 
 		ns.queue[ dispID ] = ns.queue[ dispID ] or {}
 		local Queue = ns.queue[ dispID ]
+    local clash = Hekili.DB.profile.Clash or 0
 		
 		if display and ns.visible.display[ dispID ] then
 		
-			state:reset()
+			state.reset()
       state.min_targets = display['Force Targets'] or 1
 			
 			if ( self.Config or checkScript( 'D', dispID )  ) then 
@@ -251,7 +252,7 @@ function Hekili:ProcessHooks( dispID )
 
 												end
 											
-											elseif isKnown( state.this_action ) and isUsable( state.this_action ) and wait_time < chosen_wait and ns.hasRequiredResources( state.this_action ) and ( class.abilities[ state.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and checkScript( 'A', listID..':'..actID, nil, nil, wait_time ) then
+											elseif isKnown( state.this_action ) and isUsable( state.this_action ) and wait_time + clash < chosen_wait and ns.hasRequiredResources( state.this_action ) and ( class.abilities[ state.this_action ].cast == 0 or self.DB.profile.Hardcasts ) and checkScript( 'A', listID..':'..actID, nil, nil, wait_time ) then
                       
 												chosen_action = state.this_action
 												chosen_caption = entry.Caption

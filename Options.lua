@@ -365,6 +365,7 @@ ns.newDisplayOption = function( key )
 					Hekili.DB.profile.displays[ dispID ] = import
           Hekili.DB.profile.displays[ dispID ].Name = class.defaults[ defaultID ].name
 					Hekili.DB.profile.displays[ dispID ].Release = class.defaults[ defaultID ].version
+          Hekili.DB.profile.displays[ dispID ].Default = true
 					ns.refreshOptions()
 					ns.loadScripts()
 					ns.buildUI()
@@ -1023,6 +1024,7 @@ ns.newActionListOption = function( index )
 					Hekili.DB.profile.actionLists[ listID ] = import
           Hekili.DB.profile.actionLists[ listID ].Name = class.defaults[ defaultID ].name
 					Hekili.DB.profile.actionLists[ listID ].Release = class.defaults[ defaultID ].version
+          Hekili.DB.profile.actionLists[ listID ].Default = true
 					ns.refreshOptions()
 					ns.loadScripts()
 					-- ns.buildUI()
@@ -1303,6 +1305,7 @@ function Hekili:GetOptions()
           whatsNew = {
             type = 'description',
             name = "|cFFFFD100What's New!|r\n\n" ..
+              "|cFFFFD100Clash|r - Under |cFFFFD100General Settings|r, you can now specify a |cFFFFD100Cooldown Clash|r setting.  This allows you to set a small buffer of time for preferring higher priority abilities over lower priority abilities.  For example, if Hammer of Wrath is ready in 0.1s and Judgment is ready now, setting this to 0.1 (or higher) will tell the addon to recommend Hammer of Wrath over Judgment.\n\n" ..
               "|cFF00C0FFDefaults|r - The names of the default displays and action lists have been changed.  They no longer begin with @, and if a display or action list is a default, its name will be in |cFF00C0FFblue|r.  Default lists and displays are automatically updated whenever you update the addon.\n\n" ..
               "|cFFFFD100SpellFlash Support|r - At user request, minimal SpellFlash support has been implemented.  If you have SpellFlash (or SpellFlashCore) installed, you will find an option for 'Use SpellFlash' on each display.  You can specify the color that display will flash when highlighting an entry.  If two or more lists are recommending the same ability, the addon will use the color of the first display.\n\n" ..
               "|cFFFFD100Minimum Targets|r - Displays now have an option labeled 'Force Minimum Targets'.  When action lists are processed in this display, the addon will always assume there are at least this many targets.  This purpose of this function is to prevent AOE displays from appearing very bizarre when there are not enough targets for the action list to function properly.  If a display is forced to act as though there are 3 targets but fewer than 3 targets are actually detected, the number of targets will be displayed in |cFFFF0000red|r.\n",
@@ -1339,11 +1342,33 @@ function Hekili:GetOptions()
 						desc = "If checked, the addon will collect additional information that you can view by pausing the addon and placing your mouse over your displayed abilities.",
 						order = 3
 					},
+					['Clash'] = {
+						type = "group",
+						name = "Cooldown Clash",
+						inline = true,
+						order = 4,
+						args = {
+							['Clash Description'] = {
+								type = 'description',
+								name = "When recommending abilities, the addon prioritizes the action that is available soonest and whose criteria passes.  Sometimes, a lower priority action will be recommended over a higher priority action because the lower priority action will be available slightly sooner.  By setting a Cooldown Clash value greater than 0, the addon will recommend a lower priority action only if it is available at least this much sooner than a higher priority ability.",
+								order = 0
+							},
+							['Clash'] = {
+								type = 'range',
+								name = "Clash",
+								min = 0,
+								max = 0.5,
+								step = 0.01,
+								width = 'full',
+								order = 1
+							}						
+						}
+					},
 					['Counter'] = {
 						type = "group",
 						name = "Target Count",
 						inline = true,
-						order = 4,
+						order = 5,
 						args = {
 							['Delay Description'] = {
 								type = 'description',
@@ -1365,7 +1390,7 @@ function Hekili:GetOptions()
 						type = "group",
 						name = "Engine Settings",
 						inline = true,
-						order = 5,
+						order = 6,
 						args = {
 							['Engine Description'] = {
 								type = 'description',

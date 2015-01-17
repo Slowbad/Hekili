@@ -1970,8 +1970,6 @@ ns.timeToReady = function( action )
       spend, resource = ability.spend()
     end
     
-    if resource == 'energy' then Hekili.lastenergy = action end
-   
     if spend > state[ resource ].current then
       if resource == 'focus' or resource == 'energy' then
         delay = max( delay, 0.1 + ( ( spend - state[ resource ].current ) / state[ resource ].regen ) )
