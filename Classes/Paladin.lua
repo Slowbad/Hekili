@@ -423,6 +423,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     addHandler( 'divine_storm', function ()
       if buff.divine_crusader.up then removeBuff( 'divine_crusader' )
       elseif buff.divine_purpose.up then removeBuff( 'divine_purpose' ) end
+      removeBuff( 'final_verdict' )
       spend( 3, 'holy_power' )
     end )
 
