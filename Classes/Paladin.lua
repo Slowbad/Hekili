@@ -318,6 +318,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
       
     addHandler( 'crusader_strike', function ()
       gain( buff.holy_avenger.up and 3 or 1, 'holy_power' )
+      setCooldown( 'hammer_of_the_righteous', action.crusader_strike.cooldown )
     end )
     
     
@@ -538,6 +539,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     
     addHandler( 'hammer_of_the_righteous', function ()
       gain( buff.holy_avenger.up and 3 or 1, 'holy_power' )
+      setCooldown( 'crusader_strike', action.hammer_of_the_righteous.cooldown )
     end )
     
     
