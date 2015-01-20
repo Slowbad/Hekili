@@ -637,18 +637,25 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     addAbility( 'consecration',
       {
         id = 26573,
+        known = 26573,
         spend = 0.07,
         spend_type = 'mana',
         cast = 0,
         gcdType = 'spell',
         cooldown = 9
-      } )
+      }, 116467, 159556 )
     
     modifyAbility( 'consecration', 'cooldown', function( x )
       return x * haste
     end )
-    
 
+    modifyAbility( 'consecration', 'id', function ( x )
+      if glyph.consecration.enabled then return 116467
+      elseif glyph.consecrator.enabled then return 159556 end
+      return x
+    end )
+    
+    
     addAbility( 'judgment',
       {
         id = 20271,
