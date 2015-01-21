@@ -198,8 +198,12 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
       end
       return delay
     end )
+
     
-    
+    -- Set racial to the right spellID.
+    class.abilities[ 'blood_fury' ].elem.id = 33697
+
+
     addAbility(	'ancestral_swiftness',
           {
             id = 16188,

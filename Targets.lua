@@ -45,6 +45,13 @@ ns.updateTarget = function( id, time, mine )
 end
 
 
+ns.reportTargets = function()
+  for k, v in pairs( targets ) do
+    Hekili:Print( "Saw " .. k .. " exactly " .. GetTime() - v .. " seconds ago." )
+  end
+end
+
+
 ns.numTargets = function() return targetCount end
 ns.numMyTargets = function() return myTargetCount end
 ns.isTarget = function( id ) return targets[ id ] ~= nil end

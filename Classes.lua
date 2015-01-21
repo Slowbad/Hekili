@@ -441,11 +441,17 @@ addAbility( 'blood_fury',
 				cast = 0,
 				gcdType = 'off',
 				cooldown = 120
-			} )
+			}, 33697, 33702 )
 			
+modifyAbility( 'blood_fury', 'id', function( x )
+  if class.file == 'MONK' or class.file == 'SHAMAN' then return 33697 end
+  return x
+end )
+
 addHandler( 'blood_fury', function ()
 	applyBuff( 'blood_fury', 15 )
 end )
+
 
 addAura( 'blood_fury', 20572, 'duration', 15 )
 
@@ -458,6 +464,12 @@ addAbility( 'arcane_torrent', {
     cooldown = 120
   }, 50613, 80483, 129597, 155145, 25046, 69179 )
 
+modifyAbility( 'arcane_torrent', 'id', function( x )
+  if class.file == 'PALADIN' then return 155145
+  elseif class.file == 'MONK' then return 129597 end
+  return x
+end )
+  
 addHandler( 'arcane_torrent', function ()
 
   if mana then gain( 0.03 * mana.max, "mana" ) end
