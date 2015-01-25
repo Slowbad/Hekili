@@ -556,7 +556,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
       } )
 
     modifyAbility( 'hammer_of_wrath', 'cooldown', function( x )
-      if talent.sanctified_wrath.enabled then
+      if talent.sanctified_wrath.enabled and buff.avenging_wrath.up then
         x = x / 2
       end
       return x * haste
