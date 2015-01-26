@@ -571,6 +571,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     addAbility( 'harsh_word',
       {
         id = 136494,
+        known = function() return glyph.harsh_words.enabled end,
         spend = 1,
         spend_type = 'holy_power',
         cast = 0,

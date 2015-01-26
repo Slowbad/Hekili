@@ -738,7 +738,7 @@ local mt_target = {
 		elseif k == 'health_max' then
 			return ( UnitHealthMax('target') > 0 and UnitHealthMax('target') or 50000 )
 		
-		elseif k == 'health_pct' then
+		elseif k == 'health_pct' or k == 'health_percent' then
 			-- TBD: should health_pct use our time offset and TTD calculation to predict health?
 			-- Currently deciding not to, as predicting that you can use something that you can't is
 			-- probably worse than saying you can't use something that you can.  Right?
@@ -824,13 +824,11 @@ ns.metatables.mt_target = mt_target
 
 local mt_target_health = {
 	__index = function(t, k)
-		if k == 'current' then
-			t.current = UnitCanAttack('player', 'target') and UnitHealth('target') or 0
-			return t.current
+		if k == 'current' or k == 'actual' then
+			return UnitCanAttack('player', 'target') and UnitHealth('target') or 0
 		
 		elseif k == 'max' then
-			t.max = UnitCanAttack('player', 'target') and UnitHealthMax('target') or 0
-			return t.max
+			return UnitCanAttack('player', 'target') and UnitHealthMax('target') or 0
 			
 		elseif k == 'pct' or k == 'percent' then
 			return t.max ~= 0 and ( 100 * t.current / t.max ) or 100
@@ -955,7 +953,7 @@ ns.metatables.mt_cooldowns = mt_cooldowns
 
 local mt_resource = {
 	__index = function(t, k)
-		if k == 'pct' then
+		if k == 'pct' or k == 'percent' then
 			return 100 * ( t.current / t.max )
     
     elseif k == 'current' then
@@ -1618,6 +1616,7 @@ state.reset = function()
 		state.totem[ k ].expires = nil
 	end
 	
+	state.target.health.actual = nil
 	state.target.health.current = nil
 	state.target.health.max = nil
 	
@@ -1647,6 +1646,7 @@ state.reset = function()
 	end
 	
 	state.health = rawget( state, 'health' ) or setmetatable( { resource = 'health' }, mt_resource )
+  state.health.resource = 'health'
 	state.health.actual = UnitHealth( 'player' )
 	state.health.max = UnitHealthMax( 'player' )
 	
