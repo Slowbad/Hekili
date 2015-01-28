@@ -25,6 +25,7 @@ ns.class = {
   abilities = {},
   auras = {},
   defaults = {},
+  exclusions = {}, -- exclude from target detection
   gearsets = {},
   glyphs = {},
   hooks = {},

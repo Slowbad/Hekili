@@ -7,6 +7,8 @@ local Hekili = _G[ addon ]
 local class = ns.class
 local state = ns.state
 
+local addExclusion = ns.addExclusion
+
 local addHook = ns.addHook
 local callHook = ns.callHook
 
@@ -152,6 +154,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     addPerk( 'improved_lightning_shield', 157774 )
     addPerk( 'improved_maelstrom_weapon', 157807 )
     addPerk( 'improved_reincarnation', 157764 )
+    
+    addExclusion( 324 ) -- exclude LS from target detection; enemy could be inaccessible
     
     -- Gear Sets
     addGearSet( 'tier17', 115579, 115576, 115577, 115578, 115575 )

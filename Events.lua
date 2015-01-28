@@ -286,7 +286,7 @@ RegisterEvent( "COMBAT_LOG_EVENT_UNFILTERED", function( event, _, subtype, _, so
 	local time = GetTime()	
 	
 	-- Player/Minion Event
-	if hostile and sourceGUID ~= destGUID then
+	if hostile and sourceGUID ~= destGUID and not class.exclusions[ spellID ] then
 		
 		-- Aura Tracking
 		if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' then

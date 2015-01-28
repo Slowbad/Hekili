@@ -18,6 +18,11 @@ ns.initializeClassModule = function()
 end
 
 
+ns.addExclusion = function( spellID )
+  class.exclusions[ spellID ] = true
+end
+
+
 ns.addHook = function( hook, func )
 
   class.hooks[ hook ] = func
