@@ -290,6 +290,7 @@ RegisterEvent( "COMBAT_LOG_EVENT_UNFILTERED", function( event, _, subtype, _, so
 		
 		-- Aura Tracking
 		if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' then
+    
 			ns.trackDebuff( spellName, destGUID, time, true )
 			ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
     

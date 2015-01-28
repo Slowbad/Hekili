@@ -156,6 +156,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     addPerk( 'improved_reincarnation', 157764 )
     
     addExclusion( 324 ) -- exclude LS from target detection; enemy could be inaccessible
+    addExclusion( 26364 ) -- LS damage spellID
     
     -- Gear Sets
     addGearSet( 'tier17', 115579, 115576, 115577, 115578, 115575 )
