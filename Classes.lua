@@ -477,7 +477,6 @@ end )
   
 addHandler( 'arcane_torrent', function ()
 
-  if mana then gain( 0.03 * mana.max, "mana" ) end
   interrupt()
   
   if class.death_knight then gain( 20, "runic_power" )
