@@ -49,7 +49,7 @@ function ns.buildUI()
 			
 			ns.UI.Buttons[dispID][i]:Hide()
 
-			if ns.visible.display[ dispID ] and i <= display[ 'Icons Shown' ] then
+			if Hekili.DB.profile.Enabled and ns.visible.display[ dispID ] and i <= display[ 'Icons Shown' ] then
 				ns.UI.Buttons[dispID][i]:Show()
 			end
 			
