@@ -477,6 +477,35 @@ end
 ns.CheckDisplayCriteria = CheckDisplayCriteria
 
 
+function Hekili_GetRecommendedAbility( display, entry )
+
+  if type( display ) == 'string' then
+    local found = false
+    for dispID, disp in pairs(Hekili.DB.profile.displays) do
+      if not found and disp.Name == display then
+        display = dispID
+        found = true
+      end
+    end
+    if not found then return nil, "Display name not found." end
+  end
+  
+  if not Hekili.DB.profile.displays[ display ] then
+    return nil, "Display not found."
+  end
+  
+  if not ns.queue[ display ] then
+    return nil, "No queue for that display."
+  end
+  
+  if not ns.queue[ display ][ entry ] then
+    return nil, "No entry #" .. entry .. " for that display."
+  end
+  
+  return class.abilities[ ns.queue[ display ][ entry ].actName ].id
+
+end
+
 
 
 local flashes = {}
