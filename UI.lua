@@ -13,6 +13,166 @@ local round = ns.round
 local Masque, MasqueGroup
 
 
+function ns.StartConfiguration()
+  Hekili.Config = true
+
+  local scaleFactor = 1
+  if GetCVar( "UseUIScale" ) == 1 then
+    scaleFactor = GetScreenHeight() / select( GetCurrentResolution(), GetScreenResolutions() ):match("%d+x(%d+)")
+  end
+
+  -- Notification Panel
+  ns.UI.Notification:EnableMouse(true)
+  ns.UI.Notification:SetMovable(true)
+  ns.UI.Notification.Mover = ns.UI.Notification.Mover or CreateFrame( "Frame", "HekiliNotificationMover", ns.UI.Notification )
+  ns.UI.Notification.Mover:SetAllPoints(HekiliNotification)
+  -- ns.UI.Notification.Mover:SetHeight(20)
+  ns.UI.Notification.Mover:SetBackdrop( {
+      bgFile	 	= "Interface/Tooltips/UI-Tooltip-Background",
+      edgeFile 	= "Interface/Tooltips/UI-Tooltip-Border",
+      tile		  = false,
+      tileSize 	= 0,
+      edgeSize 	= 2,
+      insets 		= { left = 0, right = 0, top = 0, bottom = 0 }
+    } )
+	ns.UI.Notification.Mover:SetBackdropColor(.1, .1, .1, .8)
+  ns.UI.Notification.Mover:SetBackdropBorderColor(.1, .1, .1, .5)
+  ns.UI.Notification.Mover:Show()
+  
+  f = ns.UI.Notification
+  f.Header = f.Header or f:CreateFontString( "HekiliNotificationHeader", "OVERLAY", "GameFontNormal" )
+  f.Header:SetSize( Hekili.DB.profile['Notification Width'] * scaleFactor * 0.5, 20 )
+  f.Header:SetText( "Notifications" )
+  f.Header:SetJustifyH( "LEFT" )
+  f.Header:SetPoint( "BOTTOMLEFT", f, "TOPLEFT" )
+  f.Header:Show()
+
+  HekiliNotification:SetScript( "OnMouseDown", function(self, btn)
+    if ( Hekili.Config or not Hekili.DB.profile.Locked ) and btn == "LeftButton" and not self.Moving then
+      self:StartMoving()
+      self.Moving = true
+    end
+  end )
+  
+  HekiliNotification:SetScript( "OnMouseUp", function(self, btn)
+    if ( btn == "LeftButton" and self.Moving ) then
+      self:StopMovingOrSizing()
+      Hekili:SaveCoordinates()
+      self.Moving = false
+    elseif ( btn == "RightButton" and not Hekili.Config and not Hekili.Pause ) then
+      x_offset, y_offset = self:GetCenter()
+      self:StopMovingOrSizing()
+      self.Moving = false
+      Hekili.DB.profile.Locked = true
+      self:SetMovable( false )
+      self:EnableMouse( false )
+      -- Hekili:SetOption( { "locked" }, true )
+      GameTooltip:Hide()
+    end
+    Hekili:SaveCoordinates()
+  end )  
+  
+  for i,v in ipairs(ns.UI.Displays) do
+    if v.Mover then v.Mover:Hide() end
+    if v.Header then v.Header:Hide() end
+    
+    if ns.UI.Buttons[i][1] and ns.UI.Buttons[i][1]:IsShown() and Hekili.DB.profile.displays[ i ] then
+      v:EnableMouse(true)
+      v:SetMovable(true)
+      v.Mover = v.Mover or CreateFrame( "Frame", "HekiliDisplay"..i.."Mover", v )
+      v.Mover:SetAllPoints(v)
+      -- v.Mover:EnableMouse(true)
+      -- v.Mover:SetMovable(true)
+
+      v.Mover:SetBackdrop( {
+          bgFile	 	= "Interface/Tooltips/UI-Tooltip-Background",
+          edgeFile 	= "Interface/Tooltips/UI-Tooltip-Border",
+          tile		  = false,
+          tileSize 	= 0,
+          edgeSize 	= 2,
+          insets 		= { left = 0, right = 0, top = 0, bottom = 0 }
+        } )
+      v.Mover:SetBackdropColor(.1, .1, .1, .8)
+      v.Mover:SetBackdropBorderColor(.1, .1, .1, .5)
+      v.Mover:Show()
+  
+      v.Header = v.Header or v:CreateFontString( "HekiliDisplay"..i.."Header", "OVERLAY", "GameFontNormal" )
+      v.Header:SetSize( v:GetWidth() * 0.5, 20 )
+      v.Header:SetText( Hekili.DB.profile.displays[ i ].Name )
+      v.Header:SetJustifyH( "LEFT" )
+      v.Header:SetPoint( "BOTTOMLEFT", v.Mover, "TOPLEFT" )
+      v.Header:Show()
+  
+      v:SetScript( "OnMouseDown", function(self, btn)
+        if ( Hekili.Config or not Hekili.DB.profile.Locked ) and btn == "LeftButton" and not self.Moving then
+          self:StartMoving()
+          self.Moving = true
+        end
+      end )
+      
+      v:SetScript( "OnMouseUp", function(self, btn)
+        if ( btn == "LeftButton" and self.Moving ) then
+          self:StopMovingOrSizing()
+          Hekili:SaveCoordinates()
+          self.Moving = false
+        elseif ( btn == "RightButton" and not Hekili.Config and not Hekili.Pause ) then
+          x_offset, y_offset = self:GetCenter()
+          self:StopMovingOrSizing()
+          self.Moving = false
+          Hekili.DB.profile.Locked = true
+          self:SetMovable( not Hekili.DB.profile.Locked )
+          self:EnableMouse( not Hekili.DB.profile.Locked )
+          GameTooltip:Hide()
+        end
+        Hekili:SaveCoordinates()
+      end )  
+    end
+  end
+  
+  -- HekiliNotification:EnableMouse(true)
+  -- HekiliNotification:SetMovable(true)
+  ns.lib.AceConfigDialog:SetDefaultSize( "Hekili", 785, 555 )
+  ns.lib.AceConfigDialog:Open("Hekili")
+  ns.OnHideFrame = ns.OnHideFrame or CreateFrame("Frame", nil)
+  ns.OnHideFrame:SetParent( ns.lib.AceConfigDialog.OpenFrames["Hekili"].frame )
+  ns.OnHideFrame:SetScript( "OnHide", function(self)
+    ns.StopConfiguration()
+    self:SetScript("OnHide", nil)
+    collectgarbage()
+  end )
+  
+end
+
+
+
+function ns.StopConfiguration()
+  Hekili.Config = false
+  
+  local scaleFactor = 1
+  if GetCVar( "UseUIScale" ) == 1 then
+    scaleFactor = GetScreenHeight() / select( GetCurrentResolution(), GetScreenResolutions() ):match("%d+x(%d+)")
+  end
+
+  for i,v in ipairs(ns.UI.Buttons) do
+    ns.UI.Buttons[i][1]:EnableMouse( not Hekili.DB.profile.Locked or Hekili.Pause )
+    ns.UI.Buttons[i][1]:SetMovable( not Hekili.DB.profile.Locked )
+  end
+
+  HekiliNotification:EnableMouse( not Hekili.DB.profile.Locked )
+  HekiliNotification:SetMovable( not Hekili.DB.profile.Locked )
+  HekiliNotification.Mover:Hide()
+  HekiliNotification.Header:Hide()
+  
+ for i,v in ipairs(ns.UI.Displays) do
+    v:EnableMouse( not Hekili.DB.profile.Locked )
+    v:SetMovable( not Hekili.DB.profile.Locked )
+    if v.Mover then v.Mover:Hide() end
+    if v.Header then v.Header:Hide() end
+  end
+  
+end  
+  
+
 -- Builds and maintains the visible UI elements.
 -- Buttons (as frames) are never deleted, but should get reused effectively.
 function ns.buildUI()
@@ -26,17 +186,54 @@ function ns.buildUI()
 	ns.cacheCriteria()
 	
 	if not ns.UI.Engine then
-		ns.UI.Engine = CreateFrame( "Frame", "Hekili_Engine_Frame", UIParent)
+		ns.UI.Engine = CreateFrame( "Frame", "Hekili_Engine_Frame", UIParent )
 		ns.UI.Engine:SetFrameStrata("BACKGROUND")
 		ns.UI.Engine:SetClampedToScreen(true)
 		ns.UI.Engine:SetMovable(false)
 		ns.UI.Engine:EnableMouse(false)
 	end
 	
+  local scaleFactor = 1
+  if GetCVar( "UseUIScale" ) == 1 then
+    scaleFactor = GetScreenHeight() / select( GetCurrentResolution(), GetScreenResolutions() ):match("%d+x(%d+)")
+  end
+
+  local f = ns.UI.Notification or CreateFrame( "Frame", "HekiliNotification", UIParent )
+  f:SetSize( Hekili.DB.profile['Notification Width'] * scaleFactor, Hekili.DB.profile['Notification Height'] * scaleFactor )
+  f:SetClampedToScreen( true )
+  f:ClearAllPoints()
+  f:SetPoint( "CENTER", Hekili.DB.profile['Notification X'], Hekili.DB.profile['Notification Y'] )
+  
+  f.Text = f.Text or f:CreateFontString( "HekiliNotificationText", "OVERLAY" )
+  f.Text:SetSize( Hekili.DB.profile['Notification Width'] * scaleFactor, Hekili.DB.profile['Notification Height'] * scaleFactor )
+	f.Text:SetPoint( "TOP", f, "TOP" )
+	f.Text:SetFont( ns.lib.SharedMedia:Fetch("font", Hekili.DB.profile['Notification Font']), Hekili.DB.profile['Notification Height'] * scaleFactor * 0.8, "OUTLINE" )
+	f.Text:SetJustifyV( "MIDDLE" )
+	f.Text:SetTextColor(1, 1, 1, 1)
+  
+  ns.UI.Notification = f
+  
+  if not Hekili.DB.profile['Notification Enabled'] then
+    ns.UI.Notification:Hide()
+  else
+    ns.UI.Notification.Text:SetText(nil)
+    ns.UI.Notification:Show()
+  end
+  
+  ns.UI.Displays = ns.UI.Displays or {}
 	ns.UI.Buttons	= ns.UI.Buttons or {}
   
 	for dispID, display in ipairs( Hekili.DB.profile.displays ) do
-		ns.UI.Buttons[dispID] = ns.UI.Buttons[dispID] or {}
+    
+    local f = ns.UI.Displays[dispID] or CreateFrame( "Frame", "HekiliDisplay"..dispID, UIParent )
+    
+    f:SetSize( Hekili.DB.profile.displays[dispID]['Primary Icon Size'] + ( Hekili.DB.profile.displays[dispID]['Queued Icon Size'] * ( Hekili.DB.profile.displays[dispID]['Icons Shown'] - 1 ) ) + ( Hekili.DB.profile.displays[dispID]['Spacing'] * ( Hekili.DB.profile.displays[dispID]['Icons Shown'] - 1 ) ), Hekili.DB.profile.displays[dispID]['Primary Icon Size'] )
+    f:SetPoint( "CENTER", Hekili.DB.profile.displays[ dispID ].x, Hekili.DB.profile.displays[ dispID ].y )    
+    f:SetClampedToScreen( true )
+    
+    ns.UI.Displays[dispID] = f
+
+    ns.UI.Buttons[dispID] = ns.UI.Buttons[dispID] or {}
 		
 		if not Hekili[ 'ProcessDisplay'..dispID ] then
 			Hekili[ 'ProcessDisplay'..dispID ] = function()
@@ -50,7 +247,11 @@ function ns.buildUI()
 			ns.UI.Buttons[dispID][i]:Hide()
 
 			if Hekili.DB.profile.Enabled and ns.visible.display[ dispID ] and i <= display[ 'Icons Shown' ] then
-				ns.UI.Buttons[dispID][i]:Show()
+        local alpha = ns.CheckDisplayCriteria and ns.CheckDisplayCriteria( dispID ) or 0
+        if alpha > 0 then
+          ns.UI.Buttons[dispID][i]:SetAlpha( alpha )
+          ns.UI.Buttons[dispID][i]:Show()
+        end
 			end
 			
 			if MasqueGroup then MasqueGroup:AddButton( ns.UI.Buttons[dispID][i], { Icon = ns.UI.Buttons[dispID][i].Texture, Cooldown = ns.UI.Buttons[dispID][i].Cooldown } ) end	
@@ -58,6 +259,7 @@ function ns.buildUI()
 		
 	end
 
+  --if Hekili.Config then ns.StartConfiguration() end
 	if MasqueGroup then MasqueGroup:ReSkin() end
 	
 	-- Check for a display that has been removed.
@@ -181,7 +383,7 @@ function Hekili:CreateButton( display, ID )
 	local name = "Hekili_D" .. display .. "_B" .. ID
 	local disp = self.DB.profile.displays[display]
 	
-	local button = ns.UI.Buttons[ display ][ ID ] or CreateFrame( "Button", name, ns.UI.Engine )
+	local button = ns.UI.Buttons[ display ][ ID ] or CreateFrame( "Button", name, ns.UI.Displays[ display ] )
 	
 	local btnSize
 	if ID == 1 then
@@ -198,8 +400,8 @@ function Hekili:CreateButton( display, ID )
   end
 	
 	button:SetFrameStrata( "LOW" )
-	button:SetFrameLevel( 100 - display )
-	button:SetParent(UIParent)
+	-- button:SetFrameLevel( 100 - display )
+	-- button:SetParent(UIParent)
 	button:EnableMouse( not self.DB.profile.Locked )
 	button:SetMovable( not self.DB.profile.Locked )
 	button:SetClampedToScreen( true )
@@ -211,17 +413,6 @@ function Hekili:CreateButton( display, ID )
 		button.Texture:SetAllPoints(button)
 		button.Texture:SetTexture('Interface\\ICONS\\Spell_Nature_BloodLust')
 		button.Texture:SetAlpha(1)
-	end
-	
-	if display == 1 and ID == 1 then
-		button.Notification = button.Notification or button:CreateFontString("HekiliNotification", "OVERLAY")
-		button.Notification:SetSize( scaleFactor * disp['Primary Icon Size'] * 2 + disp["Spacing"], scaleFactor * disp['Primary Icon Size'] )
-		button.Notification:ClearAllPoints()
-		button.Notification:SetPoint( btnDirection, name, getInverseDirection( btnDirection ), 0, 0 )
-		button.Notification:SetJustifyV( "CENTER" )
-		button.Notification:SetTextColor(1, 0, 0, 0)
-		button.Notification:SetTextHeight( disp['Primary Icon Size'] / 3 )
-    button.Notification:SetFont( ns.lib.SharedMedia:Fetch("font", disp.Font), disp['Primary Icon Size'] / 2.5, "OUTLINE" )		
 	end
 	
 	button.Caption = button.Caption or button:CreateFontString(name.."Caption", "OVERLAY" )
@@ -242,32 +433,7 @@ function Hekili:CreateButton( display, ID )
 		
 		button.Caption:SetFont( ns.lib.SharedMedia:Fetch("font", disp.Font), disp['Primary Font Size'], "OUTLINE" )
 
-		button:SetPoint( self.DB.profile.displays[ display ].rel or "CENTER", self.DB.profile.displays[ display ].x, self.DB.profile.displays[ display ].y )
-		
-		button:SetScript( "OnMouseDown", function(self, btn)
-			if ( Hekili.Config or not Hekili.DB.profile.Locked ) and btn == "LeftButton" and not self.Moving then
-				self:StartMoving()
-				self.Moving = true
-			end
-		end )
-		
-		button:SetScript( "OnMouseUp", function(self, btn)
-			if ( btn == "LeftButton" and self.Moving ) then
-				self:StopMovingOrSizing()
-				Hekili:SaveCoordinates()
-				self.Moving = false
-			elseif ( btn == "RightButton" and not Hekili.Config and not Hekili.Pause ) then
-				x_offset, y_offset = self:GetCenter()
-				self:StopMovingOrSizing()
-				self.Moving = false
-				Hekili.DB.profile.Locked = true
-				self:SetMovable( not Hekili.DB.profile.Locked )
-				self:EnableMouse( not Hekili.DB.profile.Locked )
-				-- Hekili:SetOption( { "locked" }, true )
-				GameTooltip:Hide()
-			end
-			Hekili:SaveCoordinates()
-		end )
+		button:SetPoint( "LEFT", ns.UI.Displays[ display ], "LEFT" ) -- self.DB.profile.displays[ display ].rel or "CENTER", self.DB.profile.displays[ display ].x, self.DB.profile.displays[ display ].y )
 	
 	else
 		button.Caption:SetFont( ns.lib.SharedMedia:Fetch("font", disp.Font), disp['Queued Font Size'], "OUTLINE" )
@@ -311,11 +477,14 @@ end
 
 
 function Hekili:SaveCoordinates()
-	for k,_ in pairs(ns.UI.Buttons) do
-		local _, _, rel, x, y = ns.UI.Buttons[k][1]:GetPoint()
+	for i in pairs(Hekili.DB.profile.displays) do
+		local _, _, rel, x, y = ns.UI.Displays[i]:GetPoint()
 		
-		self.DB.profile.displays[k].rel = rel
-		self.DB.profile.displays[k].x = x
-		self.DB.profile.displays[k].y = y
+		self.DB.profile.displays[i].rel = "CENTER"
+		self.DB.profile.displays[i].x = x
+		self.DB.profile.displays[i].y = y
 	end
+  
+  _, _, _, self.DB.profile['Notification X'], self.DB.profile['Notification Y'] = HekiliNotification:GetPoint()
+  
 end

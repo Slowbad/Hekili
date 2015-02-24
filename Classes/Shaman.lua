@@ -33,7 +33,6 @@ local setGCD = ns.setGCD
 
 local storeDefault = ns.storeDefault
 
-
 -- This table gets loaded only if there's a pported class/specialization.
 if (select(2, UnitClass('player')) == 'SHAMAN') then
 
@@ -127,10 +126,12 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     -- Player Buffs / Debuffs
     addAura( 'ancestral_swiftness', 16188, 'duration', 3600 )
     addAura( 'ascendance', 114051, 'duration', 15 )
+    addAura( 'earthquake', 61882, 'duration', 10 )
     addAura( 'echo_of_the_elements', 159103, 'duration', 20 )
     addAura( 'elemental_blast', 117014, 'duration', 8 )
-    addAura( 'elemental_fusion', 157174, 'duration', 15, 'max_stacks', 2 )
+    addAura( 'elemental_fusion', 157174, 'duration', 15, 'max_stack', 2 )
     addAura( 'elemental_mastery', 16166, 'duration', 20 )
+    addAura( 'exhaustion', 57723, 'unit', 'player', 'duration', 600 )
     addAura( 'improved_chain_lightning', 157766, 'duration', 10 )
     class.auras[ 'enhanced_chain_lightning' ] = class.auras[ 'improved_chain_lightning' ] -- alias bc SimC uses both.
     addAura( 'flame_shock', 8050, 'duration', 30 )
@@ -139,13 +140,15 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     addAura( 'lava_surge', 77762 , 'duration', 6 )
     addAura( 'lightning_shield', 324, 'duration', 3600 )	
     addAura( 'liquid_magma', 152255, 'duration', 10, 'affects', 'pet' )
-    addAura( 'maelstrom_weapon', 51530 , 'duration', 30, 'max_stacks', 5 )
+    addAura( 'maelstrom_weapon', 51530 , 'duration', 30, 'max_stack', 5 )
+    addAura( 'sated', 57724, 'unit', 'player', 'duration', 600 )
     addAura( 'spiritwalkers_grace', 79206, 'duration', 15 )
     addAura( 'stormstrike', 17364 , 'duration', 15 )
     addAura( 'thunderstorm', 51490, 'duration', 5 )
     addAura( 'unleash_flame', 73683 , 'duration', 20 )
-    addAura( 'unleash_wind', 73681 , 'duration', 30, 'max_stacks', 6 )
+    addAura( 'unleash_wind', 73681 , 'duration', 30, 'max_stack', 6 )
     addAura( 'unleashed_fury', 118472, 'duration', 10 )
+    addAura( 'windstrike', 115356, 'duration', 15 )
     
     addPerk( 'enhanced_chain_lightning', 157765 )
     class.perks[ 'improved_chain_lightning' ] = class.perks[ 'enhanced_chain_lightning' ] -- alias bc SimC uses both.
@@ -220,13 +223,13 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 
     addAbility(	'ascendance',
           {
-            id = 165341,
+            id = 114051,
             known = 114049,
             spend = 0.052,
             cast = 0,
             gcdType = 'off',
             cooldown = 120
-          }, 165339 )
+          }, 114050 )
     
     addAbility( 'bloodlust',
           {
@@ -273,6 +276,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             cast = 2.5,
             gcdType = 'spell',
             cooldown = 10,
+            charges = 1,
             hostile = true
           } )
 
@@ -320,6 +324,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             cast = 0,
             gcdType = 'spell',
             cooldown = 4.5,
+            charges = 1,
             hostile = true
           } )
 
@@ -391,9 +396,11 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             spend = 0.005,
             cast = 2,
             gcdType = 'spell',
+            charges = 1,
             cooldown = 8,
             hostile = true
           } )
+
 
     addAbility( 'lava_lash',
           {
@@ -402,6 +409,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             cast = 0,
             gcdType = 'melee',
             cooldown = 9,
+            charges = 1,
             hostile = true
           } )
 
@@ -479,6 +487,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             spend = 0.01,
             cast = 0,
             gcdType = 'melee',
+            charges = 1,
             cooldown = 7.5,
             hostile = true
           } )
@@ -490,6 +499,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             cast = 0,
             gcdType = 'melee',
             cooldown = 8,
+            charges = 1,
             hostile = true
           } )
     
@@ -538,10 +548,11 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             cast = 0,
             gcdType = 'melee',
             cooldown = 7.5,
+            charges = 1,
             hostile = true
           } )
 
-
+          
     ns.addHook( "specializationChanged", function ()
     
       for k,v in pairs( class.abilities ) do
@@ -554,7 +565,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
       if state.spec.id == 263 then
         Hekili.minGCD = 1.0
         
-        modifyAbility( 'ascendance', 'id', 165341 )
+        modifyAbility( 'ascendance', 'id', 114051 )
 
         modifyAbility( 'ascendance', 'spend', function( x )
           return x * 0.25
@@ -593,14 +604,19 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         modifyAbility( 'feral_spirit', 'spend', function( x )
           return x * 0.25
         end )
-        
+
         modifyAbility( 'fire_nova', 'cooldown', function( x )
-          if buff.echo_of_the_elements.up then return 0 end
+          if cooldown.fire_nova.charges > 1 then return 0 end
           return x * haste
         end )
 
         modifyAbility( 'fire_nova', 'spend', function( x )
           if spec.enhancement then return x * 0.25 end
+          return x
+        end )
+        
+        modifyAbility( 'fire_nova', 'charges', function( x )
+          if talent.echo_of_the_elements.up then return 2 end
           return x
         end )
         
@@ -648,8 +664,13 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         end )
 
         modifyAbility( 'lava_lash', 'cooldown', function( x )
-          if buff.echo_of_the_elements.up then return 0 end
+          if cooldown.lava_lash.charges > 1 then return 0 end
           return x * haste
+        end )
+        
+        modifyAbility( 'lava_lash', 'charges', function( x )
+          if talent.echo_of_the_elements.up then return 2 end
+          return x
         end )
 
         modifyAbility( 'lightning_bolt', 'cast', 2.5 )
@@ -673,8 +694,13 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
           return x * 0.25
         end )			
         
+        modifyAbility( 'stormstrike', 'charges', function( x )
+          if talent.echo_of_the_elements.enabled then return 2 end
+          return x
+        end )
+        
         modifyAbility( 'stormstrike', 'cooldown', function( x )
-          if buff.echo_of_the_elements.up then return 0 end
+          if cooldown.stormstrike.charges > 1 then return 0 end
           return x * haste
         end )
         
@@ -690,11 +716,16 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
           return x * 0.25
         end )
         
+        modifyAbility( 'windstrike', 'charges', function( x )
+          if talent.echo_of_the_elements.enabled then return 2 end
+          return x
+        end )
+        
         modifyAbility( 'windstrike', 'cooldown', function( x )
-          if buff.echo_of_the_elements.up then return 0 end
+          if cooldown.windstrike.charges > 1 then return 0 end
           return x * haste
         end )
-
+        
         modifyAura( 'ascendance', 'id', 114051 )
         
         modifyAura( 'lightning_shield', 'max_stack', 1 )
@@ -704,7 +735,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         Hekili.minGCD = 1.5
 
         modifyAbility( 'ascendance', 'id', function( x )
-          return 165339
+          return 114050
         end )
 
         modifyAbility( 'chain_lightning', 'cast', function( x )
@@ -714,12 +745,18 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         
         modifyAbility( 'earthquake', 'cast', function( x )
           if buff.ancestral_swiftness.up then return 0 end
+          if buff.enhanced_chain_lightning.up then return 0 end
           return x * haste
         end )
         
-        modifyAbility( 'earthquake', 'cooldown',  function( x )
-          if buff.echo_of_the_elements.up then return 0 end
+        modifyAbility( 'earthquake', 'charges', function( x )
+          if talent.echo_of_the_elements.enabled then return 2 end
           return x
+        end )
+        
+        modifyAbility( 'earthquake', 'cooldown',  function( x )
+          if cooldown.earthquake.charges > 1 then return 0 end
+         return x
         end )
     
         modifyAbility( 'elemental_blast', 'cast', function( x )
@@ -749,10 +786,15 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
           return x * haste
         end )
         
+        modifyAbility( 'lava_burst', 'charges', function( x )
+          if talent.echo_of_the_elements.up then return 2 end
+          return x
+        end )
+        
         modifyAbility( 'lava_burst', 'cooldown', function( x )
           if buff.lava_surge.up and cast_start > 0 and buff.lava_surge.applied > cast_start then return 0 end
           if buff.ascendance.up then return 0 end
-          if buff.echo_of_the_elements.up then return 0 end
+          if cooldown.lava_burst.charges > 1 then return 0 end
           return x
         end )
         
@@ -859,9 +901,9 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     end )
 
     addHandler( 'earthquake', function ()
-      removeBuff( 'echo_of_the_elements' )
       removeBuff( 'improved_chain_lightning' )
       removeBuff( 'enhanced_chain_lightning' )
+      applyDebuff( 'target', 'earthquake', 10 )
     end )
     
     addHandler( 'elemental_blast', function ()
@@ -887,7 +929,6 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 
     addHandler( 'fire_nova', function ()
       removeBuff( 'unleash_flame' )
-      removeBuff( 'echo_of_the_elements' )
     end )
 
     addHandler( 'flame_shock', function ()
@@ -928,12 +969,10 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     
     addHandler( 'lava_burst', function ()
       if buff.lava_surge.up and ( cast_start == 0 or buff.lava_surge.applied < cast_start ) then removeBuff( 'lava_surge' ) end
-      if buff.echo_of_the_elements.up then removeBuff( 'echo_of_the_elements' ) end
-      if spec.elemental and buff.lightning_shield.up then addStack( 'lightning_shield', 3600, 1 ) end
+      if buff.lightning_shield.up then addStack( 'lightning_shield', 3600, 1 ) end
     end )
     
     addHandler( 'lava_lash', function ()
-      removeBuff( 'echo_of_the_elements' )
       if talent.elemental_fusion.enabled then
         applyBuff( 'elemental_fusion', 20, max(2, buff.elemental_fusion.stack + 1) )
       end
@@ -978,16 +1017,12 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     end )
 
     addHandler( 'stormstrike', function ()
-      if buff.echo_of_the_elements.up then
-        removeBuff( 'echo_of_the_elements' )
-      else
-        setCooldown( 'strike', 7.5 * haste )
-      end
-      if set_bonus.tier17_2pc ~= 0 and cooldown.feral_spirit.remains > 0 then
+      setCooldown( 'strike', 7.5 * haste )
+      if set_bonus.tier17_2pc and cooldown.feral_spirit.remains > 0 then
         setCooldown( 'feral_spirit', max(0, cooldown.feral_spirit.remains - 5) )
       end
-      applyDebuff( 'target', 'stormstrike', 8 )
-      if set_bonus.tier15_2pc_melee ~= 0 then addStack( 'maelstrom_weapon', 30, 2 ) end
+      applyDebuff( 'target', 'stormstrike', 15 )
+      if set_bonus.tier15_2pc_melee then addStack( 'maelstrom_weapon', 30, 2 ) end
     end )
 
     addHandler( 'thunderstorm', function ()
@@ -1009,49 +1044,43 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     end )
 
     addHandler( 'windstrike', function ()
-      if buff.echo_of_the_elements.up then
-        removeBuff( 'echo_of_the_elements' )
-      else
-        setCooldown( 'strike', 7.5 * haste )
-        setCooldown( 'stormstrike', 7.5 * haste )
-      end
-      applyDebuff( 'target', 'stormstrike', 8 )
-      if set_bonus.tier15_2pc_melee ~= 0 then addStack( 'maelstrom_weapon', 30, 2 ) end
+      setCooldown( 'strike', 7.5 * haste )
+      setCooldown( 'stormstrike', 7.5 * haste )
+      applyDebuff( 'target', 'windstrike', 15 )
+      if set_bonus.tier15_2pc_melee then addStack( 'maelstrom_weapon', 30, 2 ) end
     end )
     
     -- Pick an instant cast ability for checking the GCD.
     setGCD( 'lightning_shield' )
     
     -- Import strings
-    storeDefault( "Enh: Single Target", "actionLists", 20150107.1, "^1^T^SEnabled^B^SName^SEnh:~`Single~`Target^SRelease^N2.2^SSpecialization^N263^SActions^T^N1^T^SEnabled^B^SRelease^N2.25^SName^SAncestral~`Swiftness^SAbility^Sancestral_swiftness^t^N2^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N2.25^SAbility^Sliquid_magma^SScript^Stoggle.magma&totem.fire.remains>=15^t^N3^T^SEnabled^B^SName^SSearing~`Totem^SRelease^N2.25^SAbility^Ssearing_totem^SScript^S!totem.fire.active^t^N4^T^SEnabled^B^SName^SUnleash~`Elements^SRelease^N2.25^SAbility^Sunleash_elements^SScript^S(talent.unleashed_fury.enabled|set_bonus.tier16_2pc_melee=1)^t^N5^T^SEnabled^B^SName^SElemental~`Blast^SRelease^N2.25^SAbility^Selemental_blast^SScript^Sbuff.maelstrom_weapon.react>=4|buff.ancestral_swiftness.up^t^N6^T^SEnabled^B^SRelease^N2.25^SName^SWindstrike^SAbility^Swindstrike^t^N7^T^SEnabled^B^SName^SLightning~`Bolt^SRelease^N2.25^SAbility^Slightning_bolt^SScript^Sbuff.maelstrom_weapon.react=5^t^N8^T^SEnabled^B^SRelease^N2.25^SName^SStormstrike^SAbility^Sstormstrike^t^N9^T^SEnabled^B^SRelease^N2.25^SName^SLava~`Lash^SAbility^Slava_lash^t^N10^T^SEnabled^B^SName^SFlame~`Shock^SRelease^N2.25^SAbility^Sflame_shock^SScript^S(talent.elemental_fusion.enabled&buff.elemental_fusion.stack=2&buff.unleash_flame.up&dot.flame_shock.remains<16)|(!talent.elemental_fusion.enabled&buff.unleash_flame.up&dot.flame_shock.remains<=9)|!ticking^t^N11^T^SEnabled^B^SRelease^N2.25^SName^SUnleash~`Elements~`(1)^SAbility^Sunleash_elements^t^N12^T^SEnabled^B^SName^SFrost~`Shock^SRelease^N2.25^SAbility^Sfrost_shock^SScript^S(talent.elemental_fusion.enabled&dot.flame_shock.remains>=16)|!talent.elemental_fusion.enabled^t^N13^T^SEnabled^B^SName^SElemental~`Blast~`(1)^SRelease^N2.25^SAbility^Selemental_blast^SScript^Sbuff.maelstrom_weapon.react>=1^t^N14^T^SEnabled^B^SName^SLightning~`Bolt~`(1)^SRelease^N2.25^SAbility^Slightning_bolt^SScript^S(buff.maelstrom_weapon.react>=1&!buff.ascendance.up)|buff.ancestral_swiftness.up^t^N15^T^SEnabled^B^SName^SSearing~`Totem~`(1)^SRelease^N2.25^SAbility^Ssearing_totem^SScript^Stotem.fire.remains<=20&!pet.fire_elemental_totem.active&!buff.liquid_magma.up^t^t^SDefault^B^t^^" )
+    storeDefault( "Enh: Single Target", "actionLists", 20150223.1, "^1^T^SEnabled^B^SName^SEnh:~`Single~`Target^SRelease^N20150107.1^SDefault^B^SActions^T^N1^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N201504.171^SAbility^Sliquid_magma^SScript^Stoggle.magma&totem.fire.remains<=20^t^N2^T^SEnabled^B^SAbility^Sancestral_swiftness^SName^SAncestral~`Swiftness^SRelease^N201504.171^t^N3^T^SEnabled^B^SName^SSearing~`Totem^SRelease^N201504.171^SAbility^Ssearing_totem^SScript^S!totem.fire.active^t^N4^T^SEnabled^B^SName^SUnleash~`Elements^SRelease^N201504.171^SAbility^Sunleash_elements^SScript^S(talent.unleashed_fury.enabled|set_bonus.tier16_2pc_melee)^t^N5^T^SEnabled^B^SName^SElemental~`Blast^SRelease^N201504.171^SAbility^Selemental_blast^SScript^Sbuff.maelstrom_weapon.react>=4|buff.ancestral_swiftness.up^t^N6^T^SEnabled^B^SAbility^Swindstrike^SName^SWindstrike^SRelease^N201504.171^t^N7^T^SEnabled^B^SName^SLightning~`Bolt^SRelease^N201504.171^SAbility^Slightning_bolt^SScript^Sbuff.maelstrom_weapon.react=5^t^N8^T^SEnabled^B^SAbility^Sstormstrike^SName^SStormstrike^SRelease^N201504.171^t^N9^T^SEnabled^B^SAbility^Slava_lash^SName^SLava~`Lash^SRelease^N201504.171^t^N10^T^SEnabled^B^SName^SFlame~`Shock^SRelease^N201504.171^SAbility^Sflame_shock^SScript^S(talent.elemental_fusion.enabled&buff.elemental_fusion.stack=2&buff.unleash_flame.up&dot.flame_shock.remains<16)|(!talent.elemental_fusion.enabled&buff.unleash_flame.up&dot.flame_shock.remains<=9)|!ticking^t^N11^T^SEnabled^B^SAbility^Sunleash_elements^SName^SUnleash~`Elements~`(1)^SRelease^N201504.171^t^N12^T^SEnabled^B^SName^SFrost~`Shock^SRelease^N201504.171^SAbility^Sfrost_shock^SScript^S(talent.elemental_fusion.enabled&dot.flame_shock.remains>=16)|!talent.elemental_fusion.enabled^t^N13^T^SEnabled^B^SName^SElemental~`Blast~`(1)^SRelease^N201504.171^SAbility^Selemental_blast^SScript^Sbuff.maelstrom_weapon.react>=1^t^N14^T^SEnabled^B^SName^SLightning~`Bolt~`(1)^SRelease^N201504.171^SAbility^Slightning_bolt^SScript^S(buff.maelstrom_weapon.react>=1&!buff.ascendance.up)|buff.ancestral_swiftness.up^t^N15^T^SEnabled^B^SName^SSearing~`Totem~`(1)^SRelease^N201504.171^SAbility^Ssearing_totem^SScript^Stotem.fire.remains<=20&!pet.fire_elemental_totem.active&!buff.liquid_magma.up^t^t^SSpecialization^N263^t^^" )
     
-    storeDefault( "Enh: AOE", 'actionLists', 20150118.1,"^1^T^SEnabled^B^SSpecialization^N263^SRelease^N20150117.2^SName^SEnh:~`AOE^SActions^T^N1^T^SRelease^N2.25^SAbility^Sancestral_swiftness^SName^SAncestral~`Swiftness^SEnabled^B^t^N2^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N2.25^SAbility^Sliquid_magma^SScript^Stoggle.magma&totem.fire.remains>=15^t^N3^T^SEnabled^B^SName^SUnleash~`Elements^SRelease^N2.25^SAbility^Sunleash_elements^SScript^Sactive_enemies>=4&dot.flame_shock.ticking&(cooldown.shock.remains>cooldown.fire_nova.remains|cooldown.fire_nova.remains=0)^t^N4^T^SEnabled^B^SName^SFire~`Nova^SRelease^N2.25^SAbility^Sfire_nova^SScript^Sactive_dot.flame_shock>=3^t^N5^T^SEnabled^B^SName^SWait^SArgs^Ssec=cooldown.fire_nova.remains^SRelease^N2.25^SAbility^Swait^SScript^Sactive_dot.flame_shock>=4&cooldown.fire_nova.remains<=action.fire_nova.gcd^t^N6^T^SEnabled^B^SName^SMagma~`Totem^SRelease^N2.25^SAbility^Smagma_totem^SScript^S!totem.fire.active^t^N7^T^SEnabled^B^SName^SLava~`Lash^SRelease^N2.25^SAbility^Slava_lash^SScript^Sdot.flame_shock.ticking&(active_dot.flame_shock<active_enemies|!talent.echo_of_the_elements.enabled|!buff.echo_of_the_elements.up)^t^N8^T^SEnabled^B^SName^SElemental~`Blast^SRelease^N2.25^SAbility^Selemental_blast^SScript^S!buff.unleash_flame.up&(buff.maelstrom_weapon.react>=4|buff.ancestral_swiftness.up)^t^N9^T^SEnabled^B^SName^SChain~`Lightning^SRelease^N2.25^SAbility^Schain_lightning^SScript^Sbuff.maelstrom_weapon.react=5&(active_enemies>=3|(active_enemies=2&!glyph.chain_lightning.enabled&!buff.unleashed_fury.up))^t^N10^T^SEnabled^B^SName^SUnleash~`Elements~`(1)^SRelease^N2.25^SAbility^Sunleash_elements^SScript^Sactive_enemies<4^t^N11^T^SEnabled^B^SName^SFlame~`Shock^SArgs^Scycle_targets=1^SRelease^N2.25^SAbility^Sflame_shock^SScript^S!ticking^t^N12^T^SEnabled^B^SName^SLightning~`Bolt^SRelease^N2.25^SAbility^Slightning_bolt^SScript^Sbuff.maelstrom_weapon.react=5&active_enemies=2&(glyph.chain_lightning.enabled|buff.unleashed_fury.up)^t^N13^T^SRelease^N2.25^SAbility^Swindstrike^SName^SWindstrike^SEnabled^B^t^N14^T^SEnabled^B^SName^SElemental~`Blast~`(1)^SRelease^N2.25^SAbility^Selemental_blast^SScript^S!buff.unleash_flame.up&buff.maelstrom_weapon.react>=1^t^N15^T^SEnabled^B^SScript^S(glyph.chain_lightning.enabled&active_enemies>=4)&(buff.maelstrom_weapon.react>=1|buff.ancestral_swiftness.up)^SRelease^N2.25^SEnable/d^B^SAbility^Schain_lightning^SName^SChain~`Lightning~`(1)^t^N16^T^SEnabled^B^SName^SFire~`Nova~`(1)^SRelease^N2.25^SAbility^Sfire_nova^SScript^Sactive_dot.flame_shock>=2^t^N17^T^SEnabled^B^SName^SMagma~`Totem~`(1)^SRelease^N2.25^SAbility^Smagma_totem^SScript^Stotem.fire.remains<=cooldown.liquid_magma.remains+15&!pet.fire_elemental_totem.active&!buff.liquid_magma.up^t^N18^T^SRelease^N2.25^SAbility^Sstormstrike^SName^SStormstrike^SEnabled^B^t^N19^T^SEnabled^B^SName^SFrost~`Shock^SRelease^N2.25^SAbility^Sfrost_shock^SScript^Sactive_enemies<4^t^N20^T^SEnabled^B^SName^SElemental~`Blast~`(2)^SRelease^N2.25^SAbility^Selemental_blast^SScript^Sbuff.maelstrom_weapon.react>=1^t^N21^T^SEnabled^B^SName^SChain~`Lightning~`(2)^SRelease^N2.25^SAbility^Schain_lightning^SScript^S(active_enemies>=3|(active_enemies=2&!glyph.chain_lightning.up&!buff.unleashed_fury.up))&(buff.maelstrom_weapon.react>=1|buff.ancestral_swiftness.up)^t^N22^T^SEnabled^B^SName^SLightning~`Bolt~`(1)^SRelease^N2.25^SAbility^Slightning_bolt^SScript^Sactive_enemies=2&(glyph.chain_lightning.enabled|buff.unleashed_fury.up)&(buff.maelstrom_weapon.react>=1|buff.ancestral_swiftness.up)^t^N23^T^SEnabled^B^SName^SFire~`Nova~`(2)^SRelease^N2.25^SAbility^Sfire_nova^SScript^Sactive_dot.flame_shock>=1^t^t^SDefault^B^t^^" )
+    storeDefault( "Enh: AOE", 'actionLists', 20150223.1,"^1^T^SEnabled^B^SSpecialization^N263^SRelease^N20150118.1^SDefault^B^SActions^T^N1^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N201504.171^SAbility^Sliquid_magma^SScript^Stoggle.magma&totem.fire.remains<=20^t^N2^T^SEnabled^B^SAbility^Sancestral_swiftness^SName^SAncestral~`Swiftness^SRelease^N201504.171^t^N3^T^SEnabled^B^SName^SUnleash~`Elements^SRelease^N201504.171^SAbility^Sunleash_elements^SScript^Sactive_enemies>=4&dot.flame_shock.ticking&(cooldown.shock.remains>cooldown.fire_nova.remains|cooldown.fire_nova.remains=0)^t^N4^T^SEnabled^B^SName^SFire~`Nova^SRelease^N201504.171^SAbility^Sfire_nova^SScript^Sactive_dot.flame_shock>=3^t^N5^T^SEnabled^B^SName^SWait^SArgs^Ssec=cooldown.fire_nova.remains^SRelease^N201504.171^SAbility^Swait^SScript^S!talent.echo_of_the_elements.enabled&active_dot.flame_shock>=4&cooldown.fire_nova.remains<=action.fire_nova.gcd%2^t^N6^T^SEnabled^B^SName^SMagma~`Totem^SRelease^N201504.171^SAbility^Smagma_totem^SScript^S!totem.fire.active^t^N7^T^SEnabled^B^SName^SLava~`Lash^SRelease^N201504.171^SAbility^Slava_lash^SScript^Sdot.flame_shock.ticking&active_dot.flame_shock<active_enemies^t^N8^T^SEnabled^B^SName^SElemental~`Blast^SRelease^N201504.171^SAbility^Selemental_blast^SScript^S!buff.unleash_flame.up&(buff.maelstrom_weapon.react>=4|buff.ancestral_swiftness.up)^t^N9^T^SEnabled^B^SName^SChain~`Lightning^SRelease^N201504.171^SAbility^Schain_lightning^SScript^Sbuff.maelstrom_weapon.react=5&((glyph.chain_lightning.enabled&active_enemies>=3)|(!glyph.chain_lightning.enabled&active_enemies>=2))^t^N10^T^SEnabled^B^SName^SUnleash~`Elements~`(1)^SRelease^N201504.171^SAbility^Sunleash_elements^SScript^Sactive_enemies<4^t^N11^T^SEnabled^B^SName^SFlame~`Shock^SRelease^N201504.171^SAbility^Sflame_shock^SScript^Sdot.flame_shock.remains<=9|!ticking^t^N12^T^SEnabled^B^SName^SWindstrike^SArgs^Starget.unit=1^SRelease^N201504.171^SAbility^Swindstrike^SScript^S!debuff.stormstrike.up^t^N13^T^SEnabled^B^SScript^Sdebuff.stormstrike.up&(active_dot.stormstrike+active_dot.windstrike)<active_enemies^SArgs^Starget.unit=2^SAbility^Swindstrike^SRelease^N201504.171^SName^SWindstrike~`(1)^SCaption^SCycle^t^N14^T^SEnabled^B^SAbility^Swindstrike^SName^SWindstrike~`(2)^SRelease^N201504.171^t^N15^T^SEnabled^B^SName^SElemental~`Blast~`(1)^SRelease^N201504.171^SAbility^Selemental_blast^SScript^S!buff.unleash_flame.up&buff.maelstrom_weapon.react>=3^t^N16^T^SEnabled^B^SName^SChain~`Lightning~`(1)^SRelease^N201504.171^SAbility^Schain_lightning^SScript^S(buff.maelstrom_weapon.react>=3|buff.ancestral_swiftness.up)&((glyph.chain_lightning.enabled&active_enemies>=4)|(!glyph.chain_lightning.enabled&active_enemies>=3))^t^N17^T^SEnabled^B^SName^SMagma~`Totem~`(1)^SRelease^N201504.171^SAbility^Smagma_totem^SScript^Stotem.fire.remains<=20&!pet.fire_elemental_totem.active&!buff.liquid_magma.up^t^N18^T^SEnabled^B^SName^SLightning~`Bolt^SRelease^N201504.171^SAbility^Slightning_bolt^SScript^Sbuff.maelstrom_weapon.react=5&glyph.chain_lightning.enabled&active_enemies<3^t^N19^T^SEnabled^B^SName^SStormstrike^SRelease^N201504.171^SAbility^Sstormstrike^SScript^S!debuff.stormstrike.up^t^N20^T^SEnabled^B^SScript^Sdebuff.stormstrike.up&(active_dot.stormstrike+active_dot.windstrike)<active_enemies^SAbility^Sstormstrike^SRelease^N201504.171^SName^SStormstrike~`(1)^SCaption^SCycle^t^N21^T^SEnabled^B^SAbility^Sstormstrike^SName^SStormstrike~`(2)^SRelease^N201504.171^t^N22^T^SEnabled^B^SAbility^Slava_lash^SName^SLava~`Lash~`(1)^SRelease^N201504.171^t^N23^T^SEnabled^B^SName^SFire~`Nova~`(1)^SRelease^N201504.171^SAbility^Sfire_nova^SScript^Sactive_dot.flame_shock>=2^t^N24^T^SEnabled^B^SName^SElemental~`Blast~`(2)^SRelease^N201504.171^SAbility^Selemental_blast^SScript^S!buff.unleash_flame.up&buff.maelstrom_weapon.react>=1^t^N25^T^SEnabled^B^SName^SChain~`Lightning~`(2)^SRelease^N201504.171^SAbility^Schain_lightning^SScript^S(buff.maelstrom_weapon.react>=1|buff.ancestral_swiftness.up)&((glyph.chain_lightning.enabled&active_enemies>=3)|(!glyph.chain_lightning.enabled&active_enemies>=2))^t^N26^T^SEnabled^B^SName^SLightning~`Bolt~`(1)^SRelease^N201504.171^SAbility^Slightning_bolt^SScript^S(buff.maelstrom_weapon.react>=1|buff.ancestral_swiftness.up)&glyph.chain_lightning.enabled&active_enemies<3^t^N27^T^SEnabled^B^SName^SFire~`Nova~`(2)^SRelease^N201504.171^SAbility^Sfire_nova^SScript^Sactive_dot.flame_shock>=1^t^t^SName^SEnh:~`AOE^t^^" )
     
-    storeDefault( "Enh: Cooldowns", 'actionLists',  2.20,"^1^T^SEnabled^B^SSpecialization^N263^SRelease^N2.2^SName^SEnh:~`Cooldowns^SActions^T^N1^T^SEnabled^b^SName^SBloodlust^SRelease^N2.25^SAbility^Sbloodlust^SScript^Starget.health.pct<25|time>0.500^t^N2^T^SEnabled^b^SName^SHeroism^SRelease^N2.25^SAbility^Sheroism^SScript^Starget.health.pct<25|time>0.500^t^N3^T^SRelease^N2.25^SAbility^Sblood_fury^SName^SBlood~`Fury^SEnabled^B^t^N4^T^SRelease^N2.25^SAbility^Sarcane_torrent^SName^SArcane~`Torrent^SEnabled^B^t^N5^T^SRelease^N2.25^SAbility^Sberserking^SName^SBerserking^SEnabled^B^t^N6^T^SRelease^N2.25^SAbility^Selemental_mastery^SName^SElemental~`Mastery^SEnabled^B^t^N7^T^SRelease^N2.25^SAbility^Sstorm_elemental_totem^SName^SStorm~`Elemental~`Totem^SEnabled^B^t^N8^T^SEnabled^B^SName^SFire~`Elemental~`Totem^SRelease^N2.25^SAbility^Sfire_elemental_totem^SScript^S(talent.primal_elementalist.enabled&active_enemies<=10)|active_enemies<=6^t^N9^T^SEnabled^B^SName^SAscendance^SRelease^N2.25^SAbility^Sascendance^SScript^Scooldown.stormstrike.remains>0|buff.echo_of_the_elements.up^t^N10^T^SRelease^N2.25^SAbility^Sferal_spirit^SName^SFeral~`Spirit^SEnabled^B^t^t^SDefault^B^t^^" )
+    storeDefault( "Enh: Cooldowns", 'actionLists',  20150223.1,"^1^T^SEnabled^B^SSpecialization^N263^SRelease^N2.2^SDefault^B^SActions^T^N1^T^SEnabled^b^SName^SBloodlust^SRelease^N201504.171^SAbility^Sbloodlust^SScript^Starget.health.pct<25|time>0.500^t^N2^T^SEnabled^b^SName^SHeroism^SRelease^N201504.171^SAbility^Sheroism^SScript^Starget.health.pct<25|time>0.500^t^N3^T^SEnabled^B^SAbility^Sblood_fury^SName^SBlood~`Fury^SRelease^N201504.171^t^N4^T^SEnabled^B^SAbility^Sarcane_torrent^SName^SArcane~`Torrent^SRelease^N201504.171^t^N5^T^SEnabled^B^SAbility^Sberserking^SName^SBerserking^SRelease^N201504.171^t^N6^T^SEnabled^B^SAbility^Selemental_mastery^SName^SElemental~`Mastery^SRelease^N201504.171^t^N7^T^SEnabled^B^SAbility^Sstorm_elemental_totem^SName^SStorm~`Elemental~`Totem^SRelease^N201504.171^t^N8^T^SEnabled^B^SAbility^Sfire_elemental_totem^SName^SFire~`Elemental~`Totem^SRelease^N201504.171^t^N9^T^SEnabled^B^SAbility^Sferal_spirit^SName^SFeral~`Spirit^SRelease^N201504.171^t^N10^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N201504.171^SAbility^Sliquid_magma^SScript^Stoggle.magma&totem.fire.remains>10^t^N11^T^SEnabled^B^SAbility^Sancestral_swiftness^SName^SAncestral~`Swiftness^SRelease^N201504.171^t^N12^T^SEnabled^B^SAbility^Sascendance^SName^SAscendance^SRelease^N201504.171^t^t^SName^SEnh:~`Cooldowns^t^^" )
     
     storeDefault( "Shaman: Interrupts", 'actionLists', 2.06, "^1^T^SEnabled^B^SScript^S^SSpecialization^N0^SActions^T^N1^T^SEnabled^B^SName^SWind~`Shear^SAbility^Swind_shear^SCaption^SShear^SScript^Starget.casting^t^t^SName^S@Shaman,~`Interrupt^t^^" )
     
     storeDefault( "Shaman: Buffs", 'actionLists', 2.05, "^1^T^SEnabled^B^SActions^T^N1^T^SEnabled^B^SAbility^Slightning_shield^SScript^S!buff.lightning_shield.up^SName^SLightning~`Shield^t^t^SName^S@Shaman,~`Buffs^SSpecialization^N0^t^^" )
     
-    storeDefault( "Ele: Single Target", "actionLists", 20150119.1, "^1^T^SEnabled^B^SSpecialization^N262^SName^SEle:~`Single~`Target^SRelease^N20150111.1^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SAncestral~`Swiftness^SRelease^N2.06^SAbility^Sancestral_swiftness^SScript^S!buff.ascendance.up^t^N2^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N2.06^SAbility^Sliquid_magma^SScript^Stoggle.magma&totem.fire.remains>=15^t^N3^T^SEnabled^B^SName^SUnleash~`Flame^SRelease^N2.06^SAbility^Sunleash_flame^SScript^Smoving^t^N4^T^SEnabled^B^SName^SSpiritwalker's~`Grace^SArgs^S^SRelease^N2.06^SAbility^Sspiritwalkers_grace^SScript^Smoving&(buff.ascendance.up)^t^N5^T^SEnabled^B^SName^SEarth~`Shock^SRelease^N2.06^SAbility^Searth_shock^SScript^Sbuff.lightning_shield.react=buff.lightning_shield.max_stack^t^N6^T^SEnabled^B^SName^SLava~`Burst^SRelease^N2.06^SAbility^Slava_burst^SScript^Sdot.flame_shock.remains>cast_time&(buff.ascendance.up|cooldown_react)^t^N7^T^SEnabled^B^SName^SUnleash~`Flame~`(1)^SRelease^N2.06^SAbility^Sunleash_flame^SScript^Stalent.unleashed_fury.enabled&!buff.ascendance.up^t^N8^T^SEnabled^B^SName^SFlame~`Shock^SRelease^N2.06^SAbility^Sflame_shock^SScript^Sdot.flame_shock.remains<=9^t^N9^T^SEnabled^B^SName^SEarth~`Shock~`(1)^SRelease^N2.06^SAbility^Searth_shock^SScript^S(set_bonus.tier17_4pc&buff.lightning_shield.react>=15&!buff.lava_surge.up)|(!set_bonus.tier17_4pc&buff.lightning_shield.react>15)^t^N10^T^SEnabled^B^SName^SEarthquake^SRelease^N2.06^SAbility^Searthquake^SScript^S!talent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=(1.875+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&buff.elemental_mastery.down&buff.bloodlust.down^t^N11^T^SEnabled^B^SName^SEarthquake~`(1)^SRelease^N2.06^SAbility^Searthquake^SScript^S!talent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=1.3*(1.875+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.up|buff.bloodlust.up)^t^N12^T^SEnabled^B^SName^SEarthquake~`(2)^SRelease^N2.06^SAbility^Searthquake^SScript^S!talent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=(1.875+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.remains>=10|buff.bloodlust.remains>=10)^t^N13^T^SEnabled^B^SName^SEarthquake~`(3)^SRelease^N2.06^SAbility^Searthquake^SScript^Stalent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=((1.3*1.875)+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&buff.elemental_mastery.down&buff.bloodlust.down^t^N14^T^SEnabled^B^SName^SEarthquake~`(4)^SRelease^N2.06^SAbility^Searthquake^SScript^Stalent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=1.3*((1.3*1.875)+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.up|buff.bloodlust.up)^t^N15^T^SEnabled^B^SName^SEarthquake~`(5)^SRelease^N2.06^SAbility^Searthquake^SScript^Stalent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=((1.3*1.875)+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.remains>=10|buff.bloodlust.remains>=10)^t^N16^T^SRelease^N2.06^SAbility^Selemental_blast^SName^SElemental~`Blast^SEnabled^B^t^N17^T^SEnabled^B^SName^SFlame~`Shock~`(1)^SRelease^N2.06^SAbility^Sflame_shock^SScript^Stime>60&remains<=buff.ascendance.duration&cooldown.ascendance.remains+buff.ascendance.duration<duration^t^N18^T^SEnabled^B^SName^SSearing~`Totem^SRelease^N2.06^SAbility^Ssearing_totem^SScript^S(!talent.liquid_magma.enabled&!totem.fire.active)|(talent.liquid_magma.enabled&pet.searing_totem.remains<=(cooldown.liquid_magma.remains+15)&!pet.fire_elemental_totem.active&!buff.liquid_magma.up)^t^N19^T^SEnabled^B^SName^SSpiritwalker's~`Grace~`(1)^SArgs^S^SRelease^N2.06^SAbility^Sspiritwalkers_grace^SScript^Smoving&(((talent.elemental_blast.enabled&cooldown.elemental_blast.remains=0)|(cooldown.lava_burst.remains=0&!buff.lava_surge.up)))^t^N20^T^SRelease^N2.06^SAbility^Slightning_bolt^SName^SLightning~`Bolt^SEnabled^B^t^t^SDefault^B^t^^" )
+    storeDefault( "Ele: Single Target", "actionLists", 20150223.1, "^1^T^SEnabled^B^SSpecialization^N262^SDefault^B^SRelease^N20150119.1^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SAncestral~`Swiftness^SRelease^N201504.171^SAbility^Sancestral_swiftness^SScript^S!buff.ascendance.up^t^N2^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N201504.171^SAbility^Sliquid_magma^SScript^Stoggle.magma&totem.fire.remains>=15^t^N3^T^SEnabled^B^SName^SUnleash~`Flame^SArgs^S^SRelease^N201504.171^SAbility^Sunleash_flame^SScript^Smoving^t^N4^T^SEnabled^B^SName^SSpiritwalker's~`Grace^SArgs^S^SRelease^N201504.171^SAbility^Sspiritwalkers_grace^SScript^Smoving&(buff.ascendance.up)^t^N5^T^SEnabled^B^SName^SEarth~`Shock^SRelease^N201504.171^SAbility^Searth_shock^SScript^Sbuff.lightning_shield.react=buff.lightning_shield.max_stack^t^N6^T^SEnabled^B^SName^SLava~`Burst^SRelease^N201504.171^SAbility^Slava_burst^SScript^Sdot.flame_shock.remains>cast_time&(buff.ascendance.up|cooldown_react)^t^N7^T^SEnabled^B^SName^SUnleash~`Flame~`(1)^SRelease^N201504.171^SAbility^Sunleash_flame^SScript^Stalent.unleashed_fury.enabled&!buff.ascendance.up^t^N8^T^SEnabled^B^SName^SFlame~`Shock^SRelease^N201504.171^SAbility^Sflame_shock^SScript^Sdot.flame_shock.remains<=9^t^N9^T^SEnabled^B^SName^SEarth~`Shock~`(1)^SRelease^N201504.171^SAbility^Searth_shock^SScript^S(set_bonus.tier17_4pc&buff.lightning_shield.react>=12&!buff.lava_surge.up)|(!set_bonus.tier17_4pc&buff.lightning_shield.react>15)^t^N10^T^SEnabled^B^SName^SEarthquake^SRelease^N201504.171^SAbility^Searthquake^SScript^S!talent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=(1.875+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&buff.elemental_mastery.down&buff.bloodlust.down^t^N11^T^SEnabled^B^SName^SEarthquake~`(1)^SRelease^N201504.171^SAbility^Searthquake^SScript^S!talent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=1.3*(1.875+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.up|buff.bloodlust.up)^t^N12^T^SEnabled^B^SName^SEarthquake~`(2)^SRelease^N201504.171^SAbility^Searthquake^SScript^S!talent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=(1.875+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.remains>=10|buff.bloodlust.remains>=10)^t^N13^T^SEnabled^B^SName^SEarthquake~`(3)^SRelease^N201504.171^SAbility^Searthquake^SScript^Stalent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=((1.3*1.875)+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&buff.elemental_mastery.down&buff.bloodlust.down^t^N14^T^SEnabled^B^SName^SEarthquake~`(4)^SRelease^N201504.171^SAbility^Searthquake^SScript^Stalent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=1.3*((1.3*1.875)+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.up|buff.bloodlust.up)^t^N15^T^SEnabled^B^SName^SEarthquake~`(5)^SRelease^N201504.171^SAbility^Searthquake^SScript^Stalent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=((1.3*1.875)+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.remains>=10|buff.bloodlust.remains>=10)^t^N16^T^SRelease^N201504.171^SAbility^Selemental_blast^SName^SElemental~`Blast^SEnabled^B^t^N17^T^SEnabled^B^SName^SFlame~`Shock~`(1)^SRelease^N201504.171^SAbility^Sflame_shock^SScript^Sremains<=buff.ascendance.duration&cooldown.ascendance.remains+buff.ascendance.duration<duration^t^N18^T^SEnabled^B^SName^SSearing~`Totem^SRelease^N201504.171^SAbility^Ssearing_totem^SScript^S(!talent.liquid_magma.enabled&!totem.fire.active)|(talent.liquid_magma.enabled&totem.fire.remains<=20&!pet.fire_elemental_totem.active&!buff.liquid_magma.up)^t^N19^T^SEnabled^B^SName^SSpiritwalker's~`Grace~`(1)^SArgs^S^SRelease^N201504.171^SAbility^Sspiritwalkers_grace^SScript^Smoving&(((talent.elemental_blast.enabled&cooldown.elemental_blast.remains=0)|(cooldown.lava_burst.remains=0&!buff.lava_surge.up)))^t^N20^T^SRelease^N201504.171^SAbility^Slightning_bolt^SName^SLightning~`Bolt^SEnabled^B^t^t^SName^SEle:~`Single~`Target^t^^" )
     
-    storeDefault( "Ele: Cleave", "actionLists", 20150111.1, "^1^T^SEnabled^B^SDefault^B^SSpecialization^N262^SRelease^N2.2^SName^SEle:~`Cleave^SActions^T^N1^T^SEnabled^B^SName^SAncestral~`Swiftness^SRelease^N2.25^SAbility^Sancestral_swiftness^SScript^S!buff.ascendance.up^t^N2^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N2.25^SAbility^Sliquid_magma^SScript^Stotem.fire.remains>=15^t^N3^T^SEnabled^B^SName^SEarthquake^SArgs^Scycle_targets=1^SRelease^N2.25^SAbility^Searthquake^SScript^S!ticking&(buff.enhanced_chain_lightning.up|level<=90)&active_enemies>=2^t^N4^T^SAbility^Slava_beam^SEnabled^B^SName^SLava~`Beam^SRelease^N2.25^t^N5^T^SEnabled^B^SName^SChain~`Lightning^SRelease^N2.25^SAbility^Schain_lightning^SScript^S!buff.enhanced_chain_lightning.up^t^N6^T^SEnabled^B^SName^SUnleash~`Flame^SArgs^S^SRelease^N2.25^SAbility^Sunleash_flame^SScript^Smoving^t^N7^T^SEnabled^B^SName^SSpiritwalker's~`Grace^SArgs^S^SRelease^N2.25^SAbility^Sspiritwalkers_grace^SScript^Smoving&(buff.ascendance.up)^t^N8^T^SEnabled^B^SName^SEarth~`Shock^SRelease^N2.25^SAbility^Searth_shock^SScript^Sbuff.lightning_shield.react=buff.lightning_shield.max_stack^t^N9^T^SEnabled^B^SName^SLava~`Burst^SRelease^N2.25^SAbility^Slava_burst^SScript^Sdot.flame_shock.remains>cast_time&(buff.ascendance.up|cooldown_react)^t^N10^T^SEnabled^B^SName^SUnleash~`Flame~`(1)^SRelease^N2.25^SAbility^Sunleash_flame^SScript^Stalent.unleashed_fury.enabled&!buff.ascendance.up^t^N11^T^SEnabled^B^SName^SFlame~`Shock^SRelease^N2.25^SAbility^Sflame_shock^SScript^Sdot.flame_shock.remains<=9^t^N12^T^SEnabled^B^SName^SEarth~`Shock~`(1)^SRelease^N2.25^SAbility^Searth_shock^SScript^S(set_bonus.tier17_4pc&buff.lightning_shield.react>=15&!buff.lava_surge.up)|(!set_bonus.tier17_4pc&buff.lightning_shield.react>15)^t^N13^T^SEnabled^B^SName^SEarthquake~`(1)^SRelease^N2.25^SAbility^Searthquake^SScript^S!talent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=(1.875+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&buff.elemental_mastery.down&buff.bloodlust.down^t^N14^T^SEnabled^B^SName^SEarthquake~`(2)^SRelease^N2.25^SAbility^Searthquake^SScript^S!talent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=1.3*(1.875+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.up|buff.bloodlust.up)^t^N15^T^SEnabled^B^SName^SEarthquake~`(3)^SRelease^N2.25^SAbility^Searthquake^SScript^S!talent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=(1.875+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.remains>=10|buff.bloodlust.remains>=10)^t^N16^T^SEnabled^B^SName^SEarthquake~`(4)^SRelease^N2.25^SAbility^Searthquake^SScript^Stalent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=((1.3*1.875)+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&buff.elemental_mastery.down&buff.bloodlust.down^t^N17^T^SEnabled^B^SName^SEarthquake~`(5)^SRelease^N2.25^SAbility^Searthquake^SScript^Stalent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=1.3*((1.3*1.875)+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.up|buff.bloodlust.up)^t^N18^T^SEnabled^B^SName^SEarthquake~`(6)^SRelease^N2.25^SAbility^Searthquake^SScript^Stalent.unleashed_fury.enabled&((1+stat.spell_haste)*(1+(mastery_value*2%4.5))>=((1.3*1.875)+(1.25*0.226305)+1.25*(2*0.226305*stat.multistrike_pct%100)))&target.time_to_die>10&(buff.elemental_mastery.remains>=10|buff.bloodlust.remains>=10)^t^N19^T^SAbility^Selemental_blast^SEnabled^B^SName^SElemental~`Blast^SRelease^N2.25^t^N20^T^SEnabled^B^SName^SFlame~`Shock~`(1)^SRelease^N2.25^SAbility^Sflame_shock^SScript^Stime>60&remains<=buff.ascendance.duration&cooldown.ascendance.remains+buff.ascendance.duration<duration^t^N21^T^SEnabled^B^SName^SMagma~`Totem^SRelease^N2.25^SScript^Starget.within5&((!talent.liquid_magma.enabled&!totem.fire.active)|(talent.liquid_magma.enabled&pet.searing_totem.remains<=20&!pet.fire_elemental_totem.active&!buff.liquid_magma.up))^SAbility^Smagma_totem^t^N22^T^SEnabled^B^SName^SSearing~`Totem^SRelease^N2.25^SAbility^Ssearing_totem^SScript^Starget.outside5&((!talent.liquid_magma.enabled&!totem.fire.active)|(talent.liquid_magma.enabled&pet.searing_totem.remains<=20&!pet.fire_elemental_totem.active&!buff.liquid_magma.up))^t^N23^T^SEnabled^B^SName^SSpiritwalker's~`Grace~`(1)^SArgs^S^SRelease^N2.25^SAbility^Sspiritwalkers_grace^SScript^Smoving&(((talent.elemental_blast.enabled&cooldown.elemental_blast.remains=0)|(cooldown.lava_burst.remains=0&!buff.lava_surge.up)))^t^N24^T^SEnabled^B^SScript^Sactive_enemies>=3^SRelease^N2.25^SAbility^Schain_lightning^SName^SChain~`Lightning~`(2)^t^N25^T^SAbility^Slightning_bolt^SEnabled^B^SName^SLightning~`Bolt^SRelease^N2.25^t^t^SScript^S^t^^" )
+    storeDefault( "Ele: AOE", "actionLists", 20150223.1, "^1^T^SEnabled^B^SDefault^B^SName^SEle:~`AOE^SRelease^N20150111.1^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SAncestral~`Swiftness^SRelease^N201504.171^SAbility^Sancestral_swiftness^SScript^S!buff.ascendance.up^t^N2^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N201504.171^SAbility^Sliquid_magma^SScript^Stoggle.magma&totem.fire.remains>=15^t^N3^T^SEnabled^B^SName^SEarthquake^SRelease^N201504.171^SAbility^Searthquake^SScript^S!ticking&(buff.enhanced_chain_lightning.up|level<=90)&active_enemies>=2^t^N4^T^SEnabled^B^SScript^Sactive_dot.earthquake<active_enemies&(buff.enhanced_chain_lightning.up|level<=90)&active_enemies>=2^SAbility^Searthquake^SRelease^N201504.171^SName^SEarthquake~`(1)^SCaption^SCycle^t^N5^T^SRelease^N201504.171^SAbility^Slava_beam^SName^SLava~`Beam^SEnabled^B^t^N6^T^SEnabled^B^SName^SEarth~`Shock^SRelease^N201504.171^SAbility^Searth_shock^SScript^Sbuff.lightning_shield.react=buff.lightning_shield.max_stack^t^N7^T^SEnabled^B^SName^SThunderstorm^SRelease^N201504.171^SAbility^Sthunderstorm^SScript^Sactive_enemies>=10^t^N8^T^SEnabled^B^SName^SSearing~`Totem^SRelease^N201504.171^SAbility^Ssearing_totem^SScript^S(!talent.liquid_magma.enabled&!totem.fire.active)|(talent.liquid_magma.enabled&pet.searing_totem.remains<=20&!pet.fire_elemental_totem.active&!buff.liquid_magma.up)^t^N9^T^SEnabled^B^SName^SChain~`Lightning^SRelease^N201504.171^SAbility^Schain_lightning^SScript^Sactive_enemies>=2^t^N10^T^SRelease^N201504.171^SAbility^Slightning_bolt^SName^SLightning~`Bolt^SEnabled^B^t^t^SSpecialization^N262^t^^" )
     
-    storeDefault( "Ele: AOE", "actionLists", 20150111.1, "^1^T^SEnabled^B^SDefault^B^SSpecialization^N262^SRelease^N2.2^SScript^S^SActions^T^N1^T^SEnabled^B^SName^SAncestral~`Swiftness^SRelease^N2.25^SScript^S!buff.ascendance.up^SAbility^Sancestral_swiftness^t^N2^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N2.25^SScript^Stotem.fire.remains>=15^SAbility^Sliquid_magma^t^N3^T^SEnabled^B^SName^SEarthquake^SArgs^Scycle_targets=1^SRelease^N2.25^SScript^S!ticking&(buff.enhanced_chain_lightning.up|level<=90)&active_enemies>=2^SAbility^Searthquake^t^N4^T^SRelease^N2.25^SEnabled^B^SName^SLava~`Beam^SAbility^Slava_beam^t^N5^T^SEnabled^B^SName^SEarth~`Shock^SRelease^N2.25^SScript^Sbuff.lightning_shield.react=buff.lightning_shield.max_stack^SAbility^Searth_shock^t^N6^T^SEnabled^B^SName^SThunderstorm^SRelease^N2.25^SScript^Sactive_enemies>=10&target.within5^SAbility^Sthunderstorm^t^N7^T^SEnabled^B^SName^SSearing~`Totem^SRelease^N2.25^SScript^S(!talent.liquid_magma.enabled&!totem.fire.active)|(talent.liquid_magma.enabled&pet.searing_totem.remains<=20&!pet.fire_elemental_totem.active&!buff.liquid_magma.up)^SAbility^Ssearing_totem^t^N8^T^SEnabled^B^SName^SChain~`Lightning^SRelease^N2.25^SScript^Sactive_enemies>=2^SAbility^Schain_lightning^t^N9^T^SEnabled^B^SName^SMagma~`Totem^SRelease^N2.25^SScript^Stalent.liquid_magma.enabled&!totem.fire.up^SAbility^Smagma_totem^t^t^SName^SEle:~`AOE^t^^" )
-    
-    storeDefault( "Ele: Cooldowns", "actionLists", 2.20, "^1^T^SEnabled^B^SScript^S^SName^SEle:~`Cooldowns^SRelease^N2.2^SAbility^Sbloodlust^SDefault^B^SActions^T^N1^T^SEnabled^b^SName^SBloodlust^SRelease^N2.25^SAbility^Sbloodlust^SScript^Starget.health.pct<25|time>0.500^t^N2^T^SEnabled^b^SName^SHeroism^SRelease^N2.25^SAbility^Sheroism^SScript^Starget.health.pct<25|time>0.500^t^N3^T^SEnabled^B^SName^SBerserking^SRelease^N2.25^SAbility^Sberserking^SScript^S!buff.bloodlust.up&!buff.elemental_mastery.up&(set_bonus.tier15_4pc_caster=1|(buff.ascendance.cooldown.up=0&(dot.flame_shock.remains>buff.ascendance.duration|level<87)))^t^N4^T^SEnabled^B^SName^SBlood~`Fury^SRelease^N2.25^SAbility^Sblood_fury^SScript^Sbuff.bloodlust.up|buff.ascendance.up|((cooldown.ascendance.remains>10|level<87)&cooldown.fire_elemental_totem.remains>10)^t^N5^T^SRelease^N2.25^SAbility^Sarcane_torrent^SName^SArcane~`Torrent^SEnabled^B^t^N6^T^SEnabled^B^SName^SElemental~`Mastery^SRelease^N2.25^SAbility^Selemental_mastery^SScript^Saction.lava_burst.cast_time>=1.2^t^N7^T^SRelease^N2.25^SAbility^Sstorm_elemental_totem^SName^SStorm~`Elemental~`Totem^SEnabled^B^t^N8^T^SEnabled^B^SName^SFire~`Elemental~`Totem^SRelease^N2.25^SAbility^Sfire_elemental_totem^SScript^S!active^t^N9^T^SEnabled^B^SName^SAscendance^SRelease^N2.25^SAbility^Sascendance^SScript^Sactive_enemies>1|(dot.flame_shock.remains>buff.ascendance.duration&(target.time_to_die<20|buff.bloodlust.up|time>=60)&cooldown.lava_burst.remains>0)^t^t^SSpecialization^N262^t^^" )
+    storeDefault( "Ele: Cooldowns", "actionLists", 20150223.1, "^1^T^SEnabled^B^SDefault^B^SName^SEle:~`Cooldowns^SRelease^N2.2^SAbility^Sbloodlust^SSpecialization^N262^SActions^T^N1^T^SEnabled^b^SName^SBloodlust^SRelease^N201504.171^SAbility^Sbloodlust^SScript^Starget.health.pct<25|time>0.500^t^N2^T^SEnabled^b^SName^SHeroism^SRelease^N201504.171^SAbility^Sheroism^SScript^Starget.health.pct<25|time>0.500^t^N3^T^SEnabled^B^SName^SBerserking^SRelease^N201504.171^SAbility^Sberserking^SScript^S!buff.bloodlust.up&!buff.elemental_mastery.up&(set_bonus.tier15_4pc_caster|(buff.ascendance.cooldown.up=0&(dot.flame_shock.remains>buff.ascendance.duration|level<87)))^t^N4^T^SEnabled^B^SName^SBlood~`Fury^SRelease^N201504.171^SAbility^Sblood_fury^SScript^Sbuff.bloodlust.up|buff.ascendance.up|((cooldown.ascendance.remains>10|level<87)&cooldown.fire_elemental_totem.remains>10)^t^N5^T^SRelease^N201504.171^SAbility^Sarcane_torrent^SName^SArcane~`Torrent^SEnabled^B^t^N6^T^SEnabled^B^SName^SElemental~`Mastery^SRelease^N201504.171^SAbility^Selemental_mastery^SScript^Saction.lava_burst.cast_time>=1.2^t^N7^T^SEnabled^B^SName^SAncestral~`Swiftness^SRelease^N201504.171^SAbility^Sancestral_swiftness^SScript^S!buff.ascendance.up^t^N8^T^SRelease^N201504.171^SAbility^Sstorm_elemental_totem^SName^SStorm~`Elemental~`Totem^SEnabled^B^t^N9^T^SEnabled^B^SName^SFire~`Elemental~`Totem^SRelease^N201504.171^SAbility^Sfire_elemental_totem^SScript^S^t^N10^T^SEnabled^B^SName^SAscendance^SRelease^N201504.171^SAbility^Sascendance^SScript^Sactive_enemies>1|(dot.flame_shock.remains>buff.ascendance.duration&cooldown.lava_burst.remains>0)^t^N11^T^SEnabled^B^SName^SLiquid~`Magma^SRelease^N201504.171^SAbility^Sliquid_magma^SScript^Stoggle.magma&totem.fire.remains>=15^t^t^SScript^S^t^^" )
     
     
     
     
 
-    storeDefault( "Enh: Primary", 'displays', 2.20, "^1^T^SPrimary~`Icon~`Size^N40^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^SMaelstrom~`Weapon^Srel^SCENTER^SSpellFlash~`Color^T^Sa^N1^Sb^N1^Sg^N1^Sr^N1^t^SSpecialization^N263^SSpacing^N7^SQueue~`Direction^SRIGHT^SSpecialization~`Group^Sboth^SQueued~`Icon~`Size^N40^SEnabled^B^SQueues^T^N1^T^SEnabled^B^SAction~`List^SShaman:~`Buffs^SScript^S^SCleave^B^SName^SBuffs^SAOE^B^SSingle^B^t^N2^T^SEnabled^B^SAction~`List^SShaman:~`Interrupts^SScript^Stoggle.interrupts^SCleave^B^SName^SInterrupt^SAOE^B^SSingle^B^t^N3^T^SEnabled^B^SAction~`List^SEnh:~`Cooldowns^SScript^Stoggle.cooldowns^SCleave^B^SName^SCooldowns^SAOE^B^SSingle^B^t^N4^T^SEnabled^B^SAction~`List^SEnh:~`Single~`Target^SName^SSingle~`Target^SScript^Ssingle|(cleave&active_enemies=1)^SSingle^B^t^N5^T^SEnabled^B^SAction~`List^SEnh:~`AOE^SScript^Saoe|(cleave&active_enemies>1)^SAOE^B^SName^SAOE^t^t^SScript^S^Sx^F-4925812629307390^f-46^SIcons~`Shown^N4^SFont^SUbuntu~`Condensed^SPrimary~`Caption^Sbuff^SDefault^B^Sy^F-7740562396413950^f-45^STalent~`Group^N0^SName^SEnh:~`Primary^SPvP~`Visibility^Salways^SRelease^N2.2^SForce~`Targets^N1^SAction~`Captions^B^SPvE~`Visibility^Salways^t^^" )
+    storeDefault( "Enh: Primary", 'displays', 20150223.1, "^1^T^SQueued~`Font~`Size^N12^SPvP~`-~`Target^b^SPrimary~`Caption~`Aura^SMaelstrom~`Weapon^Srel^SCENTER^SSpacing^N4^SPvE~`-~`Default^B^SPvE~`-~`Combat^b^SQueues^T^N1^T^SEnabled^B^SAction~`List^SShaman:~`Buffs^SScript^S^SCleave^B^SSingle^B^SAOE^B^SName^SBuffs^t^N2^T^SEnabled^B^SAction~`List^SShaman:~`Interrupts^SScript^Stoggle.interrupts^SCleave^B^SSingle^B^SAOE^B^SName^SInterrupt^t^N3^T^SEnabled^B^SAction~`List^SEnh:~`Cooldowns^SScript^Stoggle.cooldowns^SCleave^B^SSingle^B^SAOE^B^SName^SCooldowns^t^N4^T^SEnabled^B^SAction~`List^SEnh:~`Single~`Target^SName^SSingle~`Target^SSingle^B^SScript^Ssingle|(cleave&active_enemies=1)^t^N5^T^SEnabled^B^SAction~`List^SEnh:~`AOE^SScript^Saoe|(cleave&active_enemies>1)^SAOE^B^SName^SAOE^t^t^SPvP~`-~`Default~`Alpha^N1^SPvP~`-~`Combat^b^SPvP~`-~`Default^B^Sy^F-4823191901962242^f-44^SIcons~`Shown^N4^SPrimary~`Caption^Sbuff^SForce~`Targets^N1^SPvE~`-~`Combat~`Alpha^N0.67^SPvP~`-~`Target~`Alpha^N1^SPvP~`-~`Combat~`Alpha^N1^SSpellFlash~`Color^T^Sa^N1^Sr^N1^Sg^N1^Sb^N1^t^SSpecialization^N263^SQueue~`Direction^SRIGHT^SSpecialization~`Group^Sboth^SQueued~`Icon~`Size^N40^SEnabled^B^SPvE~`-~`Target^b^SAction~`Captions^B^SPvE~`Visibility^Salways^Sx^N0^SRelease^N2.2^SName^SEnh:~`Primary^SPvE~`-~`Target~`Alpha^N1^SFont^SElvUI~`Font^SDefault^B^SPrimary~`Icon~`Size^N40^SPrimary~`Font~`Size^N12^SScript^S^SPvE~`-~`Default~`Alpha^N1^STalent~`Group^N0^t^^" )
     
-    storeDefault( "Enh: AOE", 'displays', 2.20, "^1^T^SPrimary~`Icon~`Size^N40^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^SFlame~`Shock^Srel^SCENTER^SSpellFlash~`Color^T^Sa^N1^Sb^N1^Sg^N1^Sr^N1^t^SSpecialization^N263^SSpacing^N7^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SEnabled^B^SQueues^T^N1^T^SEnabled^B^SAction~`List^SEnh:~`Cooldowns^SName^SCooldowns^SScript^Stoggle.cooldowns^t^N2^T^SEnabled^B^SAction~`List^SEnh:~`AOE^SName^SAOE^SScript^S^t^t^SScript^S^STalent~`Group^N0^SFont^SUbuntu~`Condensed^Sx^F-4925812629307390^f-46^SRelease^N2.2^SDefault^B^Sy^F-6157265652416510^f-45^SIcons~`Shown^N4^SName^SEnh:~`AOE^SPvP~`Visibility^Salways^SPrimary~`Caption^Sratio^SForce~`Targets^N2^SAction~`Captions^B^SSpecialization~`Group^Sboth^t^^" )
+    storeDefault( "Enh: AOE", 'displays', 20150223.1, "^1^T^SQueued~`Font~`Size^N12^SPvP~`-~`Target^b^SPrimary~`Caption~`Aura^SFlame~`Shock^Srel^SCENTER^SSpacing^N4^SPvE~`-~`Default^B^SQueues^T^N1^T^SEnabled^B^SAction~`List^SEnh:~`Cooldowns^SName^SCooldowns^SScript^Stoggle.cooldowns^t^N2^T^SEnabled^B^SAction~`List^SEnh:~`AOE^SName^SAOE^SScript^S^t^t^SPvP~`-~`Default~`Alpha^N1^SPvP~`-~`Combat^b^SPvP~`-~`Default^B^Sy^F-8092406117302270^f-45^STalent~`Group^N0^SPrimary~`Caption^Sratio^SForce~`Targets^N2^SPvP~`-~`Target~`Alpha^N1^SPvP~`-~`Combat~`Alpha^N1^SSpellFlash~`Color^T^Sa^N1^Sr^N1^Sg^N1^Sb^N1^t^SCopy~`To^Sxxx^SQueue~`Direction^SRIGHT^SSpecialization~`Group^Sboth^SQueued~`Icon~`Size^N40^SEnabled^B^Sx^N0^SPvE~`-~`Default~`Alpha^N1^SRelease^N2.2^SPvE~`Visibility^Salways^SPvE~`-~`Target^b^SDefault^B^SPvE~`-~`Target~`Alpha^N1^SPrimary~`Icon~`Size^N40^SFont^SElvUI~`Font^SName^SEnh:~`AOE^SPrimary~`Font~`Size^N12^SSpecialization^N263^SScript^S^SAction~`Captions^B^SIcons~`Shown^N4^t^^" )
     
-    storeDefault( "Ele: Primary", 'displays', 20150111.1, 	"^1^T^SPrimary~`Icon~`Size^N40^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^SLightning~`Shield^Srel^SCENTER^SSpellFlash~`Color^T^Sa^N1^Sr^N1^Sg^N1^Sb^N1^t^SSpecialization^N262^SSpacing^N7^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SEnabled^B^SQueues^T^N1^T^SEnabled^B^SAction~`List^SShaman:~`Buffs^SName^SBuffs^SScript^S^t^N2^T^SEnabled^B^SAction~`List^SShaman:~`Interrupts^SName^SInterrupt^SScript^Stoggle.interrupts^t^N3^T^SEnabled^B^SAction~`List^SEle:~`Cooldowns^SName^SCooldowns^SScript^Stoggle.cooldowns^t^N4^T^SEnabled^B^SAction~`List^SEle:~`Single~`Target^SName^SSingle~`Target^SScript^Ssingle|(cleave&active_enemies=1)^t^N5^T^SEnabled^B^SAction~`List^SEle:~`Cleave^SName^SCleave^SScript^Scleave&active_enemies>1&active_enemies<3^t^N6^T^SEnabled^B^SAction~`List^SEle:~`AOE^SName^SAOE^SScript^Saoe|(cleave&active_enemies>=3)^t^t^SScript^S^SFont^SUbuntu~`Condensed^Sx^N-70^STalent~`Group^N0^SPrimary~`Caption^Sbuff^SDefault^B^Sy^N-220^SIcons~`Shown^N4^SName^SEle:~`Primary^SPvP~`Visibility^Salways^SRelease^N2.2^SForce~`Targets^N1^SAction~`Captions^B^SMaximum~`Time^N30^t^^" )
+    storeDefault( "Ele: Primary", 'displays', 20150223.1, 	"^1^T^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^SLightning~`Shield^Srel^SCENTER^SUse~`SpellFlash^b^SPvE~`-~`Target^b^SPvE~`-~`Default^B^SPvE~`-~`Combat^b^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^SShaman:~`Buffs^SName^SBuffs^SScript^S^t^N2^T^SEnabled^B^SAction~`List^SShaman:~`Interrupts^SName^SInterrupt^SScript^Stoggle.interrupts^t^N3^T^SEnabled^B^SAction~`List^SEle:~`Cooldowns^SName^SCooldowns^SScript^Stoggle.cooldowns^t^N4^T^SEnabled^B^SAction~`List^SEle:~`Single~`Target^SName^SSingle~`Target^SScript^Ssingle|(cleave&active_enemies=1)^t^N5^T^SEnabled^B^SAction~`List^SEle:~`AOE^SName^SAOE^SScript^Saoe|(cleave&active_enemies>=3)^t^t^SPvP~`-~`Default~`Alpha^N1^SPvP~`-~`Combat^b^SPvP~`-~`Default^B^Sy^N-275^STalent~`Group^N0^SPrimary~`Caption^Sbuff^SForce~`Targets^N1^SPvE~`-~`Combat~`Alpha^N1^SPvP~`-~`Target~`Alpha^N1^SPvP~`-~`Combat~`Alpha^N1^SSpellFlash~`Color^T^Sa^N1^Sr^N1^Sg^N1^Sb^N1^t^SCopy~`To^Sxxx^SQueue~`Direction^SRIGHT^SQueued~`Icon~`Size^N40^SEnabled^B^SIcons~`Shown^N4^SAction~`Captions^B^SRelease^N20150111.1^Sx^N0^SPvP~`-~`Target^b^SName^SEle:~`Primary^SPvE~`-~`Target~`Alpha^N1^SFont^SElvUI~`Font^SDefault^B^SPrimary~`Icon~`Size^N40^SSpecialization^N262^SSpacing^N4^SPvE~`-~`Default~`Alpha^N1^SScript^S^t^^" )
     
-    storeDefault( "Ele: AOE", 'displays', 2.20, "^1^T^SPrimary~`Icon~`Size^N40^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^S^Srel^SCENTER^SSpellFlash~`Color^T^Sa^N1^Sr^N1^Sg^N1^Sb^N1^t^SSpecialization^N262^SSpacing^N7^SQueue~`Direction^SRIGHT^SPvE~`Visibility^Salways^SQueued~`Icon~`Size^N40^SEnabled^B^SQueues^T^N1^T^SEnabled^B^SAction~`List^SEle:~`Cooldowns^SName^SCooldowns^SScript^Stoggle.cooldowns^t^N2^T^SEnabled^B^SAction~`List^SEle:~`AOE^SName^SAOE^SScript^S^t^t^SScript^S^SMaximum~`Time^N30^STalent~`Group^N0^SIcons~`Shown^N4^SRelease^N2.2^SName^SEle:~`AOE^Sy^N-175^SFont^SUbuntu~`Condensed^SDefault^B^SPvP~`Visibility^Salways^SPrimary~`Caption^Stargets^SForce~`Targets^N3^SAction~`Captions^B^Sx^N-70^t^^" )
+    storeDefault( "Ele: AOE", 'displays', 20150223.1, "^1^T^SQueued~`Font~`Size^N12^SPvP~`-~`Target^b^SPrimary~`Caption~`Aura^S^Srel^SCENTER^SPvE~`-~`Target^b^SPvE~`-~`Default^B^SPvE~`-~`Combat^b^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^SEle:~`Cooldowns^SName^SCooldowns^SScript^Stoggle.cooldowns^t^N2^T^SEnabled^B^SAction~`List^SEle:~`AOE^SName^SAOE^SScript^S^t^t^SPvP~`-~`Default~`Alpha^N1^SPvP~`-~`Combat^b^SPvP~`-~`Default^B^Sy^N-230^STalent~`Group^N0^SPrimary~`Caption^Stargets^SForce~`Targets^N3^SPvE~`-~`Combat~`Alpha^N1^SPvP~`-~`Target~`Alpha^N1^SPvP~`-~`Combat~`Alpha^N1^SSpellFlash~`Color^T^Sa^N1^Sb^N1^Sg^N1^Sr^N1^t^SSpecialization^N262^SQueue~`Direction^SRIGHT^SQueued~`Icon~`Size^N40^SEnabled^B^SCopy~`To^SEle:~`AOE2^SAction~`Captions^B^SRelease^N2.2^Sx^N0^SIcons~`Shown^N4^SName^SEle:~`AOE^SPvE~`-~`Target~`Alpha^N1^SFont^SElvUI~`Font^SDefault^B^SPrimary~`Icon~`Size^N40^SPrimary~`Font~`Size^N12^SSpacing^N4^SPvE~`-~`Default~`Alpha^N1^SScript^S^t^^" )
     
   end
   

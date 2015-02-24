@@ -112,12 +112,12 @@ state.removeBuff = removeBuff
 -- Wraps around Buff() to check for an existing buff.
 local function addStack( aura, duration, stacks, value )
 
-  local max_stacks = ( class.auras[ aura ] and class.auras[ aura ].max_stacks ) and class.auras[ aura ].max_stacks or 1
+  local max_stack = ( class.auras[ aura ] and class.auras[ aura ].max_stack ) and class.auras[ aura ].max_stack or 1
 
 	if state.buff[ aura ].up then
-		applyBuff( aura, duration, min( max_stacks, state.buff[ aura ].count + stacks ), value )
+		applyBuff( aura, duration, min( max_stack, state.buff[ aura ].count + stacks ), value )
 	else
-		applyBuff( aura, duration, min( max_stacks, stacks ), value )
+		applyBuff( aura, duration, min( max_stack, stacks ), value )
 	end
 
 end
@@ -1331,14 +1331,16 @@ local mt_set_bonuses = {
 
 		if not pieces or not set then
 			-- This wasn't a tier set bonus.
-			return 0
+			return false
 		
 		else
 			if class then set = set .. class end
 
-			if t[set] >= pieces then
-				return true
-			end
+      if not t[set] then
+        return false
+      end
+      
+			return t[set] >= pieces
 		end 
 		
 		return false
@@ -1352,9 +1354,17 @@ ns.metatables.mt_set_bonuses = mt_set_bonuses
 -- Needs review.
 local mt_default_debuff = {
 	__index = function(t, k)
-		if k == 'count' or k == 'expires' or k == 'v1' or k == 'v2' or k == 'v3' then
-      local unit = rawget( t, unit ) or 'target'
-			local name, _, _, count, _, _, expires, _, _, _, _, _, _, _, v1, v2, v3 = UnitDebuff( unit, class.auras[ t.key ].name, nil, 'PLAYER' )
+    if k == 'name' then
+      t.name = class.auras[ t.key ].name
+      return t.name
+    
+    elseif k == 'unit' then
+      t.unit = class.auras[ t.key ].unit or "target"
+      return t.unit
+      
+		elseif k == 'count' or k == 'expires' or k == 'v1' or k == 'v2' or k == 'v3' then
+      
+			local name, _, _, count, _, _, expires, _, _, _, _, _, _, _, v1, v2, v3 = UnitDebuff( t.unit, t.name, nil, unit == 'target' and 'PLAYER' or nil )
 			
 			if name then
 				count = max(1, count)
@@ -1673,12 +1683,34 @@ state.reset = function()
   
 	if cast_time and casting then
 		state.advance( cast_time )
+    
 		if class.abilities[ casting ] then
 			state.cooldown[ casting ].expires = state.now + state.offset + class.abilities[ casting ].cooldown
-		end
-		ns.runHandler( casting )
+
+      -- Put the action on cooldown.  (It's slightly premature, but addresses CD resets like Echo of the Elements.)
+      state.setCooldown( casting, ns.class.abilities[ casting ].cooldown )
+    
+      -- Perform the action.
+      ns.runHandler( casting )
+
+      -- Spend resources.
+      ns.spendResources( casting )
+    
+     -- Adjust charges as needed.
+      if class.abilities[ casting ].charges then
+        state.cooldown[ casting ].charges = state.cooldown[ casting ].charges - 1
+        if state.cooldown[ casting ].next_charge < state.now + state.offset then
+          state.cooldown[ casting ].next_charge = state.now + state.offset + class.abilities[ casting ].cooldown
+        end
+      end	
+
+      -- Start the GCD.
+      state.setCooldown( ns.class.gcd, ns.class.abilities[ casting ].gcdType ~= 'off' and state.gcd or 0 )
+    end
+      
 	end
-	
+
+
 	-- Delay to end of GCD.
   local delay = state.cooldown[ class.gcd ].remains
   
@@ -1705,6 +1737,8 @@ state.advance = function( time )
       cd.charges = cd.charges + 1
       if cd.charges < class.abilities[ k ].charges then
         cd.next_charge = cd.next_charge + class.abilities[ k ].elem.cooldown
+      else 
+        cd.next_charge = 0
       end
     end
   end
@@ -1830,8 +1864,7 @@ end
 
 
 ns.isKnown = function( sID )
-
-	if type(sID) ~= 'number' then sID = class.abilities[ sID ].id or nil end
+	if type(sID) ~= 'number' then sID = class.abilities[ sID ] and class.abilities[ sID ].id or nil end
   
   if not sID then return false -- no ability
   elseif sID < 0 then return true end -- fake ability (i.e., wait)

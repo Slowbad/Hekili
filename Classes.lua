@@ -183,7 +183,7 @@ local function addAura( key, id, ... )
   class.auras[ id ] = class.auras[ key ]
 	
 	-- Add the elements, front-loading defaults and just overriding them if something else is specified.
-  storeAuraElements( key, 'duration', 30, 'max_stacks', 1, ... )
+  storeAuraElements( key, 'duration', 30, 'max_stack', 1, ... )
 	
 end
 ns.addAura = addAura
@@ -396,7 +396,7 @@ addAura( 'sated', 57724, 'duration', 600 )
 addAura( 'temporal_displacement', 80354, 'duration', 600 )
 
 -- Enchants.
-addAura( 'dancing_steel', 104434, 'duration', 12, 'max_stacks', 2 )
+addAura( 'dancing_steel', 104434, 'duration', 12, 'max_stack', 2 )
 
 -- Potions.
 addAura( 'jade_serpent_potion', 105702, 'duration', 25 )

@@ -37,15 +37,80 @@ local checkImports = function ()
 
   for i = #profile.displays, 1, -1 do
     local display = profile.displays[ i ]
-		if type( display ) ~= 'table' then
+		if type( display ) ~= 'table' or display.Name:match("^@") then
 			table.remove( profile.displays, i )
-		elseif display.Name:match("^@") then
-      -- Remove old defaults.
-      table.remove( profile.displays, i )
-    elseif not display['Force Targets'] then
-      display['Force Targets'] = 1
+		else
+      if not display['Force Targets'] then
+        display['Force Targets'] = 1
+      end
+      
+      if display['PvE Visibility'] and not display['PvE - Default Alpha'] then
+        if display['PvE Visibility'] == 'always' then
+          display['PvE - Default'] = true
+          display['PvE - Default Alpha'] = 1
+          display['PvE - Target'] = false
+          display['PvE - Target Alpha'] = 1
+          display['PvE - Combat'] = false
+          display['PvE - Combat Alpha'] = 1
+        elseif display['PvE Visibility'] == 'combat' then
+          display['PvE - Default'] = false
+          display['PvE - Default Alpha'] = 1
+          display['PvE - Target'] = false
+          display['PvE - Target Alpha'] = 1
+          display['PvE - Combat'] = true
+          display['PvE - Combat Alpha'] = 1
+        elseif display['PvE Visibility'] == 'target' then
+          display['PvE - Default'] = false
+          display['PvE - Default Alpha'] = 1
+          display['PvE - Target'] = true
+          display['PvE - Target Alpha'] = 1
+          display['PvE - Combat'] = false
+          display['PvE - Combat Alpha'] = 1
+        else
+          display['PvE - Default'] = false
+          display['PvE - Default Alpha'] = 1
+          display['PvE - Target'] = false
+          display['PvE - Target Alpha'] = 1
+          display['PvE - Combat'] = false
+          display['PvE - Combat Alpha'] = 1
+        end
+        display['PvE Visibility'] = nil
+      end
+
+      if display['PvP Visibility'] and not display['PvP - Default Alpha'] then
+        if display['PvP Visibility'] == 'always' then
+          display['PvP - Default'] = true
+          display['PvP - Default Alpha'] = 1
+          display['PvP - Target'] = false
+          display['PvP - Target Alpha'] = 1
+          display['PvP - Combat'] = false
+          display['PvP - Combat Alpha'] = 1
+        elseif display['PvP Visibility'] == 'combat' then
+          display['PvP - Default'] = false
+          display['PvP - Default Alpha'] = 1
+          display['PvP - Target'] = false
+          display['PvP - Target Alpha'] = 1
+          display['PvP - Combat'] = true
+          display['PvP - Combat Alpha'] = 1
+        elseif display['PvP Visibility'] == 'target' then
+          display['PvP - Default'] = false
+          display['PvP - Default Alpha'] = 1
+          display['PvP - Target'] = true
+          display['PvP - Target Alpha'] = 1
+          display['PvP - Combat'] = false
+          display['PvP - Combat Alpha'] = 1
+        else
+          display['PvP - Default'] = false
+          display['PvP - Default Alpha'] = 1
+          display['PvP - Target'] = false
+          display['PvP - Target Alpha'] = 1
+          display['PvP - Combat'] = false
+          display['PvP - Combat Alpha'] = 1
+        end
+        display['PvP Visibility'] = nil
+      end
     end
-	end
+  end
 	
 	for i = #profile.actionLists, 1, -1 do
     local list = profile.actionLists[ i ]
@@ -105,7 +170,7 @@ function Hekili:OnInitialize()
 
   ns.primeTooltipColors()
   
-	self.DB.profile.Release = 25
+	self.DB.profile.Release = 20150223.1
   callHook( "onInitialize" )
 	
 	if class.file == 'NONE' then
@@ -324,7 +389,7 @@ function Hekili:ProcessHooks( dispID )
             -- Adjust charges as needed.
             if class.abilities[ chosen_action ].charges then
               state.cooldown[ chosen_action ].charges = state.cooldown[ chosen_action ].charges - 1
-              if state.cooldown[ chosen_action ].next_charge == 0 then
+              if state.cooldown[ chosen_action ].next_charge < state.now + state.offset then
                 state.cooldown[ chosen_action ].next_charge = state.now + state.offset + class.abilities[ chosen_action ].cooldown
               end
             end
@@ -362,50 +427,54 @@ local pvpZones = {
 }
 
 
-function CheckDisplayCriteria( dispID )
+local function CheckDisplayCriteria( dispID )
 
 	local display = Hekili.DB.profile.displays[ dispID ]
 	local _, zoneType = IsInInstance()
 	
-	if C_PetBattles.IsInBattle() or not ns.visible.display[ dispID ] then
-		return false
+	if C_PetBattles.IsInBattle() or Hekili.Barber or not ns.visible.display[ dispID ] then
+		return 0
 		
-	elseif not pvpZones[ zoneType ] and display['PvE Visibility'] ~= 'always' then
-		if display['PvE Visibility'] == 'combat' and ( not UnitAffectingCombat('player') and not UnitCanAttack('player', 'target') ) then
-			return false
-			
-		elseif display['PvE Visibility'] == 'target' and ( UnitIsDead( 'target' ) or not UnitCanAttack( 'player', 'target' ) ) then
-			return false
-			
-		elseif display['PvE Visibility'] == 'zzz' and not pvpZones[ zoneType ] then
-			return false
-			
-		end
+	elseif not pvpZones[ zoneType ] then
+    if display['PvE - Target'] and UnitExists( 'target' ) and not ( UnitIsDead( 'target' ) or not UnitCanAttack( 'player', 'target' ) ) then
+      return display['PvE - Target Alpha']
+    
+    elseif display['PvE - Combat'] and UnitAffectingCombat( 'player' ) then
+      return display['PvE - Combat Alpha']
+    
+    elseif display['PvE - Default'] then
+      return display['PvE - Default Alpha']
+      
+    end
+    
+    return 0
 	
-	elseif pvpZones[ zoneType ] and display['PvP Visibility'] ~= 'always' then
-		if display['PvP Visibility'] == 'combat' and ( not UnitAffectingCombat('player') and not UnitCanAttack('player', 'target') ) then
-			return false
-			
-		elseif display['PvP Visibility'] == 'target' and ( UnitIsDead( 'target' ) or not UnitCanAttack( 'player', 'target' ) ) then
-			return false
-		
-		elseif display['PvP Visibility'] == 'zzz' then
-			return false
-			
-		end
+	elseif pvpZones[ zoneType ] then
+    if display['PvP - Target'] and UnitExists( 'target' ) and not ( UnitIsDead( 'target' ) or not UnitCanAttack( 'player', 'target' ) ) then
+      return display['PvP - Target Alpha']
+    
+    elseif display['PvP - Combat'] and UnitAffectingCombat( 'player' ) then
+      return display['PvP - Combat Alpha']
+    
+    elseif display['PvP - Default'] then
+      return display['PvP - Default Alpha']
+      
+    end
+    
+    return 0
 		
 	elseif not Hekili.Config and not ns.queue[ dispID ] then
-		return false
+		return 0
 		
 	elseif not checkScript( 'D', dispID ) then
-    return false
+    return 0
   
   end
 	
-	return true
+	return 0
 
 end
-Hekili.CDC = CheckDisplayCriteria
+ns.CheckDisplayCriteria = CheckDisplayCriteria
 
 
 
@@ -433,7 +502,9 @@ function Hekili:UpdateDisplays()
       
 			ns.UI.Buttons[ dispID ][1].Overlay:Hide()
 		
-			if CheckDisplayCriteria( dispID ) then
+      local alpha = CheckDisplayCriteria( dispID ) or 0
+    
+			if alpha > 0 then
 				local Queue = ns.queue[ dispID ]
 
 				local gcd_start, gcd_duration = GetSpellCooldown( class.abilities[ class.gcd ].id )
@@ -448,6 +519,7 @@ function Hekili:UpdateDisplays()
 								ns.UI.Buttons[dispID][n]:Hide()
 							else
 								ns.UI.Buttons[dispID][n]:Show()
+                ns.UI.Buttons[dispID][n]:SetAlpha(alpha)
 							end
 						end
 						break
@@ -457,6 +529,7 @@ function Hekili:UpdateDisplays()
 				
 					if aKey then
 						button:Show()
+            button:SetAlpha(alpha)
 						button.Texture:SetTexture( GetSpellTexture( class.abilities[ aKey ].name ) )
 						button.Texture:Show()
 						

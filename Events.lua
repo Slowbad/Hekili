@@ -100,6 +100,16 @@ RegisterEvent( "PLAYER_SPECIALIZATION_CHANGED", function ( _, unit )
 end )
 
 
+RegisterEvent( "BARBER_SHOP_OPEN", function ()
+  Hekili.Barber = true
+end )
+
+
+RegisterEvent( "BARBER_SHOP_CLOSE", function ()
+  Hekili.Barber = false
+end )
+
+
 ns.updateTalents = function ()
 
 	for k, _ in pairs( state.talent ) do
@@ -174,11 +184,8 @@ RegisterEvent( "ENCOUNTER_END", function () state.boss = false end )
 local gearInitialized = false
 ns.updateGear = function ()
 
-  for k, _ in pairs( state.set_bonus ) do
-    state.set_bonus[ k ] = 0
-  end
-	
   for set, items in pairs( class.gearsets ) do
+    state.set_bonus[ set ] = 0
     for item, _ in pairs( items ) do
       local itemName = GetItemInfo( item )
       

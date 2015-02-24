@@ -9,6 +9,7 @@ local class = ns.class
 local format = string.format
 local match = string.match
 
+local callHook = ns.callHook
 local restoreDefaults = ns.restoreDefaults
 local tableCopy = ns.tableCopy
 
@@ -17,7 +18,7 @@ function Hekili:GetDefaults()
 	local defaults = {
 		profile = {
 			Version = 2,
-			Release = 20,
+			Release = 20150223.1,
 			Enabled = true,
 			Locked = false,
 			Debug = false,
@@ -29,6 +30,13 @@ function Hekili:GetDefaults()
 			
 			['Audit Targets'] = 5,
 			['Updates Per Second'] = 10,
+      
+      ['Notification Enabled'] = true,
+      ['Notification Font'] = 'Arial Narrow',
+      ['Notification X'] = 0,
+      ['Notification Y'] = 0,
+      ['Notification Width'] = 175,
+      ['Notification Height'] = 25,
 
 			displays = {
 			},
@@ -70,8 +78,21 @@ ns.newDisplay = function( name )
 		Release = Hekili.DB.profile.Version + ( Hekili.DB.profile.Release / 100 ),
 
 		Enabled = true,
-		['PvE Visibility'] = 'always',
-		['PvP Visibility'] = 'always',
+
+    ['PvE - Default'] = true,
+    ['PvE - Default Alpha'] = 1,
+    ['PvE - Target'] = false,
+    ['PvE - Target Alpha'] = 1,
+    ['PvE - Combat'] = false,
+    ['PvE - Combat Alpha'] = 1,
+
+    ['PvP - Default'] = true,
+    ['PvP - Default Alpha'] = 1,
+    ['PvP - Target'] = false,
+    ['PvP - Target Alpha'] = 1,
+    ['PvP - Combat'] = false,
+    ['PvP - Combat Alpha'] = 1,
+
 		Script = '',
 		
     ['Force Targets'] = 1,
@@ -175,11 +196,69 @@ ns.newDisplayOption = function( key )
         max = 5,
         step = 1
       },
+			['Talent Group'] = {
+				type = 'select',
+				name = 'Talent Group',
+				desc = 'Choose the talent group(s) for this display.',
+				order = 30,
+				values = {
+					[0] = 'Both',
+					[1] = 'Primary',
+					[2] = 'Secondary'
+				},
+				width = "single"
+			},		
+			--[[ ['PvE Visibility'] = {
+				type = 'select',
+				name = 'PvE Visibility',
+				desc = 'Set the visibility for this display in PvE zones.',
+				order = 40,
+				values = {
+					always = 'Show Always',
+					combat = 'Show in Combat',
+					target = 'Show with Target',
+					zzz = 'Never'
+				},
+			}, ]]
+			['Specialization'] = {
+				type = 'select',
+				name = 'Specialization',
+				desc = 'Choose the talent specialization(s) for this display.',
+				order = 40,
+				values = function(info)
+					local class = select(2, UnitClass("player"))
+					if not class then return nil end
+					
+					local num = GetNumSpecializations()
+					local list = {}
+					
+					for i = 1, num do
+						local specID, name = GetSpecializationInfoForClassID( ns.getClassID(class), i )
+						list[specID] = '|T' .. select( 4, GetSpecializationInfoByID( specID ) ) .. ':0|t ' .. name
+					end
+					
+					list[ 0 ] = '|TInterface\\Addons\\Hekili\\Textures\\' .. class .. '.blp:0|t Any'
+					return list
+				end,
+				width = 'double',
+			},
+			--[[ ['PvP Visibility'] = {
+				type = 'select',
+				name = 'PvP Visibility',
+				desc = 'Set the visibility for this display in PvP zones.',
+				order = 51,
+				values = {
+					always = 'Show Always',
+					combat = 'Show in Combat',
+					target = 'Show with Target',
+					zzz = 'Never'
+				},
+			}, ]]
       ['SpellFlash Group'] = {
         type = 'group',
         inline = true,
         name = "SpellFlash",
-        order = 25,
+        order = 50,
         hidden = function(info, val)
           return ns.lib.SpellFlash == nil
         end,
@@ -200,64 +279,120 @@ ns.newDisplayOption = function( key )
           }
         }
       },
-			['Talent Group'] = {
-				type = 'select',
-				name = 'Talent Group',
-				desc = 'Choose the talent group(s) for this display.',
-				order = 30,
-				values = {
-					[0] = 'Both',
-					[1] = 'Primary',
-					[2] = 'Secondary'
-				},
-				width = "double"
-			},		
-			['PvE Visibility'] = {
-				type = 'select',
-				name = 'PvE Visibility',
-				desc = 'Set the visibility for this display in PvE zones.',
-				order = 40,
-				values = {
-					always = 'Show Always',
-					combat = 'Show in Combat',
-					target = 'Show with Target',
-					zzz = 'Never'
-				},
-			},
-			['Specialization'] = {
-				type = 'select',
-				name = 'Specialization',
-				desc = 'Choose the talent specialization(s) for this display.',
-				order = 50,
-				values = function(info)
-					local class = select(2, UnitClass("player"))
-					if not class then return nil end
-					
-					local num = GetNumSpecializations()
-					local list = {}
-					
-					for i = 1, num do
-						local specID, name = GetSpecializationInfoForClassID( ns.getClassID(class), i )
-						list[specID] = '|T' .. select( 4, GetSpecializationInfoByID( specID ) ) .. ':0|t ' .. name
-					end
-					
-					list[ 0 ] = '|TInterface\\Addons\\Hekili\\Textures\\' .. class .. '.blp:0|t Any'
-					return list
-				end,
-				width = 'double',
-			},
-			['PvP Visibility'] = {
-				type = 'select',
-				name = 'PvP Visibility',
-				desc = 'Set the visibility for this display in PvP zones.',
-				order = 60,
-				values = {
-					always = 'Show Always',
-					combat = 'Show in Combat',
-					target = 'Show with Target',
-					zzz = 'Never'
-				},
-			},
+      PvE = {
+        type = 'group',
+        inline = true,
+        name = "PvE Visibility",
+        order = 60,
+        args = {
+          ["PvE - Default"] = {
+            type = 'toggle',
+            name = 'Show Always',
+            desc = 'Show this display at all times, regardless of combat state and whether you have a target.',
+            order = 1
+          },
+          ['PvE - Default Alpha'] = {
+            type = 'range',
+            name = 'Alpha',
+            desc = "When this display is shown due to 'Show Always', set the alpha transparency to this value.",
+            order = 2,
+            min = 0,
+            max = 1,
+            step = 0.01,
+            width = "double",
+          },
+          ['PvE - Target'] = {
+            type = 'toggle',
+            name = 'Show with Target',
+            desc = 'Show this display whenever you have a hostile enemy targeted, regardless of whether you are in combat.',
+            order = 3,
+          },
+          ['PvE - Target Alpha'] = {
+            type = 'range',
+            name = 'Alpha',
+            desc = "When this display is shown due to 'Show with Target', set the alpha transparency to this value.",
+            order = 4,
+            min = 0,
+            max = 1,
+            step = 0.01,
+            width = "double"
+          },
+          ['PvE - Combat'] = {
+            type = 'toggle',
+            name = 'Show in Combat',
+            desc = "Show this display whenever you are in combat.",
+            order = 5
+          },
+          ['PvE - Combat Alpha'] = {
+            type = 'range',
+            name = 'Alpha',
+            desc = "When the display is shown because you are in combat, set the transparency to this value.",
+            order = 6,
+            min = 0,
+            max = 1,
+            step = 0.01,
+            width = 'double'
+           
+          }
+        }
+      },
+      PvP = {
+        type = 'group',
+        inline = true,
+        name = "PvP Visibility",
+        order = 65,
+        args = {
+          ["PvP - Default"] = {
+            type = 'toggle',
+            name = 'Show Always',
+            desc = 'Show this display at all times, regardless of combat state and whether you have a target.',
+            order = 1
+          },
+          ['PvP - Default Alpha'] = {
+            type = 'range',
+            name = 'Alpha',
+            desc = "When this display is shown due to 'Show Always', set the alpha transparency to this value.",
+            order = 2,
+            min = 0,
+            max = 1,
+            step = 0.01,
+            width = "double",
+          },
+          ['PvP - Target'] = {
+            type = 'toggle',
+            name = 'Show with Target',
+            desc = 'Show this display whenever you have a hostile enemy targeted, regardless of whether you are in combat.',
+            order = 3,
+          },
+          ['PvP - Target Alpha'] = {
+            type = 'range',
+            name = 'Alpha',
+            desc = "When this display is shown due to 'Show with Target', set the alpha transparency to this value.",
+            order = 4,
+            min = 0,
+            max = 1,
+            step = 0.01,
+            width = "double"
+          },
+          ['PvP - Combat'] = {
+            type = 'toggle',
+            name = 'Show in Combat',
+            desc = "Show this display whenever you are in combat.",
+            order = 5
+          },
+          ['PvP - Combat Alpha'] = {
+            type = 'range',
+            name = 'Alpha',
+            desc = "When the display is shown because you are in combat, set the transparency to this value.",
+            order = 6,
+            min = 0,
+            max = 1,
+            step = 0.01,
+            width = 'double'
+           
+          }
+        }
+      },
 			Script = {
 				type = 'input',
 				name = 'Conditions',
@@ -1410,6 +1545,70 @@ function Hekili:GetOptions()
 					}
 				}
 			},
+      notifs = {
+        type = "group",
+        name = "Notifications",
+        childGroups = "tree",
+        cmdHidden = true,
+        order = 25,
+        args = {
+          ['Notification Enabled'] = {
+            type = 'toggle',
+            name = "Show Notifications",
+            desc = "Show a frame where some updates will be posted during combat (e.g., 'Cooldowns ON' when you press your Cooldown toggle key).",
+            order = 1,
+            width = 'full',
+          },
+          ['Notification X'] = {
+            type = 'input',
+            name = 'Position (X)',
+            desc = "Enter the horizontal position of the notification panel relative to the center of your screen.",
+            order = 2,
+          },
+          ['Notification Y'] = {
+            type = 'input',
+            name = 'Position (Y)',
+            desc = "Enter the vertical position of the notification panel relative to the center of your screen.",
+            order = 3,
+          },
+          blank1 = {
+            type = 'description',
+            name = ' ',
+            order = 4,
+          },
+          ['Notification Width'] = {
+            type = 'range',
+            name = 'Panel Width',
+            desc = "Select the width of the panel in pixels.",
+            order = 4,
+            min = 25,
+            max = 500,
+            step = 1,
+          },
+          ['Notification Height'] = {
+            type = 'range',
+            name = 'Panel Height',
+            desc = "Select the height of the panel in pixels.",
+            order = 5,
+            min = 10,
+            max = 100,
+            step = 1,
+          },
+          blank2 = {
+            type = 'description',
+            name = ' ',
+            order = 6
+          },
+          ['Notification Font'] = {
+						type = 'select',
+						name = 'Font',
+						desc = "Select the font to use in the Notification panel.",
+						dialogControl = 'LSM30_Font',
+						order = 7,
+						values = ns.lib.SharedMedia:HashTable("font"), -- pull in your font list from LSM
+					},
+        },
+      },
 			displays = {
 				type = "group",
 				name = "Displays",
@@ -1515,7 +1714,7 @@ function Hekili:GetOptions()
 									
 									if import then
 										if exists[ default.name ] then
-											local settings_to_keep = { "Primary Icon Size", "Queued Font Size", "Primary Font Size", "Primary Caption Aura", "rel", "Spacing", "Queue Direction", "Queued Icon Size", "Font", "x", "y", "Icons Shown", "Action Captions", "Primary Caption", "Primary Caption Aura" }
+											local settings_to_keep = { "Primary Icon Size", "Queued Font Size", "Primary Font Size", "Primary Caption Aura", "rel", "Spacing", "Queue Direction", "Queued Icon Size", "Font", "x", "y", "Icons Shown", "Action Captions", "Primary Caption", "Primary Caption Aura", "PvE - Default", "PvE - Default Alpha", "PvE - Target", "PvE - Target Alpha", "PvE - Combat", "PvE - Combat Alpha", "PvP - Default", "PvP - Default Alpha", "PvP - Target", "PvP - Target Alpha", "PvP - Combat", "PvP - Combat Alpha" }
 											
 											for _, k in pairs( settings_to_keep ) do
 												import[ k ] = Hekili.DB.profile.displays[ index ][ k ]
@@ -1999,6 +2198,7 @@ function Hekili:TotalRefresh()
 		ns.queue[i] = nil
 	end
 
+  callHook( "onInitialize" )
 	ns.refreshOptions()
 	ns.buildUI()
   
@@ -2057,6 +2257,12 @@ function Hekili:GetOption( info, input )
 	if category == 'general' then
 		return profile[option]
 	
+  elseif category == 'notifs' then
+    if option == 'Notification X' or option == 'Notification Y' then
+      return tostring( profile[ option ] )
+    end  
+    return profile[option]
+  
 	elseif category == 'bindings' then
 	
 		if option:match( "TOGGLE" ) then
@@ -2213,6 +2419,15 @@ function Hekili:SetOption( info, input, ... )
 		-- General options do not need add'l handling.
 		return 
 	
+  elseif category == 'notifs' then
+    profile[ option ] = input
+    
+    if option == 'Notification X' or option == 'Notification Y' then
+      profile[ option ] = tonumber( input )
+    end
+    
+    RebuildUI = true
+  
 	elseif category == 'bindings' then
 
 		local revert = profile[ option ]
@@ -2351,7 +2566,14 @@ function Hekili:SetOption( info, input, ... )
 					
 					profile.displays[ index ] = tableCopy( display )
 					profile.displays[ index ].Name = input
-					
+          profile.displays[ index ].Default = ns.isDefault( input, 'displays' )
+          
+          if not Hekili[ 'ProcessDisplay'..index ] then
+            Hekili[ 'ProcessDisplay'..index ] = function ()
+              Hekili:ProcessHooks( index )
+            end
+            C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self[ 'ProcessDisplay'..index ] )
+          end
 					Rebuild = true
 				
 				elseif option == 'Import' then
@@ -2476,8 +2698,9 @@ function Hekili:SetOption( info, input, ... )
 					end
 					
 					import.Name = list.Name
-					
-					profile.actionLists[ listID ] = import
+					table.remove( profile.actionLists, listID )
+          table.insert( profile.actionLists, listID, import )
+					-- profile.actionLists[ listID ] = import
 					Rebuild = true
 				
 				elseif option == 'SimulationCraft' then
@@ -2563,23 +2786,11 @@ end
 
 function Hekili:CmdLine( input )
 	if not input or input:trim() == "" then
-		self.Config = true
-		for i,v in ipairs(ns.UI.Buttons) do
-			ns.UI.Buttons[i][1]:EnableMouse(true)
-			ns.UI.Buttons[i][1]:SetMovable(true)
-		end
-		ns.lib.AceConfigDialog:SetDefaultSize( "Hekili", 765, 555 )
-		ns.lib.AceConfigDialog:Open("Hekili")
-		ns.OnHideFrame = ns.OnHideFrame or CreateFrame("Frame", nil)
-		ns.OnHideFrame:SetParent( ns.lib.AceConfigDialog.OpenFrames["Hekili"].frame )
-		ns.OnHideFrame:SetScript( "OnHide", function(self)
-			Hekili.Config = false
-			for i,v in ipairs(ns.UI.Buttons) do
-				ns.UI.Buttons[i][1]:EnableMouse( not Hekili.DB.profile.Locked or Hekili.Pause )
-				ns.UI.Buttons[i][1]:SetMovable( not Hekili.DB.profile.Locked )
-			end
-			self:SetScript("OnHide", nil)
-		end )
+    if InCombatLockdown() then
+      Hekili:Print( "This addon cannot be configured while in combat." )
+      return
+    end
+    ns.StartConfiguration()
 			
 	elseif input:trim() == 'center' then
 		for i, v in ipairs( Hekili.DB.profile.displays ) do
@@ -2718,6 +2929,15 @@ function Hekili:ImportSimulationCraftActionList( str )
     if times > 0 then
       Hekili:Print("Line " .. line .. ": Converted non-specific 'target' to 'target.unit' at EOL (" .. times .. "x)." )
     end
+    
+    i,times = i:gsub( "(set_bonus.[^.=|&]+)=1", "%1" )
+    if times > 0 then
+      Hekili:Print("Line " .. line .. ": Converted set_bonus.X=1 to set_bonus.X (" .. times .. "x)." )
+    end
+    i,times = i:gsub( "(set_bonus.[^.=|&]+)=0", "!%1" )
+    if times > 0 then
+      Hekili:Print("Line " .. line .. ": Converted set_bonus.X=0 to !set_bonus.X (" .. times .. "x)." )
+    end
   
 		local _, commas = i:gsub(",", "")
 		local _, condis = i:gsub(",if=", "")
@@ -2825,13 +3045,14 @@ end
 
 
 function Hekili:Notify( str )
-	if not ns.UI.Buttons or not ns.UI.Buttons[1] or not ns.UI.Buttons[1][1] or not str then
+	--[[ if not ns.UI.Buttons or not ns.UI.Buttons[1] or not ns.UI.Buttons[1][1] or not str then
 		return
-	end
-	
-	HekiliNotification:SetText( str )
-	HekiliNotification:SetTextColor( 1, 0.8, 0, 1 )
-	UIFrameFadeOut( HekiliNotification, 3, 1, 0 )
+	end ]]
+  
+  
+	HekiliNotificationText:SetText( str )
+	HekiliNotificationText:SetTextColor( 1, 0.8, 0, 1 )
+	UIFrameFadeOut( HekiliNotificationText, 3, 1, 0 )
 end
 
 
@@ -2844,19 +3065,19 @@ local nextMode = {
 local modeMsgs = {
   [0] = {
     p = "Single-target mode activated.",
-    n = "Mode\nSingle"
+    n = "Mode: Single"
   },
   [1] = {
     p = "Cleave mode activated.",
-    n = "Mode\nCleave"
+    n = "Mode: Cleave"
   },
   [2] = {
     p = "AOE mode activated.",
-    n = "Mode\nAOE"
+    n = "Mode: AOE"
   },
   [3] = {
     p = "Automatic mode activated.",
-    n = "Mode\nAuto"
+    n = "Mode: Auto"
   }
 }
 
