@@ -13,6 +13,36 @@ local round = ns.round
 local Masque, MasqueGroup
 
 
+local function Mover_OnMouseUp( self, btn )
+  if ( btn == "LeftButton" and self.Moving ) then
+    self:StopMovingOrSizing()
+    Hekili:SaveCoordinates()
+    self.Moving = false
+  elseif ( btn == "RightButton" and not Hekili.Config ) then
+    self:StopMovingOrSizing()
+    self.Moving = false
+    Hekili.DB.profile.Locked = true
+   	local MouseInteract = ( Hekili.DB.profile.Debug and Hekili.Pause ) or Hekili.Config or ( not Hekili.DB.profile.Locked )
+    for i = 1, #ns.UI.Buttons do
+      for j = 1, #ns.UI.Buttons[i] do
+        ns.UI.Buttons[i][j]:EnableMouse( MouseInteract )
+      end
+    end
+    -- Hekili:SetOption( { "locked" }, true )
+    GameTooltip:Hide()
+  end
+  Hekili:SaveCoordinates()
+end
+
+
+local function Mover_OnMouseDown( self, btn )
+  if ( Hekili.Config or not Hekili.DB.profile.Locked ) and btn == "LeftButton" and not self.Moving then
+    self:StartMoving()
+    self.Moving = true
+  end
+end 
+
+
 function ns.StartConfiguration()
   Hekili.Config = true
 
@@ -47,30 +77,8 @@ function ns.StartConfiguration()
   f.Header:SetPoint( "BOTTOMLEFT", f, "TOPLEFT" )
   f.Header:Show()
 
-  HekiliNotification:SetScript( "OnMouseDown", function(self, btn)
-    if ( Hekili.Config or not Hekili.DB.profile.Locked ) and btn == "LeftButton" and not self.Moving then
-      self:StartMoving()
-      self.Moving = true
-    end
-  end )
-  
-  HekiliNotification:SetScript( "OnMouseUp", function(self, btn)
-    if ( btn == "LeftButton" and self.Moving ) then
-      self:StopMovingOrSizing()
-      Hekili:SaveCoordinates()
-      self.Moving = false
-    elseif ( btn == "RightButton" and not Hekili.Config and not Hekili.Pause ) then
-      x_offset, y_offset = self:GetCenter()
-      self:StopMovingOrSizing()
-      self.Moving = false
-      Hekili.DB.profile.Locked = true
-      self:SetMovable( false )
-      self:EnableMouse( false )
-      -- Hekili:SetOption( { "locked" }, true )
-      GameTooltip:Hide()
-    end
-    Hekili:SaveCoordinates()
-  end )  
+  HekiliNotification:SetScript( "OnMouseDown", Mover_OnMouseDown )
+  HekiliNotification:SetScript( "OnMouseUp", Mover_OnMouseUp )  
   
   for i,v in ipairs(ns.UI.Displays) do
     if v.Mover then v.Mover:Hide() end
@@ -79,12 +87,10 @@ function ns.StartConfiguration()
     if ns.UI.Buttons[i][1] and ns.UI.Buttons[i][1]:IsShown() and Hekili.DB.profile.displays[ i ] then
       v:EnableMouse(true)
       v:SetMovable(true)
-      v.Mover = v.Mover or CreateFrame( "Frame", "HekiliDisplay"..i.."Mover", v )
-      v.Mover:SetAllPoints(v)
       -- v.Mover:EnableMouse(true)
       -- v.Mover:SetMovable(true)
 
-      v.Mover:SetBackdrop( {
+      v:SetBackdrop( {
           bgFile	 	= "Interface/Tooltips/UI-Tooltip-Background",
           edgeFile 	= "Interface/Tooltips/UI-Tooltip-Border",
           tile		  = false,
@@ -92,40 +98,18 @@ function ns.StartConfiguration()
           edgeSize 	= 2,
           insets 		= { left = 0, right = 0, top = 0, bottom = 0 }
         } )
-      v.Mover:SetBackdropColor(.1, .1, .1, .8)
-      v.Mover:SetBackdropBorderColor(.1, .1, .1, .5)
-      v.Mover:Show()
+      v:SetBackdropColor(.1, .1, .1, .8)
+      v:SetBackdropBorderColor(.1, .1, .1, .5)
+      v:SetScript( "OnMouseDown", Mover_OnMouseDown )
+      v:SetScript( "OnMouseUp", Mover_OnMouseUp )
+      v:Show()
   
       v.Header = v.Header or v:CreateFontString( "HekiliDisplay"..i.."Header", "OVERLAY", "GameFontNormal" )
       v.Header:SetSize( v:GetWidth() * 0.5, 20 )
       v.Header:SetText( Hekili.DB.profile.displays[ i ].Name )
       v.Header:SetJustifyH( "LEFT" )
-      v.Header:SetPoint( "BOTTOMLEFT", v.Mover, "TOPLEFT" )
+      v.Header:SetPoint( "BOTTOMLEFT", v, "TOPLEFT" )
       v.Header:Show()
-  
-      v:SetScript( "OnMouseDown", function(self, btn)
-        if ( Hekili.Config or not Hekili.DB.profile.Locked ) and btn == "LeftButton" and not self.Moving then
-          self:StartMoving()
-          self.Moving = true
-        end
-      end )
-      
-      v:SetScript( "OnMouseUp", function(self, btn)
-        if ( btn == "LeftButton" and self.Moving ) then
-          self:StopMovingOrSizing()
-          Hekili:SaveCoordinates()
-          self.Moving = false
-        elseif ( btn == "RightButton" and not Hekili.Config and not Hekili.Pause ) then
-          x_offset, y_offset = self:GetCenter()
-          self:StopMovingOrSizing()
-          self.Moving = false
-          Hekili.DB.profile.Locked = true
-          self:SetMovable( not Hekili.DB.profile.Locked )
-          self:EnableMouse( not Hekili.DB.profile.Locked )
-          GameTooltip:Hide()
-        end
-        Hekili:SaveCoordinates()
-      end )  
     end
   end
   
@@ -153,20 +137,24 @@ function ns.StopConfiguration()
     scaleFactor = GetScreenHeight() / select( GetCurrentResolution(), GetScreenResolutions() ):match("%d+x(%d+)")
   end
 
+	local MouseInteract = ( Hekili.DB.profile.Debug and Hekili.Pause ) or ( not Hekili.DB.profile.Locked )
+  
   for i,v in ipairs(ns.UI.Buttons) do
-    ns.UI.Buttons[i][1]:EnableMouse( not Hekili.DB.profile.Locked or Hekili.Pause )
-    ns.UI.Buttons[i][1]:SetMovable( not Hekili.DB.profile.Locked )
+    for j, btn in ipairs(v) do
+      btn:EnableMouse( MouseInteract )
+      btn:SetMovable( not Hekili.DB.profile.Locked )
+    end
   end
 
-  HekiliNotification:EnableMouse( not Hekili.DB.profile.Locked )
+  HekiliNotification:EnableMouse( MouseInteract )
   HekiliNotification:SetMovable( not Hekili.DB.profile.Locked )
   HekiliNotification.Mover:Hide()
   HekiliNotification.Header:Hide()
   
  for i,v in ipairs(ns.UI.Displays) do
-    v:EnableMouse( not Hekili.DB.profile.Locked )
-    v:SetMovable( not Hekili.DB.profile.Locked )
-    if v.Mover then v.Mover:Hide() end
+    v:EnableMouse( false )
+    v:SetMovable( true )
+    v:SetBackdrop( nil )
     if v.Header then v.Header:Hide() end
   end
   
@@ -198,6 +186,8 @@ function ns.buildUI()
     scaleFactor = GetScreenHeight() / select( GetCurrentResolution(), GetScreenResolutions() ):match("%d+x(%d+)")
   end
 
+	local MouseInteract = ( Hekili.DB.profile.Debug and Hekili.Pause ) or ( not Hekili.DB.profile.Locked )
+  
   local f = ns.UI.Notification or CreateFrame( "Frame", "HekiliNotification", UIParent )
   f:SetSize( Hekili.DB.profile['Notification Width'] * scaleFactor, Hekili.DB.profile['Notification Height'] * scaleFactor )
   f:SetClampedToScreen( true )
@@ -228,9 +218,10 @@ function ns.buildUI()
     local f = ns.UI.Displays[dispID] or CreateFrame( "Frame", "HekiliDisplay"..dispID, UIParent )
     
     f:SetSize( Hekili.DB.profile.displays[dispID]['Primary Icon Size'] + ( Hekili.DB.profile.displays[dispID]['Queued Icon Size'] * ( Hekili.DB.profile.displays[dispID]['Icons Shown'] - 1 ) ) + ( Hekili.DB.profile.displays[dispID]['Spacing'] * ( Hekili.DB.profile.displays[dispID]['Icons Shown'] - 1 ) ), Hekili.DB.profile.displays[dispID]['Primary Icon Size'] )
-    f:SetPoint( "CENTER", Hekili.DB.profile.displays[ dispID ].x, Hekili.DB.profile.displays[ dispID ].y )    
+    f:SetPoint( "CENTER", Hekili.DB.profile.displays[ dispID ].x, Hekili.DB.profile.displays[ dispID ].y )
     f:SetClampedToScreen( true )
-    
+    f:EnableMouse( false )
+    f:SetMovable( true )
     ns.UI.Displays[dispID] = f
 
     ns.UI.Buttons[dispID] = ns.UI.Buttons[dispID] or {}
@@ -243,7 +234,6 @@ function ns.buildUI()
 
 		for i = 1, max( #ns.UI.Buttons[dispID], display['Icons Shown'] ) do
 			ns.UI.Buttons[dispID][i] = Hekili:CreateButton( dispID, i )
-			
 			ns.UI.Buttons[dispID][i]:Hide()
 
 			if Hekili.DB.profile.Enabled and ns.visible.display[ dispID ] and i <= display[ 'Icons Shown' ] then
@@ -398,12 +388,8 @@ function Hekili:CreateButton( display, ID )
   if GetCVar( "UseUIScale" ) == 1 then
     scaleFactor = GetScreenHeight() / select( GetCurrentResolution(), GetScreenResolutions() ):match("%d+x(%d+)")
   end
-	
+
 	button:SetFrameStrata( "LOW" )
-	-- button:SetFrameLevel( 100 - display )
-	-- button:SetParent(UIParent)
-	button:EnableMouse( not self.DB.profile.Locked )
-	button:SetMovable( not self.DB.profile.Locked )
 	button:SetClampedToScreen( true )
 	
 	button:SetSize( scaleFactor * btnSize, scaleFactor * btnSize )
@@ -451,25 +437,28 @@ function Hekili:CreateButton( display, ID )
 	end
 	
 	button:SetScript( "OnEnter", function(self)
-		if ( ID == 1 and ( not Hekili.Pause ) and ( Hekili.Config or not Hekili.DB.profile.Locked ) ) then
+    if ( not Hekili.Pause ) or ( Hekili.Config or not Hekili.DB.profile.Locked ) then
 			ns.Tooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
 			ns.Tooltip:SetBackdropColor( 0, 0, 0, 1 )
 			ns.Tooltip:SetText(Hekili.DB.profile.displays[ display ].Name .. " (" .. display .. ")")
 			ns.Tooltip:AddLine("Left-click and hold to move.", 1, 1, 1)
-			if not Hekili.Config or not Hekili.DB.profile.Locked then ns.Tooltip:AddLine("Right-click to lock all and close.",1 ,1 ,1)  end
+			if not Hekili.Config or not Hekili.DB.profile.Locked then ns.Tooltip:AddLine("Right-click to lock all and close.",1 ,1 ,1) end
 			ns.Tooltip:Show()
 			self:SetMovable(true)
-		elseif ( Hekili.Pause and ns.queue[ display ] and ns.queue[ display ][ ID ] ) then
+    elseif ( Hekili.Pause and ns.queue[ display ] and ns.queue[ display ][ ID ] ) then
 			Hekili:ShowDiagnosticTooltip( ns.queue[ display ][ ID ] )
-		else
-			self:SetMovable(false)
-			self:EnableMouse(false)
 		end
 	end )
 	
 	button:SetScript( "OnLeave", function(self)
 		ns.Tooltip:Hide()
 	end )
+
+  button:SetScript( "OnMouseDown", Mover_OnMouseDown )
+  button:SetScript( "OnMouseUp", Mover_OnMouseUp )      
+
+	button:EnableMouse( not Hekili.DB.profile.Locked )
+	button:SetMovable( not Hekili.DB.profile.Locked )
 	
 	return button
 

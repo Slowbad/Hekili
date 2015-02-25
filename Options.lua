@@ -3031,7 +3031,7 @@ end
 function Hekili:TogglePause()
 	self.Pause = not self.Pause
 	
-	local MouseInteract = self.Pause or self.Config or not Hekili.DB.profile.Locked
+	local MouseInteract = ( self.DB.profile.Debug and self.Pause ) or self.Config or ( not Hekili.DB.profile.Locked )
 	
 	for i = 1, #ns.UI.Buttons do
 		for j = 1, #ns.UI.Buttons[i] do
