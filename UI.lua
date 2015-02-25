@@ -44,7 +44,7 @@ end
 
 
 local function Button_OnMouseDown( self, btn )
-  local display = self:GetName():match("Hekili_D(%d+)_B1")
+  local display = self:GetName():match("Hekili_D(%d+)_B(%d+)")
   local mover = _G[ "HekiliDisplay" .. display ]
   if ( Hekili.Config or not Hekili.DB.profile.Locked ) and btn == "LeftButton" and not self.Moving then
     mover:StartMoving()
@@ -54,7 +54,7 @@ end
 
 
 local function Button_OnMouseUp( self, btn )
-  local display = self:GetName():match("Hekili_D(%d+)_B1")
+  local display = self:GetName():match("Hekili_D(%d+)_B(%d+)")
   local mover = _G[ "HekiliDisplay" .. display ]
   if ( btn == "LeftButton" and mover.Moving ) then
     mover:StopMovingOrSizing()
@@ -455,27 +455,6 @@ function Hekili:CreateButton( display, ID )
 
 		button:SetPoint( "LEFT", ns.UI.Displays[ display ], "LEFT" ) -- self.DB.profile.displays[ display ].rel or "CENTER", self.DB.profile.displays[ display ].x, self.DB.profile.displays[ display ].y )
     
-    button:SetScript( "OnEnter", function(self)
-      if ( not Hekili.Pause ) or ( Hekili.Config or not Hekili.DB.profile.Locked ) then
-        ns.Tooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
-        ns.Tooltip:SetBackdropColor( 0, 0, 0, 1 )
-        ns.Tooltip:SetText(Hekili.DB.profile.displays[ display ].Name .. " (" .. display .. ")")
-        ns.Tooltip:AddLine("Left-click and hold to move.", 1, 1, 1)
-        if not Hekili.Config or not Hekili.DB.profile.Locked then ns.Tooltip:AddLine("Right-click to lock all and close.",1 ,1 ,1) end
-        ns.Tooltip:Show()
-        self:SetMovable(true)
-      elseif ( Hekili.Pause and ns.queue[ display ] and ns.queue[ display ][ ID ] ) then
-        Hekili:ShowDiagnosticTooltip( ns.queue[ display ][ ID ] )
-      end
-    end )
-    
-    button:SetScript( "OnLeave", function(self)
-      ns.Tooltip:Hide()
-    end )
-
-    button:SetScript( "OnMouseDown", Button_OnMouseDown )
-    button:SetScript( "OnMouseUp", Button_OnMouseUp )  
-	
 	else
 		button.Caption:SetFont( ns.lib.SharedMedia:Fetch("font", disp.Font), disp['Queued Font Size'], "OUTLINE" )
 
@@ -491,6 +470,27 @@ function Hekili:CreateButton( display, ID )
 
 	end
 	
+  button:SetScript( "OnMouseDown", Button_OnMouseDown )
+  button:SetScript( "OnMouseUp", Button_OnMouseUp )  
+
+  button:SetScript( "OnEnter", function(self)
+    if ( not Hekili.Pause ) or ( Hekili.Config or not Hekili.DB.profile.Locked ) then
+      ns.Tooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
+      ns.Tooltip:SetBackdropColor( 0, 0, 0, 1 )
+      ns.Tooltip:SetText(Hekili.DB.profile.displays[ display ].Name .. " (" .. display .. ")")
+      ns.Tooltip:AddLine("Left-click and hold to move.", 1, 1, 1)
+      if not Hekili.Config or not Hekili.DB.profile.Locked then ns.Tooltip:AddLine("Right-click to lock all and close.",1 ,1 ,1) end
+      ns.Tooltip:Show()
+      self:SetMovable(true)
+    elseif ( Hekili.Pause and ns.queue[ display ] and ns.queue[ display ][ ID ] ) then
+      Hekili:ShowDiagnosticTooltip( ns.queue[ display ][ ID ] )
+    end
+  end )
+
+  button:SetScript( "OnLeave", function(self)
+    ns.Tooltip:Hide()
+  end )
+    
 	button:EnableMouse( not Hekili.DB.profile.Locked )
 	button:SetMovable( not Hekili.DB.profile.Locked )
 	

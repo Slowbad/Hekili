@@ -757,7 +757,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
         id = 20165,
         spend = 0,
         cast = 0,
-        gcdType = 'spell',
+        gcdType = 'totem',
         cooldown = 0,
         usable = function() return not seal.insight end
       } )
@@ -770,9 +770,10 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
     addAbility( 'seal_of_righteousness',
       {
         id = 20154,
+        known = 105361,
         spend = 0,
         cast = 0,
-        gcdType = 'spell',
+        gcdType = 'totem',
         cooldown = 0,
         usable = function() return not seal.righteousness end
       } )
@@ -787,7 +788,7 @@ if (select(2, UnitClass('player')) == 'PALADIN') then
         id = 31801,
         spend = 0,
         cast = 0,
-        gcdType = 'spell',
+        gcdType = 'totem',
         cooldown = 0,
         known = 105361,
         usable = function() return not seal.truth end

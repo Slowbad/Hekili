@@ -1904,44 +1904,6 @@ ns.isUsable = function( spell )
 end
 	
 
---[[ How long before I can use this action (based on CD and resource availability).
--- returns 999 if you lack resources and they don't regenerate.
-ns.timeToReady = function( action )
-
-  -- Need to ignore the delay for this part.
-	local delay = max( 0, state.cooldown[ action ].expires - ( state.now + state.offset ) )
-
-  delay = ns.callHook( "timeToReady", action, delay ) or delay
-  
-  local ability = class.abilities[ action ]
-
-  if ability.spend then
-    local spend, resource
-    
-    if type( ability.spend ) == 'number' then
-      spend = ability.spend
-      resource = ability.spend_type or class.primaryResource
-    elseif type( ability.spend ) == 'function' then
-      spend, resource = ability.spend()
-    end
-    
-		if spend > 0 and spend < 1 then
-			spend = ( spend * state[ resource ].max )
-		end
-		
-    if spend > state[ resource ].actual then
-      if resource == 'focus' or resource == 'energy' then
-        delay = max( delay, 0.25 + ( ( spend - state[ resource ].actual ) / state[ resource ].regen ) )
-      else
-        delay = 999
-      end
-    end
-  end
-
-	return delay
-end ]]--
-
-
 ns.hasRequiredResources = function( ability )
 
 	local action = class.abilities[ ability ]
