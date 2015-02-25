@@ -401,6 +401,9 @@ local mt_state = {
       end
       return 0
     
+    elseif k == 'max_charges' then
+      return class.abilities[ t.this_action ].charges or 0
+    
     elseif k == 'recharge_time' then
       if class.abilities[ t.this_action ].charges then
         return t.cooldown[ t.this_action ].next_charge > t.now and ( t.cooldown[ t.this_action ].next_charge - ( t.now + t.offset ) ) or 0
@@ -1466,6 +1469,12 @@ local mt_default_action = {
 			
 		elseif k == 'execute_time' then
 			return max( t.gcd, t.cast )
+    
+    elseif k == 'charges' then
+      return class.abilities[ t.action ].charges and state.cooldown[ t.action ].charges or 0
+    
+    elseif k == 'max_charges' then
+      return class.abilities[ t.action ].charges or 0
 	
     elseif k == 'ready_time' then
       return ns.isUsable( t.action ) and ns.timeToReady( t.action ) or 999
