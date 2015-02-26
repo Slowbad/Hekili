@@ -144,6 +144,8 @@ function ns.StartConfiguration()
       v.Header:SetJustifyH( "LEFT" )
       v.Header:SetPoint( "BOTTOMLEFT", v, "TOPLEFT" )
       v.Header:Show()
+    else
+      v:Hide()
     end
   end
   
