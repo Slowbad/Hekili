@@ -118,7 +118,7 @@ function ns.StartConfiguration()
     if v.Mover then v.Mover:Hide() end
     if v.Header then v.Header:Hide() end
     
-    if ns.UI.Buttons[i][1] and ns.UI.Buttons[i][1]:IsShown() and Hekili.DB.profile.displays[ i ] then
+    if ns.UI.Buttons[i][1] and ns.visible.display[ i ] and Hekili.DB.profile.displays[ i ] then
       v:EnableMouse(true)
       v:SetMovable(true)
       -- v.Mover:EnableMouse(true)
@@ -295,6 +295,8 @@ function ns.buildUI()
 		end
 	end
 	
+  if Hekili.Config then ns.StartConfiguration() end
+  
 end
 
 
