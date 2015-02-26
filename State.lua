@@ -1367,7 +1367,7 @@ local mt_default_debuff = {
       
 		elseif k == 'count' or k == 'expires' or k == 'v1' or k == 'v2' or k == 'v3' then
       
-			local name, _, _, count, _, _, expires, _, _, _, _, _, _, _, v1, v2, v3 = UnitDebuff( t.unit, t.name, nil, unit == 'target' and 'PLAYER' or nil )
+			local name, _, _, count, _, _, expires, _, _, _, _, _, _, _, v1, v2, v3 = UnitDebuff( t.unit, t.name, nil, 'PLAYER' )
 			
 			if name then
 				count = max(1, count)
