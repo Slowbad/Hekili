@@ -79,12 +79,11 @@ state.setCooldown = setCooldown
 
 
 local function spendCharges( action, charges )
-  if ns.class.abilities[ action ].charges then
+  if class.abilities[ action ].charges then
     state.cooldown[ action ] = state.cooldown[ action ] or {}
-    state.cooldown[ action ].charges = state.cooldown[ action ].charges - 1
+    state.cooldown[ action ].charges = max( 0, state.cooldown[ action ].charges - charges )
     if state.cooldown[ action ].charges == 0 then
-      state.cooldown[ action ].duration = class.abilities[ action ].cooldown
-      state.cooldown[ action ].expires = state.now + state.offset + class.abilities[ action ].cooldown
+      setCooldown( action, class.abilities[ action ].recharge )
     end
 
     if state.cooldown[ action ].next_charge < state.now + state.offset then
@@ -1799,7 +1798,7 @@ state.advance = function( time )
     if class.abilities[ k ].charges and cd.next_charge > 0 and cd.next_charge < state.now + state.offset then
       cd.charges = cd.charges + 1
       if cd.charges < class.abilities[ k ].charges then
-        cd.next_charge = cd.next_charge + class.abilities[ k ].cooldown
+        cd.next_charge = cd.next_charge + class.abilities[ k ].recharge
       else 
         cd.next_charge = 0
       end

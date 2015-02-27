@@ -411,9 +411,9 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             spend = 0.01,
             cast = 0,
             gcdType = 'melee',
-            cooldown = 9,
+            cooldown = 10.5,
             charges = 1,
-            recharge = 9,
+            recharge = 10.5,
             hostile = true
           } )
 
@@ -1039,7 +1039,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     end )
 
     addHandler( 'stormstrike', function ()
-      setCooldown( 'strike', 7.5 * haste )
+      spendCharges( 'strike', 1 )
       if set_bonus.tier17_2pc and cooldown.feral_spirit.remains > 0 then
         setCooldown( 'feral_spirit', max(0, cooldown.feral_spirit.remains - 5) )
       end
@@ -1066,8 +1066,8 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     end )
 
     addHandler( 'windstrike', function ()
-      setCooldown( 'strike', 7.5 * haste )
-      setCooldown( 'stormstrike', 7.5 * haste )
+      spendCharges( 'strike', 1 )
+      spendCharges( 'stormstrike', 1 )
       applyDebuff( 'target', 'windstrike', 15 )
       if set_bonus.tier15_2pc_melee then addStack( 'maelstrom_weapon', 30, 2 ) end
     end )
