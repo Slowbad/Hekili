@@ -13,14 +13,44 @@ local round = ns.round
 local Masque, MasqueGroup
 
 
+local movementData = {}
+
+local function startScreenMovement( frame )
+  local fkey = tostring(frame)
+    
+  _, _, _, movementData.origX, movementData.origY = frame:GetPoint()
+  frame:StartMoving()
+  _, _, _, movementData.fromX, movementData.fromY = frame:GetPoint()
+  frame.Moving = true
+end
+
+
+local function stopScreenMovement( frame )
+  local fkey = tostring(frame)
+  
+  local scrW, scrH = select( GetCurrentResolution(), GetScreenResolutions() ):match("(%d+)x(%d+)")
+  local scaleFactor = GetScreenHeight() / select( GetCurrentResolution(), GetScreenResolutions() ):match("%d+x(%d+)")
+  scrW = scrW * scaleFactor
+  scrH = scrH * scaleFactor
+  local limitX = ( scrW - frame:GetWidth() ) / 2
+  local limitY = ( scrH - frame:GetHeight() ) / 2
+
+  _, _, _, movementData.toX, movementData.toY = frame:GetPoint()
+  frame:StopMovingOrSizing()
+  frame.Moving = false
+  frame:ClearAllPoints()
+  frame:SetPoint( "CENTER", max( -limitX, min( limitX, movementData.origX + ( movementData.toX - movementData.fromX ) ) ), max( -limitY, min( limitY, movementData.origY + ( movementData.toY - movementData.fromY ) ) ) )
+  Hekili:SaveCoordinates()
+end
+
+
 local function Mover_OnMouseUp( self, btn )
   if ( btn == "LeftButton" and self.Moving ) then
-    self:StopMovingOrSizing()
-    Hekili:SaveCoordinates()
-    self.Moving = false
+    stopScreenMovement( self )
   elseif ( btn == "RightButton" and not Hekili.Config ) then
-    self:StopMovingOrSizing()
-    self.Moving = false
+    if self.Moving then
+      stopScreenMovement( self )
+    end
     Hekili.DB.profile.Locked = true
    	local MouseInteract = ( Hekili.DB.profile.Debug and Hekili.Pause ) or Hekili.Config or ( not Hekili.DB.profile.Locked )
     for i = 1, #ns.UI.Buttons do
@@ -37,18 +67,7 @@ end
 
 local function Mover_OnMouseDown( self, btn )
   if ( Hekili.Config or not Hekili.DB.profile.Locked ) and btn == "LeftButton" and not self.Moving then
-    self:StartMoving()
-    self.Moving = true
-  end
-end 
-
-
-local function Button_OnMouseDown( self, btn )
-  local display = self:GetName():match("Hekili_D(%d+)_B(%d+)")
-  local mover = _G[ "HekiliDisplay" .. display ]
-  if ( Hekili.Config or not Hekili.DB.profile.Locked ) and btn == "LeftButton" and not self.Moving then
-    mover:StartMoving()
-    mover.Moving = true
+    startScreenMovement( self )
   end
 end 
 
@@ -57,12 +76,11 @@ local function Button_OnMouseUp( self, btn )
   local display = self:GetName():match("Hekili_D(%d+)_B(%d+)")
   local mover = _G[ "HekiliDisplay" .. display ]
   if ( btn == "LeftButton" and mover.Moving ) then
-    mover:StopMovingOrSizing()
-    mover.Moving = false
-    Hekili:SaveCoordinates()
+    stopScreenMovement( mover )
   elseif ( btn == "RightButton" and not Hekili.Config ) then
-    mover:StopMovingOrSizing()
-    mover.Moving = false
+    if mover.Moving then
+      stopScreenMovement( mover )
+    end
     Hekili.DB.profile.Locked = true
    	local MouseInteract = ( Hekili.DB.profile.Debug and Hekili.Pause ) or Hekili.Config or ( not Hekili.DB.profile.Locked )
     for i = 1, #ns.UI.Buttons do
@@ -75,6 +93,13 @@ local function Button_OnMouseUp( self, btn )
   end
   Hekili:SaveCoordinates()
 end
+
+
+local function Button_OnMouseDown( self, btn )
+  local display = self:GetName():match("Hekili_D(%d+)_B(%d+)")
+  local mover = _G[ "HekiliDisplay" .. display ]
+  startScreenMovement( mover )
+end 
 
 
 function ns.StartConfiguration()
@@ -228,7 +253,7 @@ function ns.buildUI()
   f:SetSize( Hekili.DB.profile['Notification Width'] * scaleFactor, Hekili.DB.profile['Notification Height'] * scaleFactor )
   f:SetClampedToScreen( true )
   f:ClearAllPoints()
-  f:SetPoint( "CENTER", Hekili.DB.profile['Notification X'], Hekili.DB.profile['Notification Y'] )
+  f:SetPoint( "CENTER", Screen, "CENTER", Hekili.DB.profile['Notification X'], Hekili.DB.profile['Notification Y'] )
   
   f.Text = f.Text or f:CreateFontString( "HekiliNotificationText", "OVERLAY" )
   f.Text:SetSize( Hekili.DB.profile['Notification Width'] * scaleFactor, Hekili.DB.profile['Notification Height'] * scaleFactor )
@@ -253,8 +278,8 @@ function ns.buildUI()
     
     local f = ns.UI.Displays[dispID] or CreateFrame( "Frame", "HekiliDisplay"..dispID, UIParent )
     
-    f:SetSize( Hekili.DB.profile.displays[dispID]['Primary Icon Size'] + ( Hekili.DB.profile.displays[dispID]['Queued Icon Size'] * ( Hekili.DB.profile.displays[dispID]['Icons Shown'] - 1 ) ) + ( Hekili.DB.profile.displays[dispID]['Spacing'] * ( Hekili.DB.profile.displays[dispID]['Icons Shown'] - 1 ) ), Hekili.DB.profile.displays[dispID]['Primary Icon Size'] )
-    f:SetPoint( "CENTER", Hekili.DB.profile.displays[ dispID ].x, Hekili.DB.profile.displays[ dispID ].y )
+    f:SetSize( Hekili.DB.profile.displays[dispID]['Primary Icon Size'] + ( Hekili.DB.profile.displays[dispID]['Queued Icon Size'] * ( Hekili.DB.profile.displays[dispID]['Icons Shown'] - 1 ) ) + ( Hekili.DB.profile.displays[dispID]['Spacing'] * ( Hekili.DB.profile.displays[dispID]['Icons Shown'] - 1 ) ), max( Hekili.DB.profile.displays[dispID]['Primary Icon Size'], Hekili.DB.profile.displays[dispID]['Queued Icon Size'] ) )
+    f:SetPoint( "CENTER", Screen, "CENTER", Hekili.DB.profile.displays[ dispID ].x, Hekili.DB.profile.displays[ dispID ].y )
     f:SetClampedToScreen( true )
     f:EnableMouse( false )
     f:SetMovable( true )
