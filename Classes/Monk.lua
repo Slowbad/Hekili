@@ -135,6 +135,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
     addAura( 'rising_sun_kick', 130320 )
     addAura( 'rushing_jade_wind', 116847 )
     addAura( 'serenity', 152173 )
+    addAura( 'soothing_mist', 115175 )
     addAura( 'spinning_crane_kick', 101546 )
     addAura( 'stagger', 124255 )
     addAura( 'tiger_palm', 100787 )
