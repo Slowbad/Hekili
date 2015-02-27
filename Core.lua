@@ -262,6 +262,16 @@ function Hekili:ProcessHooks( dispID )
 			state.reset()
       state.min_targets = display['Force Targets'] or 1
 			
+      if Queue then
+        for k, v in pairs( Queue ) do
+          for l, w in pairs( v ) do
+            if type( Queue[ k ][ l ] ) ~= 'table' then
+              Queue[k][l] = nil
+            end
+          end
+        end
+      end
+      
 			if ( self.Config or checkScript( 'D', dispID )  ) then 
 
 				for i = 1, display['Icons Shown'] do
@@ -271,11 +281,11 @@ function Hekili:ProcessHooks( dispID )
 					
 					Queue[i] = Queue[i] or {}
 					
-					for k in pairs( Queue[ i ] ) do
+					--[[ for k in pairs( Queue[ i ] ) do
 						if type( Queue[ i ][ k ] ) ~= 'table' then
 							Queue[ i ][ k ] = nil
 						end
-					end
+					end ]]
 					
 					for hookID, hook in ipairs( display.Queues ) do
 					
