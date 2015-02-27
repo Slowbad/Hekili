@@ -265,6 +265,9 @@ RegisterEvent( "UNIT_SPELLCAST_SUCCEEDED", function( _, unit, spell, _, spellID 
   if unit == 'player' then
     state.player.lastcast = spell
     state.player.casttime = GetTime()
+    for i = 1, #Hekili.DB.profile.displays do
+      Hekili:ProcessHooks( i, true )
+    end
   end
   
 end )

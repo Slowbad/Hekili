@@ -277,6 +277,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             gcdType = 'spell',
             cooldown = 10,
             charges = 1,
+            recharge = 10,
             hostile = true
           } )
 
@@ -325,6 +326,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             gcdType = 'spell',
             cooldown = 4.5,
             charges = 1,
+            recharge = 4.5,
             hostile = true
           } )
 
@@ -397,6 +399,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             cast = 2,
             gcdType = 'spell',
             charges = 1,
+            recharge = 8,
             cooldown = 8,
             hostile = true
           } )
@@ -410,6 +413,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             gcdType = 'melee',
             cooldown = 9,
             charges = 1,
+            recharge = 9,
             hostile = true
           } )
 
@@ -488,6 +492,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             cast = 0,
             gcdType = 'melee',
             charges = 1,
+            recharge = 7.5,
             cooldown = 7.5,
             hostile = true
           } )
@@ -500,6 +505,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             gcdType = 'melee',
             cooldown = 8,
             charges = 1,
+            recharge = 8,
             hostile = true
           } )
     
@@ -549,6 +555,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
             gcdType = 'melee',
             cooldown = 7.5,
             charges = 1,
+            recharge = 7.5,
             hostile = true
           } )
 
@@ -606,7 +613,11 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         end )
 
         modifyAbility( 'fire_nova', 'cooldown', function( x )
-          if cooldown.fire_nova.charges > 1 then return 0 end
+          -- if cooldown.fire_nova.charges > 1 then return 0 end
+          return x * haste
+        end )
+        
+        modifyAbility( 'fire_nova', 'recharge', function( x )
           return x * haste
         end )
 
@@ -616,7 +627,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         end )
         
         modifyAbility( 'fire_nova', 'charges', function( x )
-          if talent.echo_of_the_elements.up then return 2 end
+          if talent.echo_of_the_elements.enabled then return 2 end
           return x
         end )
         
@@ -664,12 +675,16 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         end )
 
         modifyAbility( 'lava_lash', 'cooldown', function( x )
-          if cooldown.lava_lash.charges > 1 then return 0 end
+          -- if cooldown.lava_lash.charges > 1 then return 0 end
+          return x * haste
+        end )
+        
+        modifyAbility( 'lava_lash', 'recharge', function( x )
           return x * haste
         end )
         
         modifyAbility( 'lava_lash', 'charges', function( x )
-          if talent.echo_of_the_elements.up then return 2 end
+          if talent.echo_of_the_elements.enabled then return 2 end
           return x
         end )
 
@@ -700,7 +715,11 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         end )
         
         modifyAbility( 'stormstrike', 'cooldown', function( x )
-          if cooldown.stormstrike.charges > 1 then return 0 end
+          -- if cooldown.stormstrike.charges > 1 then return 0 end
+          return x * haste
+        end )
+        
+        modifyAbility( 'stormstrike', 'recharge', function( x )
           return x * haste
         end )
         
@@ -722,7 +741,11 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         end )
         
         modifyAbility( 'windstrike', 'cooldown', function( x )
-          if cooldown.windstrike.charges > 1 then return 0 end
+          -- if cooldown.windstrike.charges > 1 then return 0 end
+          return x * haste
+        end )
+        
+        modifyAbility( 'windstrike', 'recharge', function( x )
           return x * haste
         end )
         
@@ -755,17 +778,16 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         end )
         
         modifyAbility( 'earthquake', 'cooldown',  function( x )
-          if cooldown.earthquake.charges > 1 then return 0 end
-         return x
+          -- if cooldown.earthquake.charges > 1 then return 0 end
+          return x
         end )
-    
+        
         modifyAbility( 'elemental_blast', 'cast', function( x )
           if buff.ancestral_swiftness.up then return 0 end
           return x * haste
         end )
     
         modifyAbility( 'frost_shock', 'cooldown',  function( x )
-          if buff.echo_of_the_elements.up then return 0 end
           if glyph.frost_shock.enabled then x = x - 2 end
           return x
         end )
@@ -787,14 +809,14 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
         end )
         
         modifyAbility( 'lava_burst', 'charges', function( x )
-          if talent.echo_of_the_elements.up then return 2 end
+          if talent.echo_of_the_elements.enabled then return 2 end
           return x
         end )
         
         modifyAbility( 'lava_burst', 'cooldown', function( x )
           if buff.lava_surge.up and cast_start > 0 and buff.lava_surge.applied > cast_start then return 0 end
           if buff.ascendance.up then return 0 end
-          if cooldown.lava_burst.charges > 1 then return 0 end
+          -- if cooldown.lava_burst.charges > 1 then return 0 end
           return x
         end )
         
@@ -848,10 +870,10 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
 
     addHandler( 'ascendance', function ()
       applyBuff( 'ascendance', 15 )
-      setCooldown( 'lava_burst', 0 )
-      setCooldown( 'stormstrike', 0 )
-      setCooldown( 'windstrike', 0 )
-      setCooldown( 'strike', 0 )
+      gainCharges( 'lava_burst', 1 )
+      gainCharges( 'stormstrike', 1 )
+      gainCharges( 'windstrike', 1 )
+      gainCharges( 'strike', 1 )
     end )
 
 
@@ -1078,7 +1100,7 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
     
     storeDefault( "Enh: AOE", 'displays', 20150223.1, "^1^T^SQueued~`Font~`Size^N12^SPvP~`-~`Target^b^SPrimary~`Caption~`Aura^SFlame~`Shock^Srel^SCENTER^SSpacing^N4^SPvE~`-~`Default^B^SQueues^T^N1^T^SEnabled^B^SAction~`List^SEnh:~`Cooldowns^SName^SCooldowns^SScript^Stoggle.cooldowns^t^N2^T^SEnabled^B^SAction~`List^SEnh:~`AOE^SName^SAOE^SScript^S^t^t^SPvP~`-~`Default~`Alpha^N1^SPvP~`-~`Combat^b^SPvP~`-~`Default^B^Sy^F-8092406117302270^f-45^STalent~`Group^N0^SPrimary~`Caption^Sratio^SForce~`Targets^N2^SPvP~`-~`Target~`Alpha^N1^SPvP~`-~`Combat~`Alpha^N1^SSpellFlash~`Color^T^Sa^N1^Sr^N1^Sg^N1^Sb^N1^t^SCopy~`To^Sxxx^SQueue~`Direction^SRIGHT^SSpecialization~`Group^Sboth^SQueued~`Icon~`Size^N40^SEnabled^B^Sx^N0^SPvE~`-~`Default~`Alpha^N1^SRelease^N2.2^SPvE~`Visibility^Salways^SPvE~`-~`Target^b^SDefault^B^SPvE~`-~`Target~`Alpha^N1^SPrimary~`Icon~`Size^N40^SFont^SElvUI~`Font^SName^SEnh:~`AOE^SPrimary~`Font~`Size^N12^SSpecialization^N263^SScript^S^SAction~`Captions^B^SIcons~`Shown^N4^t^^" )
     
-    storeDefault( "Ele: Primary", 'displays', 20150223.1, 	"^1^T^SQueued~`Font~`Size^N12^SPrimary~`Font~`Size^N12^SPrimary~`Caption~`Aura^SLightning~`Shield^Srel^SCENTER^SUse~`SpellFlash^b^SPvE~`-~`Target^b^SPvE~`-~`Default^B^SPvE~`-~`Combat^b^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^SShaman:~`Buffs^SName^SBuffs^SScript^S^t^N2^T^SEnabled^B^SAction~`List^SShaman:~`Interrupts^SName^SInterrupt^SScript^Stoggle.interrupts^t^N3^T^SEnabled^B^SAction~`List^SEle:~`Cooldowns^SName^SCooldowns^SScript^Stoggle.cooldowns^t^N4^T^SEnabled^B^SAction~`List^SEle:~`Single~`Target^SName^SSingle~`Target^SScript^Ssingle|(cleave&active_enemies=1)^t^N5^T^SEnabled^B^SAction~`List^SEle:~`AOE^SName^SAOE^SScript^Saoe|(cleave&active_enemies>=3)^t^t^SPvP~`-~`Default~`Alpha^N1^SPvP~`-~`Combat^b^SPvP~`-~`Default^B^Sy^N-275^STalent~`Group^N0^SPrimary~`Caption^Sbuff^SForce~`Targets^N1^SPvE~`-~`Combat~`Alpha^N1^SPvP~`-~`Target~`Alpha^N1^SPvP~`-~`Combat~`Alpha^N1^SSpellFlash~`Color^T^Sa^N1^Sr^N1^Sg^N1^Sb^N1^t^SCopy~`To^Sxxx^SQueue~`Direction^SRIGHT^SQueued~`Icon~`Size^N40^SEnabled^B^SIcons~`Shown^N4^SAction~`Captions^B^SRelease^N20150111.1^Sx^N0^SPvP~`-~`Target^b^SName^SEle:~`Primary^SPvE~`-~`Target~`Alpha^N1^SFont^SElvUI~`Font^SDefault^B^SPrimary~`Icon~`Size^N40^SSpecialization^N262^SSpacing^N4^SPvE~`-~`Default~`Alpha^N1^SScript^S^t^^" )
+    storeDefault( "Ele: Primary", 'displays', 20150226.1, 	"^1^T^SQueued~`Font~`Size^N12^SPvP~`-~`Target^b^SPrimary~`Caption~`Aura^SLightning~`Shield^Srel^SCENTER^SUse~`SpellFlash^b^SSpacing^N4^SPvE~`-~`Default^B^SPvE~`-~`Combat^b^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^SShaman:~`Buffs^SName^SBuffs^SScript^S^t^N2^T^SEnabled^B^SAction~`List^SShaman:~`Interrupts^SName^SInterrupt^SScript^Stoggle.interrupts^t^N3^T^SEnabled^B^SAction~`List^SEle:~`Cooldowns^SName^SCooldowns^SScript^Stoggle.cooldowns^t^N4^T^SEnabled^B^SAction~`List^SEle:~`Single~`Target^SName^SSingle~`Target^SScript^Ssingle|(cleave&active_enemies<3)^t^N5^T^SEnabled^B^SAction~`List^SEle:~`AOE^SName^SAOE^SScript^Saoe|(cleave&active_enemies>=3)^t^t^SScript^S^SPvP~`-~`Combat^b^SPvP~`-~`Default^B^Sy^N-270^SIcons~`Shown^N4^SPrimary~`Caption^Sbuff^SForce~`Targets^N1^SPvE~`-~`Combat~`Alpha^N1^SPrimary~`Icon~`Size^N40^SPvP~`-~`Combat~`Alpha^N1^SSpellFlash~`Color^T^Sa^N1^Sb^N1^Sg^N1^Sr^N1^t^SSpecialization^N262^SQueue~`Direction^SRIGHT^SQueued~`Icon~`Size^N40^SEnabled^B^STalent~`Group^N0^SAction~`Captions^B^SRelease^N20150223.1^Sx^N-0^SPrimary~`Font~`Size^N12^SName^SEle:~`Primary^SPvE~`-~`Target~`Alpha^N1^SFont^SElvUI~`Font^SDefault^B^SPvP~`-~`Target~`Alpha^N1^SCopy~`To^Sxxx^SPvE~`-~`Target^b^SPvE~`-~`Default~`Alpha^N1^SPvP~`-~`Default~`Alpha^N1^t^^" )
     
     storeDefault( "Ele: AOE", 'displays', 20150223.1, "^1^T^SQueued~`Font~`Size^N12^SPvP~`-~`Target^b^SPrimary~`Caption~`Aura^S^Srel^SCENTER^SPvE~`-~`Target^b^SPvE~`-~`Default^B^SPvE~`-~`Combat^b^SMaximum~`Time^N30^SQueues^T^N1^T^SEnabled^B^SAction~`List^SEle:~`Cooldowns^SName^SCooldowns^SScript^Stoggle.cooldowns^t^N2^T^SEnabled^B^SAction~`List^SEle:~`AOE^SName^SAOE^SScript^S^t^t^SPvP~`-~`Default~`Alpha^N1^SPvP~`-~`Combat^b^SPvP~`-~`Default^B^Sy^N-230^STalent~`Group^N0^SPrimary~`Caption^Stargets^SForce~`Targets^N3^SPvE~`-~`Combat~`Alpha^N1^SPvP~`-~`Target~`Alpha^N1^SPvP~`-~`Combat~`Alpha^N1^SSpellFlash~`Color^T^Sa^N1^Sb^N1^Sg^N1^Sr^N1^t^SSpecialization^N262^SQueue~`Direction^SRIGHT^SQueued~`Icon~`Size^N40^SEnabled^B^SCopy~`To^SEle:~`AOE2^SAction~`Captions^B^SRelease^N2.2^Sx^N0^SIcons~`Shown^N4^SName^SEle:~`AOE^SPvE~`-~`Target~`Alpha^N1^SFont^SElvUI~`Font^SDefault^B^SPrimary~`Icon~`Size^N40^SPrimary~`Font~`Size^N12^SSpacing^N4^SPvE~`-~`Default~`Alpha^N1^SScript^S^t^^" )
     

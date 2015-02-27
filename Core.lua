@@ -244,7 +244,7 @@ local z_PVP = {
 }					
 
 
-function Hekili:ProcessHooks( dispID )
+function Hekili:ProcessHooks( dispID, solo )
 
 	if not self.DB.profile.Enabled then
 		return
@@ -388,21 +388,17 @@ function Hekili:ProcessHooks( dispID )
 						state.advance( action.cast )
 						
 						-- Put the action on cooldown.  (It's slightly premature, but addresses CD resets like Echo of the Elements.)
-            state.setCooldown( chosen_action, action.cooldown )
+            if class.abilities[ chosen_action ].charges then
+              state.spendCharges( chosen_action, 1 )
+            else
+              state.setCooldown( chosen_action, action.cooldown )
+            end
             
 						-- Perform the action.
 						ns.runHandler( chosen_action )
 						
 						-- Spend resources.
 						ns.spendResources( chosen_action )
-
-            -- Adjust charges as needed.
-            if class.abilities[ chosen_action ].charges then
-              state.cooldown[ chosen_action ].charges = state.cooldown[ chosen_action ].charges - 1
-              if state.cooldown[ chosen_action ].next_charge < state.now + state.offset then
-                state.cooldown[ chosen_action ].next_charge = state.now + state.offset + class.abilities[ chosen_action ].cooldown
-              end
-            end
 
 						-- Move the clock forward if the GCD hasn't expired.
 						if state.cooldown[ class.gcd ].remains > 0 then
@@ -425,7 +421,7 @@ function Hekili:ProcessHooks( dispID )
 
 	end
 
-	C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self[ 'ProcessDisplay'..dispID ] )
+	if not solo then C_Timer.After( 1 / self.DB.profile['Updates Per Second'], self[ 'ProcessDisplay'..dispID ] ) end
 	
 end
 

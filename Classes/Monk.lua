@@ -650,7 +650,8 @@ if (select(2, UnitClass('player')) == 'MONK') then
         cast = 0,
         gcdType = 'off',
         cooldown = 30,
-        charges = 1
+        charges = 1,
+        recharge = 30
       } )
 
     modifyAbility( 'guard', 'cooldown', function ( x )
@@ -815,7 +816,8 @@ if (select(2, UnitClass('player')) == 'MONK') then
         cast = 0,
         gcdType = 'melee',
         cooldown = 8,
-        charges = 1
+        charges = 1,
+        recharge = 8
       } )
     
     modifyAbility( 'rising_sun_kick', 'charges', function ( x )
@@ -1111,7 +1113,8 @@ if (select(2, UnitClass('player')) == 'MONK') then
         cast = 0,
         gcdType = 'melee',
         cooldown = 20,
-        charges = 2
+        charges = 2,
+        recharge = 20
       } )
     
     

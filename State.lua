@@ -78,6 +78,40 @@ end
 state.setCooldown = setCooldown
 
 
+local function spendCharges( action, charges )
+  if ns.class.abilities[ action ].charges then
+    state.cooldown[ action ] = state.cooldown[ action ] or {}
+    state.cooldown[ action ].charges = state.cooldown[ action ].charges - 1
+    if state.cooldown[ action ].charges == 0 then
+      state.cooldown[ action ].duration = class.abilities[ action ].cooldown
+      state.cooldown[ action ].expires = state.now + state.offset + class.abilities[ action ].cooldown
+    end
+
+    if state.cooldown[ action ].next_charge < state.now + state.offset then
+      state.cooldown[ action ].next_charge = state.now + state.offset + class.abilities[ action ].recharge
+      state.cooldown[ action ].recharge = class.abilities[ action ].recharge
+    end
+  end
+end
+state.spendCharges = spendCharges
+
+
+local function gainCharges( action, charges )
+
+  if class.abilities[ action ].charges then
+    state.cooldown[ action ].charges = min( class.abilities[ action ].charges, state.cooldown[ action ].charges + charges )
+    
+    if state.cooldown[ action ].charges == class.abilities[ action ].charges then
+      state.cooldown[ action ].next_charge = 0
+      state.cooldown[ action ].recharge = 0
+      state.cooldown[ action ].duration = 0
+      state.cooldown[ action ].expires = 0
+    end
+  end
+  
+end
+state.gainCharges = gainCharges
+
 -- Apply a buff to the current game state.
 local function applyBuff( aura, duration, stacks, value )
 
@@ -406,7 +440,7 @@ local mt_state = {
     
     elseif k == 'recharge_time' then
       if class.abilities[ t.this_action ].charges then
-        return t.cooldown[ t.this_action ].next_charge > t.now and ( t.cooldown[ t.this_action ].next_charge - ( t.now + t.offset ) ) or 0
+        return t.cooldown[ t.this_action ].next_charge > t.now + t.offset and ( t.cooldown[ t.this_action ].next_charge - ( t.now + t.offset ) ) or 0
       end
       return t.cooldown[ t.this_action ].remains
       
@@ -861,14 +895,16 @@ local mt_default_cooldown = {
     if class.abilities[ t.key ].charges then
       local charges, maxCharges, start, duration = GetSpellCharges( t.id )
       t.charges = charges or 0
-      if charges and charges < class.abilities[ t.key ].charges then
+      t.recharge = duration or class.abilities[ t.key ].recharge
+      if charges and charges < maxCharges then
         t.next_charge = start + duration
       else
         t.next_charge = 0
       end
+      
     else
       t.charges = t.expires < state.now + state.offset and 1 or 0
-      t.next_charge = t.expires
+      t.next_charge = t.expires > state.now + state.offset and t.expires or 0
     end
 			
 			return t[k]
@@ -876,13 +912,27 @@ local mt_default_cooldown = {
 		elseif k == 'remains' then
       if t.expires <= ( state.now + state.offset ) then return 0 end
       return ( t.expires - ( state.now + state.offset ) )
-	
+
+    elseif k == 'charges_fractional' then
+      if class.abilities[ t.key ].charges then
+        if t.charges < class.abilities[ t.key ].charges then
+          return t.charges + ( class.abilities[ t.key ].recharge - t.recharge_time ) / class.abilities[ t.key ].recharge
+        else
+          return t.charges
+        end 
+      end
+      return 0
+      
     elseif k == 'recharge_time' then
       if class.abilities[ t.key ].charges then
-        return t.next_charge > state.now and ( t.next_charge - ( t.now + t.offset ) ) or 0
+        if  t.next_charge > ( state.now + state.offset ) then
+          return ( t.next_charge - ( state.now + state.offset ) )
+        else
+          return 0
+        end
       end
       return t.remains
-        
+    
 		elseif k == 'up' then
 			return ( t.remains == 0 )
 			
@@ -933,8 +983,13 @@ local mt_cooldowns = {
       local charges, maxCharges, start, duration = GetSpellCharges( t[k].name )
       t[ k ].charges = charges or 0
       if charges then
-        if start + duration < state.now then
-          t[ k ].next_charge = 0
+        if start + duration < state.now + state.offset then
+          t[ k ].charges = t[ k ].charges + 1
+          if t[ k ].charges < class.abilities[ k ].charges then
+            t[ k ].next_charge = t[ k ].next_charge + class.abilities[ k ].cooldown
+          else
+            t[ k ].next_charge = 0
+          end
         else
           t[ k ].next_charge = charges < class.abilities[ k ].charges and ( start + duration ) or 0
         end
@@ -1472,6 +1527,9 @@ local mt_default_action = {
     
     elseif k == 'charges' then
       return class.abilities[ t.action ].charges and state.cooldown[ t.action ].charges or 0
+      
+    elseif k == 'charges_fractional' then
+      return state.cooldown[ t.action ].charges_fractional
     
     elseif k == 'max_charges' then
       return class.abilities[ t.action ].charges or 0
@@ -1697,7 +1755,11 @@ state.reset = function()
 			state.cooldown[ casting ].expires = state.now + state.offset + class.abilities[ casting ].cooldown
 
       -- Put the action on cooldown.  (It's slightly premature, but addresses CD resets like Echo of the Elements.)
-      state.setCooldown( casting, ns.class.abilities[ casting ].cooldown )
+      if class.abilities[ casting ].charges then
+        state.spendCharges( casting, 1 )
+      else
+        state.setCooldown( casting, ns.class.abilities[ casting ].cooldown )
+      end
     
       -- Perform the action.
       ns.runHandler( casting )
@@ -1705,16 +1767,8 @@ state.reset = function()
       -- Spend resources.
       ns.spendResources( casting )
     
-     -- Adjust charges as needed.
-      if class.abilities[ casting ].charges then
-        state.cooldown[ casting ].charges = state.cooldown[ casting ].charges - 1
-        if state.cooldown[ casting ].next_charge < state.now + state.offset then
-          state.cooldown[ casting ].next_charge = state.now + state.offset + class.abilities[ casting ].cooldown
-        end
-      end	
-
       -- Start the GCD.
-      state.setCooldown( ns.class.gcd, ns.class.abilities[ casting ].gcdType ~= 'off' and state.gcd or 0 )
+      -- state.setCooldown( ns.class.gcd, ns.class.abilities[ casting ].gcdType ~= 'off' and state.gcd or 0 )
     end
       
 	end
@@ -1745,7 +1799,7 @@ state.advance = function( time )
     if class.abilities[ k ].charges and cd.next_charge > 0 and cd.next_charge < state.now + state.offset then
       cd.charges = cd.charges + 1
       if cd.charges < class.abilities[ k ].charges then
-        cd.next_charge = cd.next_charge + class.abilities[ k ].elem.cooldown
+        cd.next_charge = cd.next_charge + class.abilities[ k ].cooldown
       else 
         cd.next_charge = 0
       end
