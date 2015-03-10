@@ -655,7 +655,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
       } )
 
     modifyAbility( 'guard', 'cooldown', function ( x )
-      if cooldown.guard.charges > 1 then return 1 end
+      -- if cooldown.guard.charges > 1 then return 1 end
       return x
     end )
     
@@ -1033,7 +1033,7 @@ if (select(2, UnitClass('player')) == 'MONK') then
       } )
       
     modifyAbility( 'chi_brew', 'cooldown', function ( x )
-      if cooldown.chi_brew.charges > 1 then return 0 end
+      -- if cooldown.chi_brew.charges > 1 then return 0 end
       return x
     end )
       

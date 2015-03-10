@@ -170,7 +170,7 @@ function Hekili:OnInitialize()
 
   ns.primeTooltipColors()
   
-	self.DB.profile.Release = 20150223.1
+	self.DB.profile.Release = 20150309.1
   callHook( "onInitialize" )
 	
 	if class.file == 'NONE' then
