@@ -639,7 +639,7 @@ ns.newDisplayOption = function( key )
 						name = 'Primary Font Size',
 						desc = "Enter the size of the font for primary icon captions.",
 						min = 6,
-						max = 30,
+						max = 100,
 						order = 32,
 						step = 1,
 					},
@@ -648,7 +648,7 @@ ns.newDisplayOption = function( key )
 						name = 'Queued Font Size',
 						desc = "Enter the size of the font for queued icon captions.",
 						min = 6,
-						max = 30,
+						max = 100,
 						order = 33,
 						step = 1,
 					},
@@ -3117,7 +3117,9 @@ function Hekili:Toggle( num )
 	
 	if Hekili.DB.profile['Toggle ' .. num .. ' Name'] then
 		Hekili:Print( Hekili.DB.profile['Toggle_' .. num] and ( 'Toggle \'' .. Hekili.DB.profile['Toggle ' .. num .. ' Name'] .. "' |cFF00FF00ENABLED|r." ) or ( 'Toggle \'' .. Hekili.DB.profile['Toggle ' .. num .. ' Name'] .. "' |cFFFF0000DISABLED|r." ) )
+		Hekili:Notify( Hekili.DB.profile['Toggle_' .. num] and ( Hekili.DB.profile['Toggle ' .. num .. ' Name']:gsub("^%l", string.upper) .. " ON" ) or ( Hekili.DB.profile['Toggle ' .. num .. ' Name']:gsub("^%l", string.upper) .. " OFF" ) )
 	else
 		Hekili:Print( Hekili.DB.profile['Toggle_' .. num] and ( "Custom Toggle #" .. num .. " |cFF00FF00ENABLED|r." ) or ( "Custom Toggle #" .. num .. " |cFFFF0000DISABLED|r." ) )
+		Hekili:Notify( Hekili.DB.profile['Toggle_' .. num] and ( "Toggle #" .. num .. " ON" ) or ( "Toggle #" .. num .. " OFF" ) )
 	end
 end

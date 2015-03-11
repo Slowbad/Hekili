@@ -1751,13 +1751,13 @@ state.reset = function()
 		state.advance( cast_time )
     
 		if class.abilities[ casting ] then
-			state.cooldown[ casting ].expires = state.now + state.offset + class.abilities[ casting ].cooldown
+			-- state.cooldown[ casting ].expires = state.now + state.offset + class.abilities[ casting ].cooldown
 
       -- Put the action on cooldown.  (It's slightly premature, but addresses CD resets like Echo of the Elements.)
       if class.abilities[ casting ].charges then
         state.spendCharges( casting, 1 )
       else
-        state.setCooldown( casting, ns.class.abilities[ casting ].cooldown )
+        state.setCooldown( casting, class.abilities[ casting ].cooldown )
       end
     
       -- Perform the action.

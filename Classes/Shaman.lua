@@ -820,6 +820,11 @@ if (select(2, UnitClass('player')) == 'SHAMAN') then
           return x
         end )
         
+        modifyAbility( 'lava_burst', 'recharge', function( x )
+          if buff.ascendance.up then return 0 end
+          return x
+        end )
+        
         modifyAbility( 'lightning_bolt', 'cast', 2.0 )
 
         modifyAbility( 'lightning_bolt', 'cast', function( x )

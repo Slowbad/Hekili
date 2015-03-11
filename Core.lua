@@ -544,6 +544,8 @@ function Hekili:UpdateDisplays()
 
 				local gcd_start, gcd_duration = GetSpellCooldown( class.abilities[ class.gcd ].id )
 				
+        _G[ "HekiliDisplay" .. dispID ]:Show()
+        
 				for i, button in ipairs( ns.UI.Buttons[dispID] ) do
 					if not Queue or not Queue[i] and ( self.DB.profile.Enabled or self.Config ) then
 						for n = i, display['Icons Shown'] do
