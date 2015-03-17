@@ -102,7 +102,7 @@ local function Button_OnMouseDown( self, btn )
 end 
 
 
-function ns.StartConfiguration()
+function ns.StartConfiguration( external )
   Hekili.Config = true
 
   local scaleFactor = 1
@@ -128,12 +128,13 @@ function ns.StartConfiguration()
   ns.UI.Notification.Mover:SetBackdropBorderColor(.1, .1, .1, .5)
   ns.UI.Notification.Mover:Show()
   
-  f = ns.UI.Notification
+  f = ns.UI.Notification.Mover
   f.Header = f.Header or f:CreateFontString( "HekiliNotificationHeader", "OVERLAY", "GameFontNormal" )
-  f.Header:SetSize( Hekili.DB.profile['Notification Width'] * scaleFactor * 0.5, 20 )
+  -- f.Header:SetSize( Hekili.DB.profile['Notification Width'] * scaleFactor * 0.5, 20 )
+  f.Header:SetAllPoints( HekiliNotificationMover )
   f.Header:SetText( "Notifications" )
-  f.Header:SetJustifyH( "LEFT" )
-  f.Header:SetPoint( "BOTTOMLEFT", f, "TOPLEFT" )
+  f.Header:SetJustifyH( "CENTER" )
+  -- f.Header:SetPoint( "BOTTOMLEFT", f, "TOPLEFT" )
   f.Header:Show()
 
   HekiliNotification:SetScript( "OnMouseDown", Mover_OnMouseDown )
@@ -164,10 +165,11 @@ function ns.StartConfiguration()
       v:Show()
   
       v.Header = v.Header or v:CreateFontString( "HekiliDisplay"..i.."Header", "OVERLAY", "GameFontNormal" )
-      v.Header:SetSize( v:GetWidth() * 0.5, 20 )
+      -- v.Header:SetSize( v:GetWidth() * 0.5, 20 )
+      v.Header:SetAllPoints( v )
       v.Header:SetText( Hekili.DB.profile.displays[ i ].Name )
-      v.Header:SetJustifyH( "LEFT" )
-      v.Header:SetPoint( "BOTTOMLEFT", v, "TOPLEFT" )
+      v.Header:SetJustifyH( "CENTER" )
+      -- v.Header:SetPoint( "BOTTOMLEFT", v, "TOPLEFT" )
       v.Header:Show()
     else
       v:Hide()
@@ -176,15 +178,17 @@ function ns.StartConfiguration()
   
   -- HekiliNotification:EnableMouse(true)
   -- HekiliNotification:SetMovable(true)
-  ns.lib.AceConfigDialog:SetDefaultSize( "Hekili", 785, 555 )
-  ns.lib.AceConfigDialog:Open("Hekili")
-  ns.OnHideFrame = ns.OnHideFrame or CreateFrame("Frame", nil)
-  ns.OnHideFrame:SetParent( ns.lib.AceConfigDialog.OpenFrames["Hekili"].frame )
-  ns.OnHideFrame:SetScript( "OnHide", function(self)
-    ns.StopConfiguration()
-    self:SetScript("OnHide", nil)
-    collectgarbage()
-  end )
+  if not external then
+    ns.lib.AceConfigDialog:SetDefaultSize( "Hekili", 785, 555 )
+    ns.lib.AceConfigDialog:Open("Hekili")
+    ns.OnHideFrame = ns.OnHideFrame or CreateFrame("Frame", nil)
+    ns.OnHideFrame:SetParent( ns.lib.AceConfigDialog.OpenFrames["Hekili"].frame )
+    ns.OnHideFrame:SetScript( "OnHide", function(self)
+      ns.StopConfiguration()
+      self:SetScript("OnHide", nil)
+      collectgarbage()
+    end )
+  end
   
 end
 
@@ -210,7 +214,7 @@ function ns.StopConfiguration()
   HekiliNotification:EnableMouse( MouseInteract )
   HekiliNotification:SetMovable( not Hekili.DB.profile.Locked )
   HekiliNotification.Mover:Hide()
-  HekiliNotification.Header:Hide()
+  -- HekiliNotification.Mover.Header:Hide()
   
  for i,v in ipairs(ns.UI.Displays) do
     v:EnableMouse( false )
@@ -260,6 +264,7 @@ function ns.buildUI()
 	f.Text:SetPoint( "TOP", f, "TOP" )
 	f.Text:SetFont( ns.lib.SharedMedia:Fetch("font", Hekili.DB.profile['Notification Font']), Hekili.DB.profile['Notification Height'] * scaleFactor * 0.8, "OUTLINE" )
 	f.Text:SetJustifyV( "MIDDLE" )
+  f.Text:SetJustifyH( "CENTER" )
 	f.Text:SetTextColor(1, 1, 1, 1)
   
   ns.UI.Notification = f
@@ -280,6 +285,7 @@ function ns.buildUI()
     
     f:SetSize( Hekili.DB.profile.displays[dispID]['Primary Icon Size'] + ( Hekili.DB.profile.displays[dispID]['Queued Icon Size'] * ( Hekili.DB.profile.displays[dispID]['Icons Shown'] - 1 ) ) + ( Hekili.DB.profile.displays[dispID]['Spacing'] * ( Hekili.DB.profile.displays[dispID]['Icons Shown'] - 1 ) ), max( Hekili.DB.profile.displays[dispID]['Primary Icon Size'], Hekili.DB.profile.displays[dispID]['Queued Icon Size'] ) )
     f:SetPoint( "CENTER", Screen, "CENTER", Hekili.DB.profile.displays[ dispID ].x, Hekili.DB.profile.displays[ dispID ].y )
+    f:SetFrameStrata( "MEDIUM" )
     f:SetClampedToScreen( true )
     f:EnableMouse( false )
     f:SetMovable( true )
@@ -322,7 +328,7 @@ function ns.buildUI()
 		end
 	end
 	
-  if Hekili.Config then ns.StartConfiguration() end
+  if Hekili.Config then ns.StartConfiguration( true ) end
   
 end
 
@@ -463,6 +469,11 @@ function Hekili:CreateButton( display, ID )
 		button.Texture:SetTexture('Interface\\ICONS\\Spell_Nature_BloodLust')
 		button.Texture:SetAlpha(1)
 	end
+  
+  button.Icon = button.Icon or button:CreateTexture(nil, "LOW")
+  button.Icon:SetSize( scaleFactor * button:GetWidth() * 0.5, scaleFactor * button:GetHeight() * 0.5 )
+  button.Icon:SetPoint( "TOPRIGHT", button, "TOPRIGHT" )
+  button.Icon:Hide()
 	
 	button.Caption = button.Caption or button:CreateFontString(name.."Caption", "OVERLAY" )
 	button.Caption:SetSize( scaleFactor * button:GetWidth(), scaleFactor * button:GetHeight() / 2)
@@ -472,11 +483,13 @@ function Hekili:CreateButton( display, ID )
 	
 	button.Cooldown = button.Cooldown or CreateFrame("Cooldown", name .. "_Cooldown", button, "CooldownFrameTemplate")
 	button.Cooldown:SetAllPoints(button)
-	
+  button.Cooldown:SetFrameStrata( "MEDIUM" )
+  button.Cooldown:SetDrawBling( false ) -- disabled until Blizzard fixes the animation.
+
 	button:ClearAllPoints()
 	
 	if ID == 1 then
-		button.Overlay = button.Overlay or button:CreateTexture(nil, "LOW")
+		button.Overlay = button.Overlay or button:CreateTexture( nil, "LOW" )
 		button.Overlay:SetAllPoints(button)
 		button.Overlay:Hide()
 		

@@ -331,6 +331,7 @@ function Hekili:ProcessHooks( dispID, solo )
                       
 												chosen_action = state.this_action
 												chosen_caption = entry.Caption
+                        chosen_indicator = entry.Indicator
 												chosen_wait = wait_time
 
 												Queue[i].display = dispID
@@ -348,6 +349,8 @@ function Hekili:ProcessHooks( dispID, solo )
 													
 												Queue[i].caption = chosen_caption
 												Queue[i].wait = wait_time
+                        
+                        Queue[i].indicator = ( entry.Indicator and entry.Indicator ~= 'none' ) and entry.Indicator
 												
                       end
                       
@@ -562,7 +565,7 @@ function Hekili:UpdateDisplays()
 						break
 					end
 					
-					local aKey, caption = Queue[i].actName, Queue[i].caption
+					local aKey, caption, indicator = Queue[i].actName, Queue[i].caption, Queue[i].indicator
 				
 					if aKey then
 						button:Show()
@@ -570,6 +573,14 @@ function Hekili:UpdateDisplays()
 						button.Texture:SetTexture( GetSpellTexture( class.abilities[ aKey ].name ) )
 						button.Texture:Show()
 						
+            if indicator then
+              if indicator == 'cycle' then button.Icon:SetTexture( "Interface\\Addons\\Hekili\\Textures\\Cycle" ) end
+              if indicator == 'cancel' then button.Icon:SetTexture( "Interface\\Addons\\Hekili\\Textures\\Cancel" ) end
+              button.Icon:Show()
+            else
+              button.Icon:Hide()
+            end
+            
 						if display['Action Captions'] then
               
               local targets = max( display['Force Targets'] or 1, ns.numTargets() )
@@ -652,7 +663,8 @@ function Hekili:UpdateDisplays()
 						end
 						
 						if i == 1 then
-							button.Cooldown:SetCooldown( start, duration )
+              button.Cooldown:SetCooldown( start, duration )
+              
               if ns.lib.SpellFlash and display['Use SpellFlash'] and GetTime() >= flashes[dispID] + 0.2 then
                 ns.lib.SpellFlash.FlashAction( class.abilities[ aKey ].id, display['SpellFlash Color'] )
                 flashes[dispID] = GetTime()

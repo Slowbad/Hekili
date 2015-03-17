@@ -296,29 +296,45 @@ RegisterEvent( "COMBAT_LOG_EVENT_UNFILTERED", function( event, _, subtype, _, so
 	local time = GetTime()	
 	
 	-- Player/Minion Event
-	if hostile and sourceGUID ~= destGUID and not class.exclusions[ spellID ] then
-		
-		-- Aura Tracking
-		if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' then
-    
-			ns.trackDebuff( spellName, destGUID, time, true )
-			ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
-    
-		elseif subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
-			ns.trackDebuff( spellName, destGUID, time )
-			ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
+  if not class.exclusions[ spellID ] then
+    if hostile and sourceGUID ~= destGUID and not ( class.auras[ spellID ] and class.auras[ spellID ].friendly ) then
       
-		elseif subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_MISSED' then
-			ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
+      -- Aura Tracking
+      if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' then
       
-		elseif destGUID and subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL' then
-			ns.trackDebuff( spellName, destGUID )
+        ns.trackDebuff( spellName, destGUID, time, true )
+        ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
       
-		end
+      elseif subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
+        ns.trackDebuff( spellName, destGUID, time )
+        ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
+        
+      elseif subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_MISSED' then
+        ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
+        
+      elseif destGUID and subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL' then
+        ns.trackDebuff( spellName, destGUID )
+        
+      end
 
-		if subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
-			ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
+      if subtype == 'SPELL_DAMAGE' or subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
+        ns.updateTarget( destGUID, time, sourceGUID == state.GUID )
 
+      end
+    
+    elseif sourceGUID == state.GUID and class.auras[ spellID ] and class.auras[ spellID ].friendly then -- friendly effects
+    
+      if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' then
+        ns.trackDebuff( spellName, destGUID, time, true )
+        
+      elseif subtype == 'SPELL_PERIODIC_HEALING' or subtype == 'SPELL_PERIODIC_MISSED' then
+        ns.trackDebuff( spellName, destGUID, time )
+
+      elseif destGUID and subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL' then
+        ns.trackDebuff( spellName, destGUID )
+      
+      end
+      
     end
     
 	end

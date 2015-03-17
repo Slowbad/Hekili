@@ -1250,6 +1250,7 @@ ns.newAction = function( aList, name )
 		Enabled = false,
 		Ability = nil,
 		Caption = nil,
+    Indicator = 'none',
 		Arguments = nil,
 		Script = '',
 	}
@@ -1282,13 +1283,19 @@ ns.newActionOption = function( aList, index )
 				name = 'Enabled',
 				desc = "If disabled, this action will not be shown under any circumstances.",
 				order = 00,
-				width = 'double'
+			},
+			Ability = {
+				type = 'select',
+				name = 'Ability',
+				desc = "Select the ability for this action entry.  Only abilities supported by the addon's prediction engine will be shown.",
+				order = 01,
+				values = class.searchAbilities
 			},
 			['Move'] = {
 				type = 'select',
 				name = 'Position',
 				desc = "Select another position in the action list and move this item to that location.",
-				order = 01,
+				order = 02,
 				values = function(info)
 					local listKey, actKey = info[2], info[3]
 					local listIdx, actIdx = tonumber( listKey:match("^L(%d+)") ), tonumber( actKey:match("^A(%d+)") )
@@ -1303,7 +1310,7 @@ ns.newActionOption = function( aList, index )
 				type = 'input',
 				name = 'Name',
 				desc = "Enter a unique name for this action in the action list.  This is typically the ability name accompanied by a short description.",
-				order = 02,
+				order = 03,
 				validate = function(info, val)
 					local listIdx = tonumber( match( info[2], "^L(%d+)" ) )
 					
@@ -1315,19 +1322,23 @@ ns.newActionOption = function( aList, index )
           return true
 				end,
 			},
-			Ability = {
-				type = 'select',
-				name = 'Ability',
-				desc = "Select the ability for this action entry.  Only abilities supported by the addon's prediction engine will be shown.",
-				order = 03,
-				values = class.searchAbilities
-			},
 			Caption = {
 				type = 'input',
 				name = 'Caption',
 				desc = "Enter a caption to be displayed on this action's icon when the action is shown.",
 				order = 04,
 			},
+      Indicator = {
+        type = 'select',
+        name = 'Indicator',
+        desc = "Select a special indicator for this ability.  It will appear at the top of the action's icon when shown.",
+        order = 05,
+        values = {
+          none = "None",
+          cancel = "|TInterface\\Addons\\Hekili\\Textures\\Cancel:0|t Cancel",
+          cycle = "|TInterface\\Addons\\Hekili\\Textures\\Cycle2:0|t Cycle Targets"
+        },
+      },
 			Script = {
 				type = 'input',
 				name = 'Conditions',
@@ -2728,6 +2739,13 @@ function Hekili:SetOption( info, input, ... )
 						
 						list.Actions[ i ].Ability = import[ i ].ability
 						list.Actions[ i ].Args = import[ i ].modifiers
+            
+            if import[ i ].modifiers and import[ i ].modifiers:match("cycle_targets=1") then
+              list.Actions[ i ].Indicator = "cycle"
+            else
+              list.Actions[ i ].Indicator = "none"
+            end
+            
 						list.Actions[ i ].Script = import[ i ].conditions
 						list.Actions[ i ].Enabled = true
 					end

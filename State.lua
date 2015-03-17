@@ -118,12 +118,12 @@ local function applyBuff( aura, duration, stacks, value )
 		state.buff[ aura ].expires = 0
 		state.buff[ aura ].count = 0
 		state.buff[ aura ].value = 0
-		state.buff[ aura ].start = 0
+		state.buff[ aura ].applied = 0
 		state.buff[ aura ].caster = 'unknown'
 	else
 		state.buff[ aura ] = state.buff[ aura ] or {}
 		state.buff[ aura ].expires = state.now + state.offset + ( duration or class.auras[ aura ].duration )
-		state.buff[ aura ].start = state.now + state.offset
+		state.buff[ aura ].applied = state.now + state.offset
 		state.buff[ aura ].count = stacks or 1
 		state.buff[ aura ].value = value or 0
 		state.buff[ aura ].caster = 'player'
@@ -176,13 +176,14 @@ local function applyDebuff( unit, aura, duration, stacks, value )
 		state.debuff[ aura ].expires = 0
 		state.debuff[ aura ].count = 0
 		state.debuff[ aura ].value = 0
-		state.debuff[ aura ].start = 0
+		state.debuff[ aura ].applied = 0
 		state.debuff[ aura ].unit = unit
 	else
     state.debuff[ aura ] = state.debuff[ aura ] or {}
     state.debuff[ aura ].expires = state.now + state.offset + duration
     state.debuff[ aura ].count = stacks or 1
     state.debuff[ aura ].value = value or 0
+    state.debuff[ aura ].applied = state.now
     state.debuff[ aura ].unit = unit or 'target'
   end
 
@@ -1220,9 +1221,16 @@ local mt_buffs = {
 		elseif class.auras[ k ].id < 0 then
 			local id = -1 * class.auras[ k ].id
 			local name, _, _, duration, expires, spellID, slot = GetRaidBuffTrayAuraInfo( id )
+      local applied = 0
+      
+      if name then
+        duration = duration > 0 and duration or 3600
+        expires = expires > 0 and expires or GetTime() + 3600
+        applied = expires - duration
+      end
       
 			t[k] = {
-				key = k, name = name, count = name and 1 or 0, expires = name and ( expires > 0 and expires or 3600 ) or 0
+				key = k, id = class.auras[ k ].id, name = name, count = name and 1 or 0, expires = expires, applied = applied
 			}
 			return t[k]
 		

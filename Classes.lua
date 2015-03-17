@@ -409,14 +409,14 @@ addAura( 'vicious', 148903, 'duration', 10 )
 
 
 -- Raid Buffs
+addAura( 'str_agi_int', -1, 'duration', 3600 )
+addAura( 'stamina', -2, 'duration', 3600 )
 addAura( 'attack_power_multiplier', -3, 'duration', 3600 )
-addAura( 'critical_strike', -6, 'duration', 3600 )
 addAura( 'haste', -4, 'duration', 3600 )
+addAura( 'spell_power_multiplier', -5, 'duration', 3600 )
+addAura( 'critical_strike', -6, 'duration', 3600 )
 addAura( 'mastery', -7, 'duration', 3600 )
 addAura( 'multistrike', -8, 'duration', 3600 )
-addAura( 'spell_power_multiplier', -5, 'duration', 3600 )
-addAura( 'stamina', -2, 'duration', 3600 )
-addAura( 'str_agi_int', -1, 'duration', 3600 )
 addAura( 'versatility', -9, 'duration', 3600 )
 
 
