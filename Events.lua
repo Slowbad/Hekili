@@ -262,7 +262,7 @@ RegisterEvent( "PLAYER_REGEN_ENABLED", function () state.combat = 0 end )
 
 RegisterEvent( "UNIT_SPELLCAST_SUCCEEDED", function( _, unit, spell, _, spellID )
   
-  if unit == 'player' then
+  if unit == 'player' and spell ~= 'Auto Shot' then
     state.player.lastcast = spell
     state.player.casttime = GetTime()
     for i = 1, #Hekili.DB.profile.displays do
