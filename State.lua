@@ -62,6 +62,7 @@ state.race[ formatKey( UnitRace('player') ) ] = true
 
 state.class = ns.class
 state.targets = ns.targets
+state.pre_steady_focus = false
   
 state._G = 0
 
@@ -461,9 +462,16 @@ local mt_state = {
       table.insert( t.purge, k )
       return t.k
     
-    elseif k == 'last_judgment_target' then
-      return 'unknown'
-      
+	    elseif k == 'last_judgment_target' then
+		    return 'unknown'
+
+		elseif k == 'pre_steady_focus' then
+			return state.pre_steady_focus
+
+		elseif k == 'cast_regen' then
+			local timeToNextAction = max( t.gcd, class.abilities[ t.this_action ].cast )
+			return timeToNextAction * state[ class.primaryResource ].regen
+
 		else
 			-- Check if this is a resource table pre-init.
 			for i, key in pairs( class.resources ) do
@@ -1589,6 +1597,10 @@ local mt_default_action = {
 			
 		elseif k == 'cast_delay' then
 			return 0
+
+		elseif k == 'cast_regen' then
+			local timeToNextAction = max( t.gcd, t.cast )
+			return timeToNextAction * state[ class.primaryResource ].regen
 			
 		end
 		

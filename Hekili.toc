@@ -20,6 +20,7 @@ Classes\Monk.lua
 Classes\Paladin.lua
 Classes\Shaman.lua
 # Classes\Warrior.lua
+Classes\Hunter.lua
 Targets.lua
 Options.lua
 UI.lua
